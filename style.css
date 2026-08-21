@@ -5,30 +5,38 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    max-width: 90%;
-    margin: 0 auto;
-    padding: 10px;
+    width: 90%;
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 15px;
     background: #f4f7f6;
     color: #333;
+    /* Automatisch skalierende Grundschrift */
+    font-size: clamp(14px, 1.8vw, 17px);
 }
 
-@media (min-width: 600px) {
-    body {
-        padding: 20px;
-        margin: 20px auto;
-    }
-}
-
-h1, h2 { 
-    color: #2c3e50; 
+h1 {
+    font-size: clamp(22px, 3.5vw, 32px);
+    color: #2c3e50;
     text-align: center;
+}
+
+h2 {
+    font-size: clamp(18px, 2.8vw, 26px);
+    color: #2c3e50;
+    text-align: center;
+}
+
+h3 {
+    font-size: clamp(16px, 2.2vw, 20px);
+    color: #2c3e50;
 }
 
 .step { 
     display: none; 
     background: #fff;
-    padding: 15px;
-    margin-bottom: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 } 
@@ -37,21 +45,25 @@ h1, h2 {
     display: block; 
 }
 
-/* Logo-Anpassung */
+/* Logo-Container und Logo-Anpassung */
+.logo-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
 .app-logo {
-    max-width: 240px;
+    max-width: 280px; /* Passt die Größe auf Handys und PCs an */
     width: 100%;
     height: auto;
-    display: block;
-    margin: 0 auto 20px auto;
+    display: inline-block;
 }
 
 .question-group {
     background: #fff;
-    padding: 12px;
+    padding: 15px;
     margin-bottom: 15px;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     border-left: 4px solid #27ae60;
 }
 
@@ -61,23 +73,22 @@ h1, h2 {
     justify-content: space-between;
     margin-bottom: 12px;
     border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+    padding-bottom: 12px;
     gap: 15px;
 }
 
 .question-text, .question-item span {
     flex-grow: 1;
-    font-size: 15px;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 /* Der interaktive Wasser-Kasten */
 .checkbox-box {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
     border: 2px solid #27ae60;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     position: relative;
     overflow: hidden;
@@ -121,12 +132,12 @@ h1, h2 {
 input[type="date"], input[type="number"] {
     padding: 12px;
     font-size: 16px;
-    margin-top: 5px;
+    margin-top: 8px;
     margin-bottom: 15px;
     border-radius: 8px;
     border: 1px solid #ccc;
     width: 100%;
-    max-width: 300px;
+    max-width: 320px;
     display: block;
 }
 
@@ -136,12 +147,13 @@ button {
     color: white;
     border: none;
     padding: 14px 20px;
-    font-size: 16px;
+    font-size: inherit;
     font-weight: bold;
     border-radius: 8px;
     cursor: pointer;
     margin-top: 15px;
     width: 100%;
+    transition: background-color 0.2s;
 }
 
 @media (min-width: 600px) {
@@ -194,5 +206,4 @@ button:hover {
     background: #fff3f3;
     border-left: 4px solid #e74c3c;
     border-radius: 0 8px 8px 0;
-    font-size: 14px;
 }
