@@ -27,3 +27,15 @@ button { background-color: #27ae60; color: white; border: none; padding: 10px 20
 .result-item { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; cursor: pointer; }
 .dynamic-circle { background-color: #27ae60; border-radius: 50%; display: inline-block; }
 .details { display: none; padding: 10px; background: #fff3f3; border-left: 4px solid #e74c3c; margin-bottom: 10px; }
+
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.app-logo {
+    max-width: 280px; /* Passt die Größe auf Handys und PCs an */
+    width: 100%;
+    height: auto;
+}
