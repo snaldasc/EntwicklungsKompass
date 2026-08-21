@@ -1,0 +1,29 @@
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f4f7f6; color: #333; }
+.step { display: none; } .step.active { display: block; }
+.question-group { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 4px solid #27ae60; }
+.question-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+/* Wasser-Kasten */
+.checkbox-box { width: 40px; height: 40px; border: 2px solid #27ae60; border-radius: 4px; cursor: pointer; position: relative; overflow: hidden; background: #fff; flex-shrink: 0; }
+.checkbox-box::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; top: 0;
+    background: linear-gradient(to top, #27ae60, #4cd964);
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 66% 100%, 33% 100%, 0 100%);
+    transition: clip-path 0.3s ease-in;
+}
+.checkbox-box.state-50::after { animation: fillWater50 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+.checkbox-box.state-100::after { animation: fillWater100 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+
+@keyframes fillWater50 {
+    40% { clip-path: polygon(0 100%, 100% 100%, 100% 30%, 66% 65%, 33% 30%, 0 65%); }
+    100% { clip-path: polygon(0 100%, 100% 100%, 100% 50%, 66% 50%, 33% 50%, 0 50%); }
+}
+@keyframes fillWater100 {
+    40% { clip-path: polygon(0 100%, 100% 100%, 100% -20%, 66% 20%, 33% -20%, 0 20%); }
+    100% { clip-path: polygon(0 100%, 100% 100%, 100% 0%, 66% 0%, 33% 0%, 0 0%); }
+}
+
+button { background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+.result-item { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; cursor: pointer; }
+.dynamic-circle { background-color: #27ae60; border-radius: 50%; display: inline-block; }
+.details { display: none; padding: 10px; background: #fff3f3; border-left: 4px solid #e74c3c; margin-bottom: 10px; }
