@@ -1,0 +1,34 @@
+<link rel="stylesheet" href="style.css">
+
+
+
+    <div id="step-age" class="step active">
+        <h1>Entwicklungsschnecke</h1>
+        <p>Gib entweder das Alter in Jahren oder das Geburtsdatum ein:</p>
+        
+        <label for="ageInput">Alter (in Jahren, z.B. 3.5):</label><br>
+        <input type="number" id="ageInput" step="0.1" min="1" max="6" placeholder="z.B. 4"><br><br>
+        
+        <p>— ODER —</p>
+        
+        <label for="dobInput">Geburtsdatum:</label><br>
+        <input type="date" id="dobInput"><br><br>
+        
+        <button onclick="startAssessment()">Fragen laden</button>
+    </div>
+
+    <div id="step-questions" class="step">
+        <h2>Fragenkatalog</h2>
+        <div id="questionsContainer"></div>
+        <button onclick="generateGutachten()">Gutachten erstellen</button>
+    </div>
+
+    <div id="step-result" class="step">
+        <h2>Gutachten-Übersicht</h2>
+        <p>Klicke auf einen Bereich, um Details zu unvollständigen Fragen zu sehen.</p>
+        <div id="resultsContainer"></div>
+        <br>
+        <button onclick="location.reload()">Neue Beobachtung starten</button>
+    </div>
+
+    <script src="script.js"></script>
