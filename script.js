@@ -12,8 +12,7 @@ const SUPABASE_URL =
     "https://sjekwvalxujnfparxees.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwiaWF0IjoxNzg3NTA1OTQ0LCJleHAiOjIxMDMwODE5NDl9.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
-
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY2UiLCJyZWYiOiJzamt3d2FseHVqbmZwYXJ4ZWVzIiwiaWF0IjoxNzg3NTA1OTQ0LCJleHAiOjIxMDMwODE5NDl9.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
 const supabaseClient =
     window.supabase.createClient(
@@ -56,6 +55,7 @@ async function loadUserProfile(userId) {
 
     currentProfile = null;
     currentInstitution = null;
+
 
     const {
         data: profile,
@@ -171,29 +171,59 @@ async function loadUserProfile(userId) {
 
 function updateUserInterface() {
 
-    const userName = document.getElementById("userName");
-    const userInstitution = document.getElementById("userInstitution");
-    const userRole = document.getElementById("userRole");
+    const userName =
+        document.getElementById("userName");
+
+    const userInstitution =
+        document.getElementById("userInstitution");
+
+    const userRole =
+        document.getElementById("userRole");
+
+
+    // ========================================================
+    // NAME
+    // ========================================================
 
     if (userName) {
+
         userName.textContent =
             currentProfile?.full_name || "Benutzer";
     }
 
+
+    // ========================================================
+    // INSTITUTION
+    // ========================================================
+
     if (userInstitution) {
+
         userInstitution.textContent =
-            currentInstitution?.name || "Keine Institution";
+            currentInstitution?.name ||
+            "Keine Institution";
     }
+
+
+    // ========================================================
+    // ROLLE
+    // ========================================================
 
     if (userRole) {
 
         if (currentProfile?.role === "admin") {
-            userRole.textContent = " · Administrator";
 
-        } else if (currentProfile?.role === "teacher") {
-            userRole.textContent = " · Pädagogische Fachkraft";
+            userRole.textContent =
+                " · Administrator";
+
+        } else if (
+            currentProfile?.role === "teacher"
+        ) {
+
+            userRole.textContent =
+                " · Pädagogische Fachkraft";
 
         } else {
+
             userRole.textContent =
                 currentProfile?.role
                     ? " · " + currentProfile.role
@@ -201,48 +231,13 @@ function updateUserInterface() {
         }
     }
 
+
     console.log(
         "Benutzeroberfläche aktualisiert:",
         userName?.textContent,
         userInstitution?.textContent,
         userRole?.textContent
     );
-}
-
-    if (userInstitution) {
-
-        userInstitution.textContent =
-            currentInstitution &&
-            currentInstitution.name
-                ? currentInstitution.name
-                : "Keine Institution";
-    }
-
-
-    if (userRole) {
-
-        let roleText =
-            currentProfile &&
-            currentProfile.role
-                ? currentProfile.role
-                : "";
-
-
-        if (roleText === "admin") {
-
-            roleText =
-                " · Administrator";
-
-        } else if (roleText === "teacher") {
-
-            roleText =
-                " · Pädagogische Fachkraft";
-        }
-
-
-        userRole.textContent =
-            roleText;
-    }
 }
 
 
@@ -258,7 +253,8 @@ async function checkLogin() {
             data: {
                 session
             }
-        } = await supabaseClient.auth.getSession();
+        } =
+            await supabaseClient.auth.getSession();
 
 
         // ====================================================
@@ -273,12 +269,16 @@ async function checkLogin() {
 
 
             if (loginScreen) {
-                loginScreen.style.display = "flex";
+
+                loginScreen.style.display =
+                    "flex";
             }
 
 
             if (appContent) {
-                appContent.style.display = "none";
+
+                appContent.style.display =
+                    "none";
             }
 
 
@@ -307,12 +307,16 @@ async function checkLogin() {
         if (!profileLoaded) {
 
             if (loginScreen) {
-                loginScreen.style.display = "flex";
+
+                loginScreen.style.display =
+                    "flex";
             }
 
 
             if (appContent) {
-                appContent.style.display = "none";
+
+                appContent.style.display =
+                    "none";
             }
 
 
@@ -332,12 +336,16 @@ async function checkLogin() {
         // ====================================================
 
         if (loginScreen) {
-            loginScreen.style.display = "none";
+
+            loginScreen.style.display =
+                "none";
         }
 
 
         if (appContent) {
-            appContent.style.display = "block";
+
+            appContent.style.display =
+                "block";
         }
 
 
@@ -353,12 +361,16 @@ async function checkLogin() {
 
 
         if (loginScreen) {
-            loginScreen.style.display = "flex";
+
+            loginScreen.style.display =
+                "flex";
         }
 
 
         if (appContent) {
-            appContent.style.display = "none";
+
+            appContent.style.display =
+                "none";
         }
     }
 }
@@ -378,7 +390,9 @@ if (loginForm) {
 
 
             if (loginError) {
-                loginError.textContent = "";
+
+                loginError.textContent =
+                    "";
             }
 
 
@@ -393,7 +407,10 @@ if (loginForm) {
                 );
 
 
-            if (!emailElement || !passwordElement) {
+            if (
+                !emailElement ||
+                !passwordElement
+            ) {
 
                 if (loginError) {
 
@@ -489,12 +506,16 @@ supabaseClient.auth.onAuthStateChange(
 
 
             if (loginScreen) {
-                loginScreen.style.display = "flex";
+
+                loginScreen.style.display =
+                    "flex";
             }
 
 
             if (appContent) {
-                appContent.style.display = "none";
+
+                appContent.style.display =
+                    "none";
             }
 
 
@@ -543,17 +564,23 @@ async function logout() {
 
 
     if (loginScreen) {
-        loginScreen.style.display = "flex";
+
+        loginScreen.style.display =
+            "flex";
     }
 
 
     if (appContent) {
-        appContent.style.display = "none";
+
+        appContent.style.display =
+            "none";
     }
 
 
     if (loginError) {
-        loginError.textContent = "";
+
+        loginError.textContent =
+            "";
     }
 }
 
@@ -948,13 +975,24 @@ let currentQuestions = [];
 
 
 // ============================================================
-// STATUS
+// STATUSWERTE
+// ============================================================
+//
+// null = NOCH NICHT BEARBEITET
+// 0    = WIRD NICHT GEZEIGT
+// 50   = WIRD TEILWEISE GEZEIGT
+// 100  = WIRD VOLLSTÄNDIG GEZEIGT
+//
 // ============================================================
 
 const STATUS_VALUES = {
+
     NOT_RATED: null,
+
     NOT_SHOWN: 0,
+
     PARTIAL: 50,
+
     FULL: 100
 };
 
@@ -966,20 +1004,28 @@ const STATUS_VALUES = {
 function getStatusText(value) {
 
     if (value === null) {
+
         return "Noch nicht bewertet";
     }
 
+
     if (value === 0) {
+
         return "Wird nicht gezeigt";
     }
 
+
     if (value === 50) {
+
         return "Wird teilweise gezeigt";
     }
 
+
     if (value === 100) {
+
         return "Wird vollständig gezeigt";
     }
+
 
     return "Noch nicht bewertet";
 }
@@ -991,29 +1037,62 @@ function getStatusText(value) {
 
 function getStatusClass(value) {
 
+    // NICHT BEARBEITET
+    if (value === null) {
+
+        return "state-not-rated";
+    }
+
+
+    // 0 %
     if (value === 0) {
+
         return "state-0";
     }
 
+
+    // 50 %
     if (value === 50) {
+
         return "state-50";
     }
 
+
+    // 100 %
     if (value === 100) {
+
         return "state-100";
     }
 
-    return "";
+
+    return "state-not-rated";
 }
 
 
 // ============================================================
 // STATUS AUS BOX LESEN
 // ============================================================
+//
+// WICHTIG:
+//
+// Kein data-value
+//       = NICHT BEARBEITET
+//
+// data-value="0"
+//       = BEWUSST 0 %
+//
+// data-value="50"
+//       = 50 %
+//
+// data-value="100"
+//       = 100 %
+//
+// ============================================================
 
 function getBoxValue(box) {
 
     if (!box) {
+
         return null;
     }
 
@@ -1023,6 +1102,14 @@ function getBoxValue(box) {
             "data-value"
         );
 
+
+    // ========================================================
+    // KEIN WERT
+    // ========================================================
+    //
+    // Das bedeutet NICHT BEARBEITET.
+    //
+    // ========================================================
 
     if (
         rawValue === null ||
@@ -1036,6 +1123,10 @@ function getBoxValue(box) {
     const value =
         Number(rawValue);
 
+
+    // ========================================================
+    // NUR 0 / 50 / 100 ERLAUBEN
+    // ========================================================
 
     if (
         value !== 0 &&
@@ -1060,13 +1151,15 @@ function calculateAgeFromBirthDate(
 ) {
 
     if (!birthDateString) {
+
         return null;
     }
 
 
     const birthDate =
         new Date(
-            birthDateString + "T00:00:00"
+            birthDateString +
+            "T00:00:00"
         );
 
 
@@ -1098,7 +1191,8 @@ function calculateAgeFromBirthDate(
         monthDifference < 0 ||
         (
             monthDifference === 0 &&
-            today.getDate() < birthDate.getDate()
+            today.getDate() <
+            birthDate.getDate()
         )
     ) {
 
@@ -1156,7 +1250,7 @@ function startAssessment() {
 
 
     // ========================================================
-    // ALTERNATIV GEBURTSDATUM
+    // GEBURTSDATUM
     // ========================================================
 
     else if (dobInput) {
@@ -1209,15 +1303,18 @@ function startAssessment() {
 
     if (age < 2.5) {
 
-        key = "1-2.5";
+        key =
+            "1-2.5";
 
     } else if (age < 4.5) {
 
-        key = "2.5-4.5";
+        key =
+            "2.5-4.5";
 
     } else {
 
-        key = "4.5-6";
+        key =
+            "4.5-6";
     }
 
 
@@ -1309,16 +1406,30 @@ function startAssessment() {
                         );
 
 
+                    // =================================================
+                    // STANDARD = NICHT BEARBEITET
+                    // =================================================
+
                     box.className =
-                        "checkbox-box";
+                        "checkbox-box state-not-rated";
 
 
                     box.id =
                         `q_${categoryIndex}_${questionIndex}`;
 
 
+                    // Kein data-value!
+                    // Dadurch ist der Zustand eindeutig NICHT BEARBEITET.
+
+
                     box.title =
                         "Noch nicht bewertet";
+
+
+                    box.setAttribute(
+                        "aria-label",
+                        "Noch nicht bewertet"
+                    );
 
 
                     box.addEventListener(
@@ -1330,6 +1441,7 @@ function startAssessment() {
                     item.appendChild(
                         text
                     );
+
 
                     item.appendChild(
                         box
@@ -1386,21 +1498,22 @@ function startAssessment() {
 // CHECKBOX / STATUS WECHSELN
 // ============================================================
 //
-// leer
-//   ↓
-// 0 % = Kind zeigt Fähigkeit nicht
-//   ↓
-// 50 % = Kind zeigt Fähigkeit teilweise
-//   ↓
-// 100 % = Kind zeigt Fähigkeit vollständig
-//   ↓
-// leer
+// NICHT BEARBEITET
+//       ↓
+// 0 %
+//       ↓
+// 50 %
+//       ↓
+// 100 %
+//       ↓
+// NICHT BEARBEITET
 //
 // ============================================================
 
 function toggleBox(box) {
 
     if (!box) {
+
         return;
     }
 
@@ -1412,21 +1525,47 @@ function toggleBox(box) {
     let newValue;
 
 
-    if (currentValue === null) {
+    // ========================================================
+    // NICHT BEARBEITET → 0 %
+    // ========================================================
 
-        newValue = STATUS_VALUES.NOT_SHOWN;
-
-    } else if (
-        currentValue === STATUS_VALUES.NOT_SHOWN
+    if (
+        currentValue === null
     ) {
 
-        newValue = STATUS_VALUES.PARTIAL;
+        newValue =
+            STATUS_VALUES.NOT_SHOWN;
+
+
+    // ========================================================
+    // 0 % → 50 %
+    // ========================================================
 
     } else if (
-        currentValue === STATUS_VALUES.PARTIAL
+        currentValue ===
+        STATUS_VALUES.NOT_SHOWN
     ) {
 
-        newValue = STATUS_VALUES.FULL;
+        newValue =
+            STATUS_VALUES.PARTIAL;
+
+
+    // ========================================================
+    // 50 % → 100 %
+    // ========================================================
+
+    } else if (
+        currentValue ===
+        STATUS_VALUES.PARTIAL
+    ) {
+
+        newValue =
+            STATUS_VALUES.FULL;
+
+
+    // ========================================================
+    // 100 % → NICHT BEARBEITET
+    // ========================================================
 
     } else {
 
@@ -1439,13 +1578,23 @@ function toggleBox(box) {
     // STATUS SPEICHERN
     // ========================================================
 
-    if (newValue === null) {
+    if (
+        newValue ===
+        STATUS_VALUES.NOT_RATED
+    ) {
+
+        // KEIN data-value
+        //
+        // Dadurch wird eindeutig gespeichert:
+        // NICHT BEARBEITET
 
         box.removeAttribute(
             "data-value"
         );
 
     } else {
+
+        // 0 / 50 / 100 speichern
 
         box.setAttribute(
             "data-value",
@@ -1455,12 +1604,16 @@ function toggleBox(box) {
 
 
     // ========================================================
-    // KLASSEN
+    // KLASSEN ZURÜCKSETZEN
     // ========================================================
 
     box.className =
         "checkbox-box";
 
+
+    // ========================================================
+    // NEUE STATUS-KLASSE
+    // ========================================================
 
     const statusClass =
         getStatusClass(
@@ -1480,10 +1633,30 @@ function toggleBox(box) {
     // TOOLTIP
     // ========================================================
 
-    box.title =
+    const statusText =
         getStatusText(
             newValue
         );
+
+
+    box.title =
+        statusText;
+
+
+    box.setAttribute(
+        "aria-label",
+        statusText
+    );
+
+
+    console.log(
+        "Frage:",
+        box.id,
+        "| Status:",
+        statusText,
+        "| Wert:",
+        newValue
+    );
 }
 
 
@@ -1580,17 +1753,22 @@ function generateGutachten() {
 
 
                     // ==========================================
-                    // NICHT BEWERTET
+                    // NICHT BEARBEITET
                     // ==========================================
 
-                    if (value === null) {
+                    if (
+                        value === null
+                    ) {
 
                         notRatedCount++;
 
-                        list += createResultQuestion(
-                            question,
-                            null
-                        );
+
+                        list +=
+                            createResultQuestion(
+                                question,
+                                null
+                            );
+
 
                         return;
                     }
@@ -1600,17 +1778,22 @@ function generateGutachten() {
                     // BEWERTET
                     // ==========================================
 
-                    total += value;
+                    total +=
+                        value;
+
 
                     assessedCount++;
 
-                    totalAll += value;
+
+                    totalAll +=
+                        value;
+
 
                     countAll++;
 
 
                     // ==========================================
-                    // KIND ZEIGT ES NICHT
+                    // BEWUSST 0 %
                     // ==========================================
 
                     if (
@@ -1633,10 +1816,11 @@ function generateGutachten() {
                         STATUS_VALUES.FULL
                     ) {
 
-                        list += createResultQuestion(
-                            question,
-                            value
-                        );
+                        list +=
+                            createResultQuestion(
+                                question,
+                                value
+                            );
                     }
                 }
             );
@@ -1649,7 +1833,9 @@ function generateGutachten() {
             let average = 0;
 
 
-            if (assessedCount > 0) {
+            if (
+                assessedCount > 0
+            ) {
 
                 average =
                     total /
@@ -1665,14 +1851,20 @@ function generateGutachten() {
                 "Noch nicht bewertet";
 
 
-            if (notRatedCount === 0) {
+            if (
+                notRatedCount === 0
+            ) {
 
-                if (average === 100) {
+                if (
+                    average === 100
+                ) {
 
                     categoryStatus =
                         "Alles vollständig";
 
-                } else if (average === 0) {
+                } else if (
+                    average === 0
+                ) {
 
                     categoryStatus =
                         "Keine der bewerteten Fähigkeiten gezeigt";
@@ -1683,7 +1875,9 @@ function generateGutachten() {
                         "Teilweise erfüllt";
                 }
 
-            } else if (assessedCount > 0) {
+            } else if (
+                assessedCount > 0
+            ) {
 
                 categoryStatus =
                     "Teilweise bewertet";
@@ -1730,7 +1924,7 @@ function generateGutachten() {
                                     opacity:0.75;
                                 "
                             >
-                                ${categoryStatus}
+                                ${escapeHtml(categoryStatus)}
                             </div>
 
                         </div>
@@ -1781,7 +1975,7 @@ function generateGutachten() {
 
                             <br>
 
-                            Nicht gezeigt:
+                            Bewusst 0 %:
                             ${notObservedCount}
 
                             <br>
@@ -1832,7 +2026,9 @@ function generateGutachten() {
     let overallAverage = 0;
 
 
-    if (countAll > 0) {
+    if (
+        countAll > 0
+    ) {
 
         overallAverage =
             totalAll /
@@ -1896,7 +2092,7 @@ function generateGutachten() {
                     "
                 >
 
-                    Nicht gezeigt:
+                    Bewusst 0 %:
                     ${notObservedAll}
 
                 </div>
@@ -1995,7 +2191,8 @@ function createResultQuestion(
                     cursor:default;
                     flex-shrink:0;
                 "
-                title="${statusText}"
+                title="${escapeHtml(statusText)}"
+                aria-label="${escapeHtml(statusText)}"
             ></div>
 
 
@@ -2012,7 +2209,9 @@ function createResultQuestion(
                         margin-top:3px;
                     "
                 >
-                    ${statusText}
+
+                    ${escapeHtml(statusText)}
+
                 </div>
 
             </div>
@@ -2029,17 +2228,36 @@ function createResultQuestion(
 
 function escapeHtml(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
         return "";
     }
 
 
     return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 }
 
 
@@ -2047,9 +2265,12 @@ function escapeHtml(value) {
 // DETAILS EIN-/AUSBLENDEN
 // ============================================================
 
-function toggleResultDetails(element) {
+function toggleResultDetails(
+    element
+) {
 
     if (!element) {
+
         return;
     }
 
@@ -2059,6 +2280,7 @@ function toggleResultDetails(element) {
 
 
     if (!details) {
+
         return;
     }
 
