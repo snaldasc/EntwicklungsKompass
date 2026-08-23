@@ -1,37 +1,159 @@
-<link rel="stylesheet" href="style.css">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<div class="logo-container">
-    <img src="logo.jpg" alt="EntwicklungsKompass Logo" class="app-logo">
-</div>
+    <title>EntwicklungsKompass</title>
 
-    <div id="step-age" class="step active">
-        <h1>Entwicklungsschnecke</h1>
-        <p>Gib entweder das Alter in Jahren oder das Geburtsdatum ein:</p>
-        
-        <label for="ageInput">Alter (in Jahren, z.B. 3.5):</label><br>
-        <input type="number" id="ageInput" step="0.1" min="1" max="6" placeholder="z.B. 4"><br><br>
-        
-        <p>— ODER —</p>
-        
-        <label for="dobInput">Geburtsdatum:</label><br>
-        <input type="date" id="dobInput"><br><br>
-        
-        <button onclick="startAssessment()">Fragen laden</button>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- LOGIN -->
+    <div id="loginScreen">
+
+        <div class="login-box">
+
+            <div class="logo-container">
+                <img src="logo.jpg"
+                     alt="EntwicklungsKompass Logo"
+                     class="app-logo">
+            </div>
+
+            <h1>EntwicklungsKompass</h1>
+
+            <p>Bitte melde dich an.</p>
+
+            <form id="loginForm">
+
+                <label for="loginEmail">E-Mail-Adresse:</label>
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="E-Mail-Adresse"
+                    required
+                >
+
+                <label for="loginPassword">Passwort:</label>
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Passwort"
+                    required
+                >
+
+                <button type="submit">
+                    Anmelden
+                </button>
+
+                <p id="loginError"></p>
+
+            </form>
+
+        </div>
+
     </div>
 
-    <div id="step-questions" class="step">
-        <h2>Fragenkatalog</h2>
-        <div id="questionsContainer"></div>
-        <button onclick="generateGutachten()">Gutachten erstellen</button>
+
+    <!-- EIGENTLICHE APP -->
+    <div id="appContent" style="display: none;">
+
+        <div class="logo-container">
+            <img src="logo.jpg"
+                 alt="EntwicklungsKompass Logo"
+                 class="app-logo">
+        </div>
+
+
+        <div id="step-age" class="step active">
+
+            <h1>Entwicklungsschnecke</h1>
+
+            <p>
+                Gib entweder das Alter in Jahren oder das Geburtsdatum ein:
+            </p>
+
+            <label for="ageInput">
+                Alter (in Jahren, z.B. 3.5):
+            </label>
+
+            <br>
+
+            <input
+                type="number"
+                id="ageInput"
+                step="0.1"
+                min="1"
+                max="6"
+                placeholder="z.B. 4"
+            >
+
+            <br><br>
+
+            <p>— ODER —</p>
+
+            <label for="dobInput">
+                Geburtsdatum:
+            </label>
+
+            <br>
+
+            <input
+                type="date"
+                id="dobInput"
+            >
+
+            <br><br>
+
+            <button onclick="startAssessment()">
+                Fragen laden
+            </button>
+
+        </div>
+
+
+        <div id="step-questions" class="step">
+
+            <h2>Fragenkatalog</h2>
+
+            <div id="questionsContainer"></div>
+
+            <button onclick="generateGutachten()">
+                Gutachten erstellen
+            </button>
+
+        </div>
+
+
+        <div id="step-result" class="step">
+
+            <h2>Gutachten-Übersicht</h2>
+
+            <p>
+                Klicke auf einen Bereich, um Details zu
+                unvollständigen Fragen zu sehen.
+            </p>
+
+            <div id="resultsContainer"></div>
+
+            <br>
+
+            <button onclick="location.reload()">
+                Neue Beobachtung starten
+            </button>
+
+        </div>
+
     </div>
 
-    <div id="step-result" class="step">
-        <h2>Gutachten-Übersicht</h2>
-        <p>Klicke auf einen Bereich, um Details zu unvollständigen Fragen zu sehen.</p>
-        <div id="resultsContainer"></div>
-        <br>
-        <button onclick="location.reload()">Neue Beobachtung starten</button>
-    </div>
 
+    <!-- Dein bestehendes JavaScript -->
     <script src="script.js"></script>
+
+</body>
+</html>
