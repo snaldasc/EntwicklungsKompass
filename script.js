@@ -1,17 +1,19 @@
-// ========================================
-// SUPABASE LOGIN & BENUTZERPROFIL
-// ========================================
+// ============================================================
+// ENTWICKLUNGSKOMPASS
+// SUPABASE LOGIN + BENUTZERPROFIL + ENTWICKLUNGSKOMPASS
+// ============================================================
+
+
+// ============================================================
+// SUPABASE
+// ============================================================
 
 const SUPABASE_URL =
     "https://sjekwvalxujnfparxees.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwiaWF0IjoxNzg3NTA1OTQ0LCJleHAiOjIxMDMwODE5NDl9.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
-
-// ========================================
-// SUPABASE CLIENT
-// ========================================
 
 const supabaseClient =
     window.supabase.createClient(
@@ -20,9 +22,9 @@ const supabaseClient =
     );
 
 
-// ========================================
+// ============================================================
 // LOGIN-ELEMENTE
-// ========================================
+// ============================================================
 
 const loginForm =
     document.getElementById("loginForm");
@@ -37,28 +39,24 @@ const loginError =
     document.getElementById("loginError");
 
 
-// ========================================
+// ============================================================
 // AKTUELLER BENUTZER
-// ========================================
+// ============================================================
 
 let currentUser = null;
 let currentProfile = null;
 let currentInstitution = null;
 
 
-// ========================================
+// ============================================================
 // PROFIL LADEN
-// ========================================
+// ============================================================
 
 async function loadUserProfile(userId) {
 
     currentProfile = null;
     currentInstitution = null;
 
-
-    // ========================================
-    // PROFIL LADEN
-    // ========================================
 
     const {
         data: profile,
@@ -100,9 +98,9 @@ async function loadUserProfile(userId) {
     currentProfile = profile;
 
 
-    // ========================================
+    // ========================================================
     // INSTITUTION LADEN
-    // ========================================
+    // ========================================================
 
     if (profile.institution_id) {
 
@@ -134,9 +132,9 @@ async function loadUserProfile(userId) {
     }
 
 
-    // ========================================
+    // ========================================================
     // KONTROLLE
-    // ========================================
+    // ========================================================
 
     console.log(
         "========================================"
@@ -172,9 +170,9 @@ async function loadUserProfile(userId) {
 }
 
 
-// ========================================
+// ============================================================
 // BENUTZERINFO ANZEIGEN
-// ========================================
+// ============================================================
 
 function updateUserInterface() {
 
@@ -188,9 +186,9 @@ function updateUserInterface() {
         document.getElementById("userRole");
 
 
-    // ========================================
+    // ========================================================
     // NAME
-    // ========================================
+    // ========================================================
 
     if (userName) {
 
@@ -202,9 +200,9 @@ function updateUserInterface() {
     }
 
 
-    // ========================================
+    // ========================================================
     // INSTITUTION
-    // ========================================
+    // ========================================================
 
     if (userInstitution) {
 
@@ -216,9 +214,9 @@ function updateUserInterface() {
     }
 
 
-    // ========================================
+    // ========================================================
     // ROLLE
-    // ========================================
+    // ========================================================
 
     if (userRole) {
 
@@ -247,9 +245,9 @@ function updateUserInterface() {
 }
 
 
-// ========================================
+// ============================================================
 // LOGIN-STATUS PRÜFEN
-// ========================================
+// ============================================================
 
 async function checkLogin() {
 
@@ -262,9 +260,9 @@ async function checkLogin() {
         } = await supabaseClient.auth.getSession();
 
 
-        // ========================================
+        // ====================================================
         // NICHT EINGELOGGT
-        // ========================================
+        // ====================================================
 
         if (!session) {
 
@@ -287,17 +285,17 @@ async function checkLogin() {
         }
 
 
-        // ========================================
+        // ====================================================
         // USER GEFUNDEN
-        // ========================================
+        // ====================================================
 
         currentUser =
             session.user;
 
 
-        // ========================================
+        // ====================================================
         // PROFIL LADEN
-        // ========================================
+        // ====================================================
 
         const profileLoaded =
             await loadUserProfile(
@@ -305,9 +303,9 @@ async function checkLogin() {
             );
 
 
-        // ========================================
-        // PROFIL NICHT GEFUNDEN
-        // ========================================
+        // ====================================================
+        // PROFIL FEHLT
+        // ====================================================
 
         if (!profileLoaded) {
 
@@ -332,9 +330,9 @@ async function checkLogin() {
         }
 
 
-        // ========================================
+        // ====================================================
         // EINGELOGGT
-        // ========================================
+        // ====================================================
 
         if (loginScreen) {
             loginScreen.style.display = "none";
@@ -345,10 +343,6 @@ async function checkLogin() {
             appContent.style.display = "block";
         }
 
-
-        // ========================================
-        // BENUTZERINFO ANZEIGEN
-        // ========================================
 
         updateUserInterface();
 
@@ -373,9 +367,9 @@ async function checkLogin() {
 }
 
 
-// ========================================
+// ============================================================
 // LOGIN
-// ========================================
+// ============================================================
 
 if (loginForm) {
 
@@ -433,9 +427,9 @@ if (loginForm) {
             }
 
 
-            // ========================================
-            // LOGIN BEI SUPABASE
-            // ========================================
+            // ==================================================
+            // LOGIN
+            // ==================================================
 
             const {
                 error
@@ -447,10 +441,6 @@ if (loginForm) {
 
             });
 
-
-            // ========================================
-            // LOGIN FEHLER
-            // ========================================
 
             if (error) {
 
@@ -472,10 +462,6 @@ if (loginForm) {
             }
 
 
-            // ========================================
-            // LOGIN ERFOLGREICH
-            // ========================================
-
             await checkLogin();
         }
     );
@@ -488,9 +474,9 @@ if (loginForm) {
 }
 
 
-// ========================================
+// ============================================================
 // AUTH-ÄNDERUNGEN ÜBERWACHEN
-// ========================================
+// ============================================================
 
 supabaseClient.auth.onAuthStateChange(
     async (event, session) => {
@@ -522,7 +508,6 @@ supabaseClient.auth.onAuthStateChange(
         }
 
 
-        // Nur bei tatsächlichen Login-/Session-Events prüfen
         if (
             event === "SIGNED_IN" ||
             event === "INITIAL_SESSION" ||
@@ -535,21 +520,16 @@ supabaseClient.auth.onAuthStateChange(
 );
 
 
-// ========================================
-// BEIM LADEN DER SEITE PRÜFEN
-// ========================================
-
-checkLogin();
-
-
-// ========================================
+// ============================================================
 // LOGOUT
-// ========================================
+// ============================================================
 
 async function logout() {
 
-    const { error } =
-        await supabaseClient.auth.signOut();
+    const {
+        error
+    } = await supabaseClient.auth.signOut();
+
 
     if (error) {
 
@@ -561,21 +541,44 @@ async function logout() {
         return;
     }
 
+
     currentUser = null;
     currentProfile = null;
     currentInstitution = null;
 
-    loginScreen.style.display = "flex";
-    appContent.style.display = "none";
 
-    loginError.textContent = "";
+    if (loginScreen) {
+        loginScreen.style.display = "flex";
+    }
+
+
+    if (appContent) {
+        appContent.style.display = "none";
+    }
+
+
+    if (loginError) {
+        loginError.textContent = "";
+    }
 }
 
-// ========================================
-// ENTWICKLUNGSKOMPASS
-// ========================================
+
+// ============================================================
+// BEIM LADEN DER SEITE PRÜFEN
+// ============================================================
+
+checkLogin();
+
+
+// ============================================================
+// ENTWICKLUNGSKOMPASS – FRAGEN
+// ============================================================
 
 const data = {
+
+    // ========================================================
+    // 1 – 2,5 JAHRE
+    // ========================================================
 
     "1-2.5": [
 
@@ -593,9 +596,9 @@ const data = {
                 "4. Es versteht Adjektive (Eigenschaftswörter wie groß/klein, traurig/fröhlich).",
 
                 "5. Es versteht Aufforderungen in konkreten Situationen und setzt diese um."
-
             ]
         },
+
 
         {
             name: "Wortschatz/Wortbedeutung",
@@ -605,9 +608,9 @@ const data = {
                 "11. Das Kind spricht einzelne Wörter.",
 
                 "12. Es kann bis zu 50 Wörter sprechen."
-
             ]
         },
+
 
         {
             name: "Lautproduktion/Lautwahrnehmung",
@@ -617,9 +620,9 @@ const data = {
                 "21. Das Kind spricht die Vokale a, e, i, o, u.",
 
                 "22. Es produziert die Laute m, p, d, b, n."
-
             ]
         },
+
 
         {
             name: "Wortbildung/Satzbau",
@@ -629,9 +632,9 @@ const data = {
                 "36. Das Kind spricht Einwortsätze.",
 
                 "37. Es spricht Zweiwortsätze."
-
             ]
         },
+
 
         {
             name: "Betonung",
@@ -639,9 +642,9 @@ const data = {
             questions: [
 
                 "53. Das Kind variiert die Lautstärke je nach Stimmung und Situation."
-
             ]
         },
+
 
         {
             name: "Verbale/nonverbale Kommunikation",
@@ -657,9 +660,9 @@ const data = {
                 "60. Es kann Wünsche äußern.",
 
                 "61. Es beginnt ein Gespräch von sich aus."
-
             ]
         },
+
 
         {
             name: "Literacy",
@@ -669,9 +672,9 @@ const data = {
                 "73. Das Kind ist an Büchern interessiert.",
 
                 "74. Es zeigt und benennt Dinge oder Tiere in Bilderbüchern oder ahmt sie nach."
-
             ]
         },
+
 
         {
             name: "Grundlegende Voraussetzungen",
@@ -701,11 +704,14 @@ const data = {
                 "93. Es ist an seiner Umwelt interessiert.",
 
                 "94. Es reagiert deutlich auf Interaktionsangebote."
-
             ]
         }
     ],
 
+
+    // ========================================================
+    // 2,5 – 4,5 JAHRE
+    // ========================================================
 
     "2.5-4.5": [
 
@@ -719,9 +725,9 @@ const data = {
                 "7. Es versteht mehrteilige Aufforderungen, die unabhängig von der jetzigen Situation sind, und setzt diese um.",
 
                 "8. Es versteht Zeitangaben wie heute, gestern, morgen."
-
             ]
         },
+
 
         {
             name: "Wortschatz/Wortbedeutung",
@@ -735,9 +741,9 @@ const data = {
                 "15. Es verwendet Präpositionen (Lagebezeichnungen, z.B. vor, auf, neben, in).",
 
                 "16. Es benennt Farben."
-
             ]
         },
+
 
         {
             name: "Lautproduktion/Lautwahrnehmung",
@@ -749,9 +755,9 @@ const data = {
                 "24. Es spricht die Laute j, r, g, pf.",
 
                 "25. Es produziert Konsonantenverbindungen, z.B. kl, fl, bl, gl, br, fr, gr."
-
             ]
         },
+
 
         {
             name: "Wortbildung/Satzbau",
@@ -771,9 +777,9 @@ const data = {
                 "43. Es verwendet Plural (Mehrzahl).",
 
                 "44. Es verwendet Artikel (Begleiter/Geschlechtswort: der, die, das, ein, eine)."
-
             ]
         },
+
 
         {
             name: "Betonung",
@@ -783,9 +789,9 @@ const data = {
                 "54. Es verändert seine Tonhöhe je nach Aussage des Satzes (Frage, Aussage etc.).",
 
                 "55. Es kann einzelne Wörter betonen/akzentuieren, um diesen eine besondere Bedeutung zu verleihen."
-
             ]
         },
+
 
         {
             name: "Verbale/nonverbale Kommunikation",
@@ -801,9 +807,9 @@ const data = {
                 "65. Es spricht situationsangemessen.",
 
                 "66. Es berücksichtigt den Zuhörer und passt seine Reaktion bzw. seine Kommunikation an sein Gegenüber an."
-
             ]
         },
+
 
         {
             name: "Literacy",
@@ -815,9 +821,9 @@ const data = {
                 "76. Es erkennt Zusammenhänge aus Bildergeschichten und Bilderbüchern wieder.",
 
                 "77. Es konzentriert sich über einen längeren Zeitraum auf Geschichten und Erzählungen."
-
             ]
         },
+
 
         {
             name: "Grundlegende Voraussetzungen",
@@ -839,11 +845,14 @@ const data = {
                 "101. Es zeigt soziales Verhalten in der Gruppe.",
 
                 "102. Es besitzt ein positives Selbstwertgefühl."
-
             ]
         }
     ],
 
+
+    // ========================================================
+    // 4,5 – 6 JAHRE
+    // ========================================================
 
     "4.5-6": [
 
@@ -855,9 +864,9 @@ const data = {
                 "9. Es versteht Beziehungen und Auswirkungen (z.B. Es wird hell, wenn die Sonne aufgeht).",
 
                 "10. Es versteht W-Fragen (das Kind antwortet richtig auf die ihm gestellten Fragen)."
-
             ]
         },
+
 
         {
             name: "Wortschatz/Wortbedeutung",
@@ -871,9 +880,9 @@ const data = {
                 "19. Es kann Oberbegriffe benennen und richtig zuordnen (Apfel = Obst).",
 
                 "20. Es kann sich differenziert ausdrücken (z.B. Abläufe genau erklären oder beschreiben)."
-
             ]
         },
+
 
         {
             name: "Lautproduktion/Lautwahrnehmung",
@@ -899,9 +908,9 @@ const data = {
                 "34. Es unterscheidet ähnlich klingende Wörter.",
 
                 "35. Es erkennt Anlaute."
-
             ]
         },
+
 
         {
             name: "Wortbildung/Satzbau",
@@ -921,9 +930,9 @@ const data = {
                 "50. Es bildet die Vergangenheitsform Präteritum (Imperfekt) richtig („Der Junge sagte zum Mädchen ...“).",
 
                 "51. Es verwendet den Kasus Akkusativ korrekt (Wen- oder Was-Fall: „Das Mädchen isst den Apfel.“)."
-
             ]
         },
+
 
         {
             name: "Betonung",
@@ -931,9 +940,9 @@ const data = {
             questions: [
 
                 "56. Es ist in der Lage, einen sinnvollen Rhythmus einzuhalten."
-
             ]
         },
+
 
         {
             name: "Verbale/nonverbale Kommunikation",
@@ -951,9 +960,9 @@ const data = {
                 "71. Es kann eine kurze Geschichte sinnvoll nacherzählen.",
 
                 "72. Es beschreibt etwas Besonderes."
-
             ]
         },
+
 
         {
             name: "Literacy",
@@ -969,19 +978,115 @@ const data = {
                 "81. Es erkennt Bilder, Symbole und Piktogramme wieder, die häufig im Kindergarten verwendet werden.",
 
                 "82. Es erkennt einzelne Buchstaben wieder."
-
             ]
         }
     ]
 };
 
 
+// ============================================================
+// AKTUELLE FRAGEN
+// ============================================================
+
 let currentQuestions = [];
 
 
-// ========================================
+// ============================================================
+// STATUS-ERKLÄRUNG
+// ============================================================
+
+function getStatusText(value) {
+
+    if (value === null) {
+        return "Noch nicht bewertet";
+    }
+
+    if (value === 0) {
+        return "Wird nicht gezeigt";
+    }
+
+    if (value === 50) {
+        return "Wird teilweise gezeigt";
+    }
+
+    if (value === 100) {
+        return "Wird vollständig gezeigt";
+    }
+
+    return "Noch nicht bewertet";
+}
+
+
+// ============================================================
+// STATUS-KLASSE
+// ============================================================
+
+function getStatusClass(value) {
+
+    if (value === 0) {
+        return "state-0";
+    }
+
+    if (value === 50) {
+        return "state-50";
+    }
+
+    if (value === 100) {
+        return "state-100";
+    }
+
+    return "";
+}
+
+
+// ============================================================
+// FRAGE-STATUS AUSLESEN
+// ============================================================
+
+function getBoxValue(box) {
+
+    if (!box) {
+        return null;
+    }
+
+
+    const rawValue =
+        box.getAttribute("data-value");
+
+
+    if (
+        rawValue === null ||
+        rawValue === ""
+    ) {
+
+        return null;
+    }
+
+
+    const value =
+        parseInt(
+            rawValue,
+            10
+        );
+
+
+    if (
+        value !== 0 &&
+        value !== 50 &&
+        value !== 100
+    ) {
+
+        return null;
+    }
+
+
+    return value;
+}
+
+
+// ============================================================
 // ALTER / FRAGEN LADEN
-// ========================================
+// ============================================================
 
 function startAssessment() {
 
@@ -1007,9 +1112,9 @@ function startAssessment() {
     let age = 0;
 
 
-    // ========================================
-    // ALTER DIREKT EINGEGEBEN
-    // ========================================
+    // ========================================================
+    // ALTER DIREKT
+    // ========================================================
 
     if (ageInput) {
 
@@ -1018,14 +1123,17 @@ function startAssessment() {
     }
 
 
-    // ========================================
-    // GEBURTSDATUM VERWENDEN
-    // ========================================
+    // ========================================================
+    // GEBURTSDATUM
+    // ========================================================
 
     else if (dobInput) {
 
         const birthDate =
-            new Date(dobInput);
+            new Date(
+                dobInput + "T00:00:00"
+            );
+
 
         const today =
             new Date();
@@ -1054,24 +1162,40 @@ function startAssessment() {
     }
 
 
-    // ========================================
+    // ========================================================
     // ALTER PRÜFEN
-    // ========================================
+    // ========================================================
 
     if (
         !age ||
         age <= 0
     ) {
 
-        return alert(
+        alert(
             "Bitte Alter oder Geburtsdatum eingeben."
         );
+
+        return;
     }
 
 
-    // ========================================
-    // ALTERSBEREICH BESTIMMEN
-    // ========================================
+    // ========================================================
+    // MAXIMALES ALTER
+    // ========================================================
+
+    if (age > 6) {
+
+        alert(
+            "Der EntwicklungsKompass ist für Kinder bis 6 Jahre vorgesehen."
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // ALTERSBEREICH
+    // ========================================================
 
     let key;
 
@@ -1094,9 +1218,9 @@ function startAssessment() {
         data[key];
 
 
-    // ========================================
-    // FRAGEN CONTAINER
-    // ========================================
+    // ========================================================
+    // CONTAINER
+    // ========================================================
 
     const container =
         document.getElementById(
@@ -1117,9 +1241,9 @@ function startAssessment() {
     container.innerHTML = "";
 
 
-    // ========================================
-    // FRAGEN ERSTELLEN
-    // ========================================
+    // ========================================================
+    // FRAGEN AUFBAUEN
+    // ========================================================
 
     currentQuestions.forEach(
         (cat, c) => {
@@ -1128,23 +1252,28 @@ function startAssessment() {
 
                 <div class="question-group">
 
-                    <h3>${cat.name}</h3>
+                    <h3>
+                        ${cat.name}
+                    </h3>
 
             `;
 
 
             cat.questions.forEach(
-                (q, i) => {
+                (question, i) => {
 
                     html += `
 
                         <div class="question-item">
 
-                            <span>${q}</span>
+                            <span>
+                                ${question}
+                            </span>
 
                             <div
                                 class="checkbox-box"
-                                data-value="0"
+                                data-value=""
+                                title="Noch nicht bewertet"
                                 onclick="toggleBox(this)"
                                 id="q_${c}_${i}">
                             </div>
@@ -1157,7 +1286,9 @@ function startAssessment() {
 
 
             html += `
+
                 </div>
+
             `;
 
 
@@ -1167,9 +1298,9 @@ function startAssessment() {
     );
 
 
-    // ========================================
-    // ZUR FRAGEN-SEITE
-    // ========================================
+    // ========================================================
+    // ALTERSEITE AUSBLENDEN
+    // ========================================================
 
     const ageStep =
         document.getElementById(
@@ -1199,9 +1330,23 @@ function startAssessment() {
 }
 
 
-// ========================================
-// CHECKBOX
-// ========================================
+// ============================================================
+// CHECKBOX / STATUS WECHSELN
+// ============================================================
+//
+// Reihenfolge:
+//
+// leer
+// ↓
+// 0 % = Kind zeigt es nicht
+// ↓
+// 50 % = Kind zeigt es teilweise
+// ↓
+// 100 % = Kind zeigt es vollständig
+// ↓
+// leer
+//
+// ============================================================
 
 function toggleBox(box) {
 
@@ -1210,56 +1355,86 @@ function toggleBox(box) {
     }
 
 
-    let value =
-        parseInt(
-            box.getAttribute(
-                "data-value"
-            )
-        );
+    const currentValue =
+        getBoxValue(box);
 
 
-    if (value === 0) {
+    let newValue;
 
-        value = 50;
 
-    } else if (value === 50) {
+    if (currentValue === null) {
 
-        value = 100;
+        newValue = 0;
+
+    } else if (currentValue === 0) {
+
+        newValue = 50;
+
+    } else if (currentValue === 50) {
+
+        newValue = 100;
 
     } else {
 
-        value = 0;
+        newValue = null;
     }
 
 
-    box.setAttribute(
-        "data-value",
-        value
-    );
+    // ========================================================
+    // STATUS SPEICHERN
+    // ========================================================
 
+    if (newValue === null) {
+
+        box.removeAttribute(
+            "data-value"
+        );
+
+    } else {
+
+        box.setAttribute(
+            "data-value",
+            newValue
+        );
+    }
+
+
+    // ========================================================
+    // KLASSEN ZURÜCKSETZEN
+    // ========================================================
 
     box.className =
         "checkbox-box";
 
 
-    if (value === 50) {
-
-        box.classList.add(
-            "state-50"
+    const statusClass =
+        getStatusClass(
+            newValue
         );
 
-    } else if (value === 100) {
+
+    if (statusClass) {
 
         box.classList.add(
-            "state-100"
+            statusClass
         );
     }
+
+
+    // ========================================================
+    // TOOLTIP
+    // ========================================================
+
+    box.title =
+        getStatusText(
+            newValue
+        );
 }
 
 
-// ========================================
-// GUTACHTEN
-// ========================================
+// ============================================================
+// GUTACHTEN ERSTELLEN
+// ============================================================
 
 function generateGutachten() {
 
@@ -1282,9 +1457,9 @@ function generateGutachten() {
     res.innerHTML = "";
 
 
-    // ========================================
+    // ========================================================
     // KEINE FRAGEN
-    // ========================================
+    // ========================================================
 
     if (
         !currentQuestions ||
@@ -1298,51 +1473,93 @@ function generateGutachten() {
     }
 
 
-    // ========================================
-    // KATEGORIEN AUSWERTEN
-    // ========================================
+    let totalAll = 0;
+    let countAll = 0;
+    let notObservedAll = 0;
+
+
+    // ========================================================
+    // KATEGORIEN
+    // ========================================================
 
     currentQuestions.forEach(
-        (cat, c) => {
+        (category, categoryIndex) => {
 
             let total = 0;
+
+            let assessedCount = 0;
+
+            let notObservedCount = 0;
+
+            let notRatedCount = 0;
 
             let list = "";
 
 
-            cat.questions.forEach(
-                (q, i) => {
+            // ==================================================
+            // FRAGEN
+            // ==================================================
+
+            category.questions.forEach(
+                (question, questionIndex) => {
 
                     const box =
                         document.getElementById(
-                            `q_${c}_${i}`
+                            `q_${categoryIndex}_${questionIndex}`
                         );
 
 
                     const value =
-                        box
-                            ? parseInt(
-                                box.getAttribute(
-                                    "data-value"
-                                )
-                            )
-                            : 0;
+                        getBoxValue(box);
 
 
-                    total +=
-                        value;
+                    // ==========================================
+                    // NOCH NICHT BEWERTET
+                    // ==========================================
+
+                    if (value === null) {
+
+                        notRatedCount++;
+
+                        return;
+                    }
 
 
-                    // ========================================
-                    // NICHT VOLLSTÄNDIG BEOBACHTETE FRAGEN
-                    // ========================================
+                    // ==========================================
+                    // BEWERTET
+                    // ==========================================
+
+                    total += value;
+
+                    assessedCount++;
+
+                    totalAll += value;
+
+                    countAll++;
+
+
+                    // ==========================================
+                    // KIND ZEIGT FÄHIGKEIT NICHT
+                    // ==========================================
+
+                    if (value === 0) {
+
+                        notObservedCount++;
+
+                        notObservedAll++;
+                    }
+
+
+                    // ==========================================
+                    // ALLE NICHT VOLLSTÄNDIGEN
+                    // ==========================================
 
                     if (value < 100) {
 
                         const stateClass =
-                            value === 50
-                                ? "state-50"
-                                : "";
+                            getStatusClass(
+                                value
+                            );
 
 
                         list += `
@@ -1350,24 +1567,29 @@ function generateGutachten() {
                             <li
                                 style="
                                     display:flex;
-                                    align-items:center;
+                                    align-items:flex-start;
                                     gap:10px;
-                                    margin-bottom:8px;
+                                    margin-bottom:10px;
                                 "
                             >
 
                                 <div
-                                    class="checkbox-box ${stateClass}"
+                                    class="
+                                        checkbox-box
+                                        ${stateClass}
+                                    "
                                     style="
                                         width:20px;
                                         height:20px;
+                                        min-width:20px;
                                         cursor:default;
                                         flex-shrink:0;
                                     "
+                                    title="${getStatusText(value)}"
                                 ></div>
 
                                 <span>
-                                    ${q}
+                                    ${question}
                                 </span>
 
                             </li>
@@ -1378,45 +1600,88 @@ function generateGutachten() {
             );
 
 
-            // ========================================
+            // ==================================================
             // DURCHSCHNITT
-            // ========================================
+            // ==================================================
 
-            const average =
-                total /
-                cat.questions.length;
+            let average = 0;
+
+
+            if (assessedCount > 0) {
+
+                average =
+                    total /
+                    assessedCount;
+            }
 
 
             const size =
                 (average / 100) * 40;
 
 
-            // ========================================
-            // ERGEBNIS AUSGEBEN
-            // ========================================
+            // ==================================================
+            // KATEGORIE-STATUS
+            // ==================================================
+
+            let categoryStatus =
+                "Noch nicht bewertet";
+
+
+            if (assessedCount > 0) {
+
+                if (average === 100) {
+
+                    categoryStatus =
+                        "Alles vollständig";
+
+                } else if (average === 0) {
+
+                    categoryStatus =
+                        "Keine der bewerteten Fähigkeiten gezeigt";
+
+                } else {
+
+                    categoryStatus =
+                        "Teilweise erfüllt";
+                }
+            }
+
+
+            // ==================================================
+            // RESULT ITEM
+            // ==================================================
 
             res.innerHTML += `
 
                 <div
                     class="result-item"
-                    onclick="
-                        this.nextElementSibling.style.display =
-                        (
-                            this.nextElementSibling.style.display === 'block'
-                            ? 'none'
-                            : 'block'
-                        )
-                    "
+                    onclick="toggleResultDetails(this)"
+                    style="cursor:pointer;"
                 >
 
                     <div>
+
                         <strong>
-                            ${cat.name}
+                            ${category.name}
                         </strong>
+
+                        <div
+                            style="
+                                font-size:0.9em;
+                                margin-top:4px;
+                                opacity:0.75;
+                            "
+                        >
+                            ${categoryStatus}
+                        </div>
+
                     </div>
 
 
-                    <div class="circle-container">
+                    <div
+                        class="circle-container"
+                        title="${Math.round(average)} %"
+                    >
 
                         <span
                             class="dynamic-circle"
@@ -1436,6 +1701,39 @@ function generateGutachten() {
                     style="display:none;"
                 >
 
+                    <div
+                        style="
+                            margin-bottom:12px;
+                            padding:10px;
+                            border-radius:8px;
+                            background:rgba(0,0,0,0.04);
+                        "
+                    >
+
+                        <strong>
+                            ${Math.round(average)} %
+                        </strong>
+
+                        <br>
+
+                        Bewertet:
+                        ${assessedCount}
+                        von
+                        ${category.questions.length}
+
+                        <br>
+
+                        Nicht gezeigt:
+                        ${notObservedCount}
+
+                        <br>
+
+                        Noch nicht bewertet:
+                        ${notRatedCount}
+
+                    </div>
+
+
                     <b>
                         Beobachtungsnotizen:
                     </b>
@@ -1451,7 +1749,7 @@ function generateGutachten() {
 
                         ${
                             list ||
-                            "Alles vollständig beobachtet!"
+                            "Alle bewerteten Fähigkeiten werden vollständig gezeigt."
                         }
 
                     </ul>
@@ -1463,9 +1761,104 @@ function generateGutachten() {
     );
 
 
-    // ========================================
+    // ========================================================
+    // GESAMTÜBERSICHT
+    // ========================================================
+
+    const totalQuestions =
+        currentQuestions.reduce(
+            (sum, category) =>
+                sum + category.questions.length,
+            0
+        );
+
+
+    const totalNotRated =
+        totalQuestions -
+        countAll;
+
+
+    let overallAverage = 0;
+
+
+    if (countAll > 0) {
+
+        overallAverage =
+            totalAll /
+            countAll;
+    }
+
+
+    // ========================================================
+    // GESAMTERGEBNIS OBEN EINSETZEN
+    // ========================================================
+
+    res.insertAdjacentHTML(
+        "afterbegin",
+        `
+
+            <div
+                class="overall-result"
+                style="
+                    margin-bottom:20px;
+                    padding:15px;
+                    border-radius:12px;
+                    background:rgba(0,0,0,0.04);
+                "
+            >
+
+                <strong>
+                    Gesamtübersicht
+                </strong>
+
+                <div
+                    style="
+                        margin-top:8px;
+                        font-size:1.1em;
+                    "
+                >
+                    ${Math.round(overallAverage)} %
+                </div>
+
+                <div
+                    style="
+                        margin-top:6px;
+                        font-size:0.9em;
+                    "
+                >
+                    Bewertet:
+                    ${countAll}
+                    von
+                    ${totalQuestions}
+                </div>
+
+                <div
+                    style="
+                        font-size:0.9em;
+                    "
+                >
+                    Nicht gezeigt:
+                    ${notObservedAll}
+                </div>
+
+                <div
+                    style="
+                        font-size:0.9em;
+                    "
+                >
+                    Noch nicht bewertet:
+                    ${totalNotRated}
+                </div>
+
+            </div>
+
+        `
+    );
+
+
+    // ========================================================
     // ZUR ERGEBNISSEITE
-    // ========================================
+    // ========================================================
 
     const questionStep =
         document.getElementById(
@@ -1493,3 +1886,43 @@ function generateGutachten() {
         );
     }
 }
+
+
+// ============================================================
+// DETAILS EIN-/AUSBLENDEN
+// ============================================================
+
+function toggleResultDetails(element) {
+
+    if (!element) {
+        return;
+    }
+
+
+    const details =
+        element.nextElementSibling;
+
+
+    if (!details) {
+        return;
+    }
+
+
+    if (
+        details.style.display === "block"
+    ) {
+
+        details.style.display =
+            "none";
+
+    } else {
+
+        details.style.display =
+            "block";
+    }
+}
+
+
+// ============================================================
+// ENDE
+// ============================================================
