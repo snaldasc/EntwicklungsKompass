@@ -171,25 +171,43 @@ async function loadUserProfile(userId) {
 
 function updateUserInterface() {
 
-    const userName =
-        document.getElementById("userName");
-
-    const userInstitution =
-        document.getElementById("userInstitution");
-
-    const userRole =
-        document.getElementById("userRole");
-
+    const userName = document.getElementById("userName");
+    const userInstitution = document.getElementById("userInstitution");
+    const userRole = document.getElementById("userRole");
 
     if (userName) {
-
         userName.textContent =
-            currentProfile &&
-            currentProfile.full_name
-                ? currentProfile.full_name
-                : "Benutzer";
+            currentProfile?.full_name || "Benutzer";
     }
 
+    if (userInstitution) {
+        userInstitution.textContent =
+            currentInstitution?.name || "Keine Institution";
+    }
+
+    if (userRole) {
+
+        if (currentProfile?.role === "admin") {
+            userRole.textContent = " · Administrator";
+
+        } else if (currentProfile?.role === "teacher") {
+            userRole.textContent = " · Pädagogische Fachkraft";
+
+        } else {
+            userRole.textContent =
+                currentProfile?.role
+                    ? " · " + currentProfile.role
+                    : "";
+        }
+    }
+
+    console.log(
+        "Benutzeroberfläche aktualisiert:",
+        userName?.textContent,
+        userInstitution?.textContent,
+        userRole?.textContent
+    );
+}
 
     if (userInstitution) {
 
