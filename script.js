@@ -1,3 +1,115 @@
+// ========================================
+// SUPABASE LOGIN
+// ========================================
+
+const SUPABASE_URL = "https://sjekwvalxujnfparxees.supabase.co";
+
+
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+
+// ========================================
+// LOGIN-ELEMENTE
+// ========================================
+
+const loginForm = document.getElementById("loginForm");
+const loginScreen = document.getElementById("loginScreen");
+const appContent = document.getElementById("appContent");
+const loginError = document.getElementById("loginError");
+
+
+// ========================================
+// LOGIN-STATUS PRÜFEN
+// ========================================
+
+async function checkLogin() {
+
+    const {
+        data: {
+            session
+        }
+    } = await supabaseClient.auth.getSession();
+
+    if (session) {
+
+        // Eingeloggt
+        loginScreen.style.display = "none";
+        appContent.style.display = "block";
+
+    } else {
+
+        // Nicht eingeloggt
+        loginScreen.style.display = "flex";
+        appContent.style.display = "none";
+
+    }
+}
+
+
+// ========================================
+// LOGIN
+// ========================================
+
+loginForm.addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    loginError.textContent = "";
+
+    const email =
+        document.getElementById("loginEmail").value.trim();
+
+    const password =
+        document.getElementById("loginPassword").value;
+
+
+    const {
+        error
+    } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+
+    if (error) {
+
+        loginError.textContent =
+            "Anmeldung fehlgeschlagen: " + error.message;
+
+        return;
+    }
+
+
+    await checkLogin();
+
+});
+
+
+// ========================================
+// AUTH-ÄNDERUNGEN ÜBERWACHEN
+// ========================================
+
+supabaseClient.auth.onAuthStateChange(() => {
+    checkLogin();
+});
+
+
+// ========================================
+// BEIM LADEN DER SEITE PRÜFEN
+// ========================================
+
+checkLogin();
+
+
+// ========================================
+// ENTWICKLUNGSKOMPASS
+// ========================================
+
 const data = {
     "1-2.5": [
         { 
@@ -72,6 +184,7 @@ const data = {
             ] 
         }
     ],
+
     "2.5-4.5": [
         { 
             name: "Sprachverständnis", 
@@ -149,6 +262,7 @@ const data = {
             ] 
         }
     ],
+
     "4.5-6": [
         { 
             name: "Sprachverständnis", 
@@ -223,75 +337,287 @@ const data = {
     ]
 };
 
+
 let currentQuestions = [];
 
+
+// ========================================
+// ALTER / FRAGEN LADEN
+// ========================================
+
 function startAssessment() {
-    const ageInput = document.getElementById('ageInput').value;
-    const dobInput = document.getElementById('dobInput').value;
-    let age = ageInput ? parseFloat(ageInput) : (dobInput ? (new Date().getFullYear() - new Date(dobInput).getFullYear()) : 0);
-    
-    if (age <= 0) return alert("Bitte Alter oder Geburtsdatum eingeben.");
-    
-    let key = age < 2.5 ? "1-2.5" : (age < 4.5 ? "2.5-4.5" : "4.5-6");
+
+    const ageInput =
+        document.getElementById('ageInput').value;
+
+    const dobInput =
+        document.getElementById('dobInput').value;
+
+    let age = ageInput
+        ? parseFloat(ageInput)
+        : (
+            dobInput
+                ? (
+                    new Date().getFullYear() -
+                    new Date(dobInput).getFullYear()
+                )
+                : 0
+        );
+
+
+    if (age <= 0) {
+        return alert(
+            "Bitte Alter oder Geburtsdatum eingeben."
+        );
+    }
+
+
+    let key =
+        age < 2.5
+            ? "1-2.5"
+            : (
+                age < 4.5
+                    ? "2.5-4.5"
+                    : "4.5-6"
+            );
+
+
     currentQuestions = data[key];
-    
-    const container = document.getElementById('questionsContainer');
+
+
+    const container =
+        document.getElementById('questionsContainer');
+
     container.innerHTML = "";
-    
+
+
     currentQuestions.forEach((cat, c) => {
-        let html = `<div class="question-group"><h3>${cat.name}</h3>`;
+
+        let html =
+            `<div class="question-group">
+                <h3>${cat.name}</h3>`;
+
+
         cat.questions.forEach((q, i) => {
-            html += `<div class="question-item"><span>${q}</span><div class="checkbox-box" data-value="0" onclick="toggleBox(this)" id="q_${c}_${i}"></div></div>`;
+
+            html += `
+                <div class="question-item">
+                    <span>${q}</span>
+
+                    <div
+                        class="checkbox-box"
+                        data-value="0"
+                        onclick="toggleBox(this)"
+                        id="q_${c}_${i}">
+                    </div>
+
+                </div>
+            `;
+
         });
-        container.innerHTML += html + `</div>`;
+
+
+        container.innerHTML +=
+            html + `</div>`;
+
     });
-    document.getElementById('step-age').classList.remove('active');
-    document.getElementById('step-questions').classList.add('active');
+
+
+    document
+        .getElementById('step-age')
+        .classList
+        .remove('active');
+
+
+    document
+        .getElementById('step-questions')
+        .classList
+        .add('active');
 }
+
+
+// ========================================
+// CHECKBOX
+// ========================================
 
 function toggleBox(box) {
-    let v = parseInt(box.getAttribute('data-value'));
-    v = (v === 0) ? 50 : (v === 50 ? 100 : 0);
-    box.setAttribute('data-value', v);
-    box.className = 'checkbox-box ' + (v === 50 ? 'state-50' : (v === 100 ? 'state-100' : ''));
+
+    let v =
+        parseInt(
+            box.getAttribute('data-value')
+        );
+
+
+    v =
+        (v === 0)
+            ? 50
+            : (
+                v === 50
+                    ? 100
+                    : 0
+            );
+
+
+    box.setAttribute(
+        'data-value',
+        v
+    );
+
+
+    box.className =
+        'checkbox-box ' +
+        (
+            v === 50
+                ? 'state-50'
+                : (
+                    v === 100
+                        ? 'state-100'
+                        : ''
+                )
+        );
 }
 
+
+// ========================================
+// GUTACHTEN
+// ========================================
+
 function generateGutachten() {
-    const res = document.getElementById('resultsContainer');
+
+    const res =
+        document.getElementById(
+            'resultsContainer'
+        );
+
+
     res.innerHTML = "";
-    
+
+
     currentQuestions.forEach((cat, c) => {
-        let total = 0, list = "";
+
+        let total = 0;
+        let list = "";
+
+
         cat.questions.forEach((q, i) => {
-            const v = parseInt(document.getElementById(`q_${c}_${i}`).getAttribute('data-value'));
+
+            const v =
+                parseInt(
+                    document
+                        .getElementById(
+                            `q_${c}_${i}`
+                        )
+                        .getAttribute(
+                            'data-value'
+                        )
+                );
+
+
             total += v;
-            
-            if(v < 100) {
-                let stateClass = v === 50 ? 'state-50' : '';
-                list += `<li style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                            <div class="checkbox-box ${stateClass}" style="width:20px; height:20px; cursor:default;"></div>
-                            ${q}
-                         </li>`;
+
+
+            if (v < 100) {
+
+                let stateClass =
+                    v === 50
+                        ? 'state-50'
+                        : '';
+
+
+                list += `
+                    <li
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:10px;
+                            margin-bottom:8px;
+                        "
+                    >
+
+                        <div
+                            class="checkbox-box ${stateClass}"
+                            style="
+                                width:20px;
+                                height:20px;
+                                cursor:default;
+                            "
+                        ></div>
+
+                        ${q}
+
+                    </li>
+                `;
             }
+
         });
-        
-        const avg = total / cat.questions.length;
-        const size = (avg / 100) * 40;
-        
+
+
+        const avg =
+            total / cat.questions.length;
+
+
+        const size =
+            (avg / 100) * 40;
+
+
         res.innerHTML += `
-            <div class="result-item" onclick="this.nextElementSibling.style.display = (this.nextElementSibling.style.display === 'block' ? 'none' : 'block')">
+            <div
+                class="result-item"
+                onclick="
+                    this.nextElementSibling.style.display =
+                    (
+                        this.nextElementSibling.style.display === 'block'
+                        ? 'none'
+                        : 'block'
+                    )
+                "
+            >
+
                 <div>
                     <strong>${cat.name}</strong>
                 </div>
+
                 <div class="circle-container">
-                    <span class="dynamic-circle" style="width: ${size}px; height: ${size}px;"></span>
+                    <span
+                        class="dynamic-circle"
+                        style="
+                            width:${size}px;
+                            height:${size}px;
+                        "
+                    ></span>
                 </div>
+
             </div>
+
+
             <div class="details">
+
                 <b>Beobachtungsnotizen:</b>
-                <ul style="list-style:none; padding-left:0; margin-top: 8px;">${list || "Alles vollständig beobachtet!"}</ul>
-            </div>`;
+
+                <ul
+                    style="
+                        list-style:none;
+                        padding-left:0;
+                        margin-top:8px;
+                    "
+                >
+                    ${list || "Alles vollständig beobachtet!"}
+                </ul>
+
+            </div>
+        `;
+
     });
-    document.getElementById('step-questions').classList.remove('active');
-    document.getElementById('step-result').classList.add('active');
+
+
+    document
+        .getElementById('step-questions')
+        .classList
+        .remove('active');
+
+
+    document
+        .getElementById('step-result')
+        .classList
+        .add('active');
 }
