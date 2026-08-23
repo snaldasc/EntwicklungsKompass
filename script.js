@@ -9,6 +9,10 @@ const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
 
+// ========================================
+// SUPABASE CLIENT
+// ========================================
+
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
@@ -48,6 +52,14 @@ let currentInstitution = null;
 
 async function loadUserProfile(userId) {
 
+    currentProfile = null;
+    currentInstitution = null;
+
+
+    // ========================================
+    // PROFIL LADEN
+    // ========================================
+
     const {
         data: profile,
         error: profileError
@@ -69,6 +81,16 @@ async function loadUserProfile(userId) {
         console.error(
             "Profil konnte nicht geladen werden:",
             profileError
+        );
+
+        return false;
+    }
+
+
+    if (!profile) {
+
+        console.error(
+            "Kein Profil für diesen Benutzer gefunden."
         );
 
         return false;
@@ -113,7 +135,7 @@ async function loadUserProfile(userId) {
 
 
     // ========================================
-    // KONTROLLE IN DER BROWSER-CONSOLE
+    // KONTROLLE
     // ========================================
 
     console.log(
@@ -151,70 +173,203 @@ async function loadUserProfile(userId) {
 
 
 // ========================================
+// BENUTZERINFO ANZEIGEN
+// ========================================
+
+function updateUserInterface() {
+
+    const userName =
+        document.getElementById("userName");
+
+    const userInstitution =
+        document.getElementById("userInstitution");
+
+    const userRole =
+        document.getElementById("userRole");
+
+
+    // ========================================
+    // NAME
+    // ========================================
+
+    if (userName) {
+
+        userName.textContent =
+            currentProfile &&
+            currentProfile.full_name
+                ? currentProfile.full_name
+                : "Benutzer";
+    }
+
+
+    // ========================================
+    // INSTITUTION
+    // ========================================
+
+    if (userInstitution) {
+
+        userInstitution.textContent =
+            currentInstitution &&
+            currentInstitution.name
+                ? currentInstitution.name
+                : "Keine Institution";
+    }
+
+
+    // ========================================
+    // ROLLE
+    // ========================================
+
+    if (userRole) {
+
+        let roleText =
+            currentProfile &&
+            currentProfile.role
+                ? currentProfile.role
+                : "";
+
+
+        if (roleText === "admin") {
+
+            roleText =
+                " · Administrator";
+
+        } else if (roleText === "teacher") {
+
+            roleText =
+                " · Pädagogische Fachkraft";
+        }
+
+
+        userRole.textContent =
+            roleText;
+    }
+}
+
+
+// ========================================
 // LOGIN-STATUS PRÜFEN
 // ========================================
 
 async function checkLogin() {
 
-    const {
-        data: {
-            session
+    try {
+
+        const {
+            data: {
+                session
+            }
+        } = await supabaseClient.auth.getSession();
+
+
+        // ========================================
+        // NICHT EINGELOGGT
+        // ========================================
+
+        if (!session) {
+
+            currentUser = null;
+            currentProfile = null;
+            currentInstitution = null;
+
+
+            if (loginScreen) {
+                loginScreen.style.display = "flex";
+            }
+
+
+            if (appContent) {
+                appContent.style.display = "none";
+            }
+
+
+            return;
         }
-    } = await supabaseClient.auth.getSession();
 
 
-    // ========================================
-    // NICHT EINGELOGGT
-    // ========================================
+        // ========================================
+        // USER GEFUNDEN
+        // ========================================
 
-    if (!session) {
-
-        currentUser = null;
-        currentProfile = null;
-        currentInstitution = null;
-
-        loginScreen.style.display = "flex";
-        appContent.style.display = "none";
-
-        return;
-    }
+        currentUser =
+            session.user;
 
 
-    // ========================================
-    // USER GEFUNDEN
-    // ========================================
+        // ========================================
+        // PROFIL LADEN
+        // ========================================
 
-    currentUser = session.user;
+        const profileLoaded =
+            await loadUserProfile(
+                currentUser.id
+            );
 
 
-    // ========================================
-    // PROFIL LADEN
-    // ========================================
+        // ========================================
+        // PROFIL NICHT GEFUNDEN
+        // ========================================
 
-    const profileLoaded =
-        await loadUserProfile(
-            currentUser.id
+        if (!profileLoaded) {
+
+            if (loginScreen) {
+                loginScreen.style.display = "flex";
+            }
+
+
+            if (appContent) {
+                appContent.style.display = "none";
+            }
+
+
+            if (loginError) {
+
+                loginError.textContent =
+                    "Das Benutzerprofil konnte nicht geladen werden.";
+            }
+
+
+            return;
+        }
+
+
+        // ========================================
+        // EINGELOGGT
+        // ========================================
+
+        if (loginScreen) {
+            loginScreen.style.display = "none";
+        }
+
+
+        if (appContent) {
+            appContent.style.display = "block";
+        }
+
+
+        // ========================================
+        // BENUTZERINFO ANZEIGEN
+        // ========================================
+
+        updateUserInterface();
+
+
+    } catch (error) {
+
+        console.error(
+            "Fehler bei der Login-Prüfung:",
+            error
         );
 
 
-    if (!profileLoaded) {
+        if (loginScreen) {
+            loginScreen.style.display = "flex";
+        }
 
-        loginScreen.style.display = "flex";
-        appContent.style.display = "none";
 
-        loginError.textContent =
-            "Das Benutzerprofil konnte nicht geladen werden.";
-
-        return;
+        if (appContent) {
+            appContent.style.display = "none";
+        }
     }
-
-
-    // ========================================
-    // EINGELOGGT
-    // ========================================
-
-    loginScreen.style.display = "none";
-    appContent.style.display = "block";
 }
 
 
@@ -222,49 +377,115 @@ async function checkLogin() {
 // LOGIN
 // ========================================
 
-loginForm.addEventListener(
-    "submit",
-    async (event) => {
+if (loginForm) {
 
-        event.preventDefault();
+    loginForm.addEventListener(
+        "submit",
+        async (event) => {
 
-        loginError.textContent = "";
-
-
-        const email =
-            document
-                .getElementById("loginEmail")
-                .value
-                .trim();
+            event.preventDefault();
 
 
-        const password =
-            document
-                .getElementById("loginPassword")
-                .value;
+            if (loginError) {
+                loginError.textContent = "";
+            }
 
 
-        const {
-            error
-        } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+            const emailElement =
+                document.getElementById(
+                    "loginEmail"
+                );
+
+            const passwordElement =
+                document.getElementById(
+                    "loginPassword"
+                );
 
 
-        if (error) {
+            if (!emailElement || !passwordElement) {
 
-            loginError.textContent =
-                "Anmeldung fehlgeschlagen: " +
-                error.message;
+                if (loginError) {
 
-            return;
+                    loginError.textContent =
+                        "Login-Felder wurden nicht gefunden.";
+                }
+
+                return;
+            }
+
+
+            const email =
+                emailElement.value.trim();
+
+            const password =
+                passwordElement.value;
+
+
+            if (!email || !password) {
+
+                if (loginError) {
+
+                    loginError.textContent =
+                        "Bitte E-Mail-Adresse und Passwort eingeben.";
+                }
+
+                return;
+            }
+
+
+            // ========================================
+            // LOGIN BEI SUPABASE
+            // ========================================
+
+            const {
+                error
+            } = await supabaseClient.auth.signInWithPassword({
+
+                email: email,
+
+                password: password
+
+            });
+
+
+            // ========================================
+            // LOGIN FEHLER
+            // ========================================
+
+            if (error) {
+
+                console.error(
+                    "Login fehlgeschlagen:",
+                    error
+                );
+
+
+                if (loginError) {
+
+                    loginError.textContent =
+                        "Anmeldung fehlgeschlagen: " +
+                        error.message;
+                }
+
+
+                return;
+            }
+
+
+            // ========================================
+            // LOGIN ERFOLGREICH
+            // ========================================
+
+            await checkLogin();
         }
+    );
 
+} else {
 
-        await checkLogin();
-    }
-);
+    console.error(
+        "Das Element #loginForm wurde nicht gefunden."
+    );
+}
 
 
 // ========================================
@@ -272,10 +493,44 @@ loginForm.addEventListener(
 // ========================================
 
 supabaseClient.auth.onAuthStateChange(
-    () => {
+    async (event, session) => {
 
-        checkLogin();
+        console.log(
+            "Auth-Event:",
+            event
+        );
 
+
+        if (!session) {
+
+            currentUser = null;
+            currentProfile = null;
+            currentInstitution = null;
+
+
+            if (loginScreen) {
+                loginScreen.style.display = "flex";
+            }
+
+
+            if (appContent) {
+                appContent.style.display = "none";
+            }
+
+
+            return;
+        }
+
+
+        // Nur bei tatsächlichen Login-/Session-Events prüfen
+        if (
+            event === "SIGNED_IN" ||
+            event === "INITIAL_SESSION" ||
+            event === "TOKEN_REFRESHED"
+        ) {
+
+            await checkLogin();
+        }
     }
 );
 
@@ -286,233 +541,407 @@ supabaseClient.auth.onAuthStateChange(
 
 checkLogin();
 
+
 // ========================================
 // ENTWICKLUNGSKOMPASS
 // ========================================
 
 const data = {
+
     "1-2.5": [
-        { 
-            name: "Sprachverständnis", 
+
+        {
+            name: "Sprachverständnis",
+
             questions: [
+
                 "1. Das Kind versteht Nomen (Hauptwörter wie Auto, Puppe).",
+
                 "2. Es versteht Verben (Tätigkeitswörter wie essen, trinken, gehen, turnen).",
+
                 "3. Es versteht Präpositionen (Lagebezeichnungen wie auf, unter, neben).",
+
                 "4. Es versteht Adjektive (Eigenschaftswörter wie groß/klein, traurig/fröhlich).",
+
                 "5. Es versteht Aufforderungen in konkreten Situationen und setzt diese um."
-            ] 
+
+            ]
         },
-        { 
-            name: "Wortschatz/Wortbedeutung", 
+
+        {
+            name: "Wortschatz/Wortbedeutung",
+
             questions: [
+
                 "11. Das Kind spricht einzelne Wörter.",
+
                 "12. Es kann bis zu 50 Wörter sprechen."
-            ] 
+
+            ]
         },
-        { 
-            name: "Lautproduktion/Lautwahrnehmung", 
+
+        {
+            name: "Lautproduktion/Lautwahrnehmung",
+
             questions: [
+
                 "21. Das Kind spricht die Vokale a, e, i, o, u.",
+
                 "22. Es produziert die Laute m, p, d, b, n."
-            ] 
+
+            ]
         },
-        { 
-            name: "Wortbildung/Satzbau", 
+
+        {
+            name: "Wortbildung/Satzbau",
+
             questions: [
+
                 "36. Das Kind spricht Einwortsätze.",
+
                 "37. Es spricht Zweiwortsätze."
-            ] 
+
+            ]
         },
-        { 
-            name: "Betonung", 
+
+        {
+            name: "Betonung",
+
             questions: [
+
                 "53. Das Kind variiert die Lautstärke je nach Stimmung und Situation."
-            ] 
+
+            ]
         },
-        { 
-            name: "Verbale/nonverbale Kommunikation", 
+
+        {
+            name: "Verbale/nonverbale Kommunikation",
+
             questions: [
+
                 "57. Das Kind sucht und hält Blickkontakt.",
+
                 "58. Es hält Dialoge, die sich auf das unmittelbare Umfeld beziehen.",
+
                 "59. Es ist dem Sprecher zugewandt.",
+
                 "60. Es kann Wünsche äußern.",
+
                 "61. Es beginnt ein Gespräch von sich aus."
-            ] 
+
+            ]
         },
-        { 
-            name: "Literacy", 
+
+        {
+            name: "Literacy",
+
             questions: [
+
                 "73. Das Kind ist an Büchern interessiert.",
+
                 "74. Es zeigt und benennt Dinge oder Tiere in Bilderbüchern oder ahmt sie nach."
-            ] 
+
+            ]
         },
-        { 
-            name: "Grundlegende Voraussetzungen", 
+
+        {
+            name: "Grundlegende Voraussetzungen",
+
             questions: [
+
                 "83. Das Kind reagiert auf seinen Namen.",
+
                 "84. Es zeigt emotionale Reaktionen auf ein freundliches Gesicht.",
+
                 "85. Es hat eine gute Mundmotorik.",
+
                 "86. Es reagiert auf Flüstern.",
+
                 "87. Es erkennt verschiedene Geräusche und ordnet diese zu.",
+
                 "88. Es wendet sich einer Schallquelle zu (dreht den Kopf zum Geräusch).",
+
                 "89. Es kann eine Reihe von Wörtern nachsprechen.",
+
                 "90. Es kann Dinge in der Nähe erkennen.",
+
                 "91. Es kann Dinge in der Ferne erkennen.",
+
                 "92. Es fühlt sich bei seinen Handlungen wohl.",
+
                 "93. Es ist an seiner Umwelt interessiert.",
+
                 "94. Es reagiert deutlich auf Interaktionsangebote."
-            ] 
+
+            ]
         }
     ],
+
 
     "2.5-4.5": [
-        { 
-            name: "Sprachverständnis", 
+
+        {
+            name: "Sprachverständnis",
+
             questions: [
+
                 "6. Es versteht einteilige situationsgebundene Aufforderungen und setzt diese um.",
+
                 "7. Es versteht mehrteilige Aufforderungen, die unabhängig von der jetzigen Situation sind, und setzt diese um.",
+
                 "8. Es versteht Zeitangaben wie heute, gestern, morgen."
-            ] 
+
+            ]
         },
-        { 
-            name: "Wortschatz/Wortbedeutung", 
+
+        {
+            name: "Wortschatz/Wortbedeutung",
+
             questions: [
+
                 "13. Es verwendet Verben (Tätigkeitswörter, z.B. essen, laufen, schlafen).",
+
                 "14. Es kennt und verwendet Adjektive (Eigenschaftswörter, z.B. dick, dünn, alt, jung).",
+
                 "15. Es verwendet Präpositionen (Lagebezeichnungen, z.B. vor, auf, neben, in).",
+
                 "16. Es benennt Farben."
-            ] 
+
+            ]
         },
-        { 
-            name: "Lautproduktion/Lautwahrnehmung", 
+
+        {
+            name: "Lautproduktion/Lautwahrnehmung",
+
             questions: [
+
                 "23. Es bildet Laute w, f, l, t, ng (wie Junge), k, ch2 (wie hoch), s, z, h.",
+
                 "24. Es spricht die Laute j, r, g, pf.",
+
                 "25. Es produziert Konsonantenverbindungen, z.B. kl, fl, bl, gl, br, fr, gr."
-            ] 
+
+            ]
         },
-        { 
-            name: "Wortbildung/Satzbau", 
+
+        {
+            name: "Wortbildung/Satzbau",
+
             questions: [
+
                 "38. Es verwendet Dreiwortsätze (das Verb steht am Satzende).",
+
                 "39. Es bildet Drei- und Mehrwortsätze, wobei das Verb an der zweiten Position steht.",
+
                 "40. Es stellt W-Fragen.",
+
                 "41. Es verändert das Verb (Tätigkeitswort) entsprechend der Person (ich gehe, du gehst, wir gehen).",
+
                 "42. Es verwendet Präpositionen (Verhältniswörter wie in, auf, unter) innerhalb eines Satzes richtig.",
+
                 "43. Es verwendet Plural (Mehrzahl).",
+
                 "44. Es verwendet Artikel (Begleiter/Geschlechtswort: der, die, das, ein, eine)."
-            ] 
+
+            ]
         },
-        { 
-            name: "Betonung", 
+
+        {
+            name: "Betonung",
+
             questions: [
+
                 "54. Es verändert seine Tonhöhe je nach Aussage des Satzes (Frage, Aussage etc.).",
+
                 "55. Es kann einzelne Wörter betonen/akzentuieren, um diesen eine besondere Bedeutung zu verleihen."
-            ] 
+
+            ]
         },
-        { 
-            name: "Verbale/nonverbale Kommunikation", 
+
+        {
+            name: "Verbale/nonverbale Kommunikation",
+
             questions: [
+
                 "62. Es hält den Sprecher-Hörer-Wechsel ein.",
+
                 "63. Es verdeutlicht sein Sprechen mit Mimik und Gestik.",
+
                 "64. Es verwendet „ich“.",
+
                 "65. Es spricht situationsangemessen.",
+
                 "66. Es berücksichtigt den Zuhörer und passt seine Reaktion bzw. seine Kommunikation an sein Gegenüber an."
-            ] 
+
+            ]
         },
-        { 
-            name: "Literacy", 
+
+        {
+            name: "Literacy",
+
             questions: [
+
                 "75. Es nimmt aktiv an einer Bilderbuchbetrachtung teil.",
+
                 "76. Es erkennt Zusammenhänge aus Bildergeschichten und Bilderbüchern wieder.",
+
                 "77. Es konzentriert sich über einen längeren Zeitraum auf Geschichten und Erzählungen."
-            ] 
+
+            ]
         },
-        { 
-            name: "Grundlegende Voraussetzungen", 
+
+        {
+            name: "Grundlegende Voraussetzungen",
+
             questions: [
+
                 "95. Es nimmt Gefühle anderer wahr und verhält sich empathisch.",
+
                 "96. Es kann mit Konzentration und Ausdauer bei der Sache bleiben.",
+
                 "97. Es kann Wesentliches von Unwesentlichem unterscheiden.",
+
                 "98. Es setzt seinen Körper entsprechend seinem Alter ein.",
+
                 "99. Es zeigt eine gute Koordination bei komplexen Bewegungsabläufen.",
+
                 "100. Es ist in Alltagshandlungen geschickt (z. B. zieht sich selbstständig an und aus).",
+
                 "101. Es zeigt soziales Verhalten in der Gruppe.",
+
                 "102. Es besitzt ein positives Selbstwertgefühl."
-            ] 
+
+            ]
         }
     ],
 
+
     "4.5-6": [
-        { 
-            name: "Sprachverständnis", 
+
+        {
+            name: "Sprachverständnis",
+
             questions: [
+
                 "9. Es versteht Beziehungen und Auswirkungen (z.B. Es wird hell, wenn die Sonne aufgeht).",
+
                 "10. Es versteht W-Fragen (das Kind antwortet richtig auf die ihm gestellten Fragen)."
-            ] 
+
+            ]
         },
-        { 
-            name: "Wortschatz/Wortbedeutung", 
+
+        {
+            name: "Wortschatz/Wortbedeutung",
+
             questions: [
+
                 "17. Es benennt Dinge genau und detailliert (z.B. Wimpern).",
+
                 "18. Es benennt Formen (Kreis, Dreieck, Viereck).",
+
                 "19. Es kann Oberbegriffe benennen und richtig zuordnen (Apfel = Obst).",
+
                 "20. Es kann sich differenziert ausdrücken (z.B. Abläufe genau erklären oder beschreiben)."
-            ] 
+
+            ]
         },
-        { 
-            name: "Lautproduktion/Lautwahrnehmung", 
+
+        {
+            name: "Lautproduktion/Lautwahrnehmung",
+
             questions: [
+
                 "26. Es produziert Laute ch1 (wie in ich) und sch.",
+
                 "27. Es produziert auch schwierige Konsonantenverbindungen z.B. dr-, tr, kr, kn, sch-Verbindungen (z. B. Schmetterling, Straße, Schnecke etc.)",
+
                 "28. Es spricht in Eins-zu-eins-Situationen deutlich, sodass es gut verstanden wird.",
+
                 "29. Es spricht im Gruppengeschehen deutlich.",
+
                 "30. Es erkennt Rhythmen und kann diese mitklatschen.",
+
                 "31. Es kann Wörter in Silben zerlegen/klatschen.",
+
                 "32. Es erkennt Reimwörter.",
+
                 "33. Es kann Reimwörter ergänzen.",
+
                 "34. Es unterscheidet ähnlich klingende Wörter.",
+
                 "35. Es erkennt Anlaute."
-            ] 
+
+            ]
         },
-        { 
-            name: "Wortbildung/Satzbau", 
+
+        {
+            name: "Wortbildung/Satzbau",
+
             questions: [
+
                 "45. Es verwendet Adjektive (Eigenschaftswörter) im Satz richtig.",
+
                 "46. Es antwortet korrekt auf W-Fragen (Satzbau und Wortbildung sind korrekt).",
+
                 "47. Es bildet Nebensätze, wobei das Verb im Nebensatz am Satzende steht.",
+
                 "48. Es gibt Situationen oder Ereignisse in richtiger zeitlicher Abfolge wieder.",
+
                 "49. Es bildet die vollendete Vergangenheit (Perfekt) richtig („Ich habe den Hund gestreichelt.“).",
+
                 "50. Es bildet die Vergangenheitsform Präteritum (Imperfekt) richtig („Der Junge sagte zum Mädchen ...“).",
+
                 "51. Es verwendet den Kasus Akkusativ korrekt (Wen- oder Was-Fall: „Das Mädchen isst den Apfel.“)."
-            ] 
+
+            ]
         },
-        { 
-            name: "Betonung", 
+
+        {
+            name: "Betonung",
+
             questions: [
+
                 "56. Es ist in der Lage, einen sinnvollen Rhythmus einzuhalten."
-            ] 
+
+            ]
         },
-        { 
-            name: "Verbale/nonverbale Kommunikation", 
+
+        {
+            name: "Verbale/nonverbale Kommunikation",
+
             questions: [
+
                 "67. Es bezieht nicht situatives Wissen mit ein.",
+
                 "68. Es fragt nach.",
+
                 "69. Es antwortet sinngemäß auf Fragen.",
+
                 "70. Es hört aufmerksam zu.",
+
                 "71. Es kann eine kurze Geschichte sinnvoll nacherzählen.",
+
                 "72. Es beschreibt etwas Besonderes."
-            ] 
+
+            ]
         },
-        { 
-            name: "Literacy", 
+
+        {
+            name: "Literacy",
+
             questions: [
+
                 "78. Es kann Geschichten in logischer Reihenfolge wiedergeben.",
+
                 "79. Es versucht zu „schreiben“.",
+
                 "80. Es interessiert sich für Schrift und versucht, Buchstaben zu schreiben.",
+
                 "81. Es erkennt Bilder, Symbole und Piktogramme wieder, die häufig im Kindergarten verwendet werden.",
+
                 "82. Es erkennt einzelne Buchstaben wieder."
-            ] 
+
+            ]
         }
     ]
 };
@@ -527,92 +956,217 @@ let currentQuestions = [];
 
 function startAssessment() {
 
+    const ageElement =
+        document.getElementById("ageInput");
+
+    const dobElement =
+        document.getElementById("dobInput");
+
+
     const ageInput =
-        document.getElementById('ageInput').value;
+        ageElement
+            ? ageElement.value
+            : "";
+
 
     const dobInput =
-        document.getElementById('dobInput').value;
-
-    let age = ageInput
-        ? parseFloat(ageInput)
-        : (
-            dobInput
-                ? (
-                    new Date().getFullYear() -
-                    new Date(dobInput).getFullYear()
-                )
-                : 0
-        );
+        dobElement
+            ? dobElement.value
+            : "";
 
 
-    if (age <= 0) {
+    let age = 0;
+
+
+    // ========================================
+    // ALTER DIREKT EINGEGEBEN
+    // ========================================
+
+    if (ageInput) {
+
+        age =
+            parseFloat(ageInput);
+    }
+
+
+    // ========================================
+    // GEBURTSDATUM VERWENDEN
+    // ========================================
+
+    else if (dobInput) {
+
+        const birthDate =
+            new Date(dobInput);
+
+        const today =
+            new Date();
+
+
+        age =
+            today.getFullYear() -
+            birthDate.getFullYear();
+
+
+        const monthDifference =
+            today.getMonth() -
+            birthDate.getMonth();
+
+
+        if (
+            monthDifference < 0 ||
+            (
+                monthDifference === 0 &&
+                today.getDate() < birthDate.getDate()
+            )
+        ) {
+
+            age--;
+        }
+    }
+
+
+    // ========================================
+    // ALTER PRÜFEN
+    // ========================================
+
+    if (
+        !age ||
+        age <= 0
+    ) {
+
         return alert(
             "Bitte Alter oder Geburtsdatum eingeben."
         );
     }
 
 
-    let key =
-        age < 2.5
-            ? "1-2.5"
-            : (
-                age < 4.5
-                    ? "2.5-4.5"
-                    : "4.5-6"
-            );
+    // ========================================
+    // ALTERSBEREICH BESTIMMEN
+    // ========================================
+
+    let key;
 
 
-    currentQuestions = data[key];
+    if (age < 2.5) {
 
+        key = "1-2.5";
+
+    } else if (age < 4.5) {
+
+        key = "2.5-4.5";
+
+    } else {
+
+        key = "4.5-6";
+    }
+
+
+    currentQuestions =
+        data[key];
+
+
+    // ========================================
+    // FRAGEN CONTAINER
+    // ========================================
 
     const container =
-        document.getElementById('questionsContainer');
+        document.getElementById(
+            "questionsContainer"
+        );
+
+
+    if (!container) {
+
+        console.error(
+            "questionsContainer wurde nicht gefunden."
+        );
+
+        return;
+    }
+
 
     container.innerHTML = "";
 
 
-    currentQuestions.forEach((cat, c) => {
+    // ========================================
+    // FRAGEN ERSTELLEN
+    // ========================================
 
-        let html =
-            `<div class="question-group">
-                <h3>${cat.name}</h3>`;
+    currentQuestions.forEach(
+        (cat, c) => {
+
+            let html = `
+
+                <div class="question-group">
+
+                    <h3>${cat.name}</h3>
+
+            `;
 
 
-        cat.questions.forEach((q, i) => {
+            cat.questions.forEach(
+                (q, i) => {
+
+                    html += `
+
+                        <div class="question-item">
+
+                            <span>${q}</span>
+
+                            <div
+                                class="checkbox-box"
+                                data-value="0"
+                                onclick="toggleBox(this)"
+                                id="q_${c}_${i}">
+                            </div>
+
+                        </div>
+
+                    `;
+                }
+            );
+
 
             html += `
-                <div class="question-item">
-                    <span>${q}</span>
-
-                    <div
-                        class="checkbox-box"
-                        data-value="0"
-                        onclick="toggleBox(this)"
-                        id="q_${c}_${i}">
-                    </div>
-
                 </div>
             `;
 
-        });
+
+            container.innerHTML +=
+                html;
+        }
+    );
 
 
-        container.innerHTML +=
-            html + `</div>`;
+    // ========================================
+    // ZUR FRAGEN-SEITE
+    // ========================================
 
-    });
+    const ageStep =
+        document.getElementById(
+            "step-age"
+        );
+
+    const questionStep =
+        document.getElementById(
+            "step-questions"
+        );
 
 
-    document
-        .getElementById('step-age')
-        .classList
-        .remove('active');
+    if (ageStep) {
+
+        ageStep.classList.remove(
+            "active"
+        );
+    }
 
 
-    document
-        .getElementById('step-questions')
-        .classList
-        .add('active');
+    if (questionStep) {
+
+        questionStep.classList.add(
+            "active"
+        );
+    }
 }
 
 
@@ -622,39 +1176,55 @@ function startAssessment() {
 
 function toggleBox(box) {
 
-    let v =
+    if (!box) {
+        return;
+    }
+
+
+    let value =
         parseInt(
-            box.getAttribute('data-value')
+            box.getAttribute(
+                "data-value"
+            )
         );
 
 
-    v =
-        (v === 0)
-            ? 50
-            : (
-                v === 50
-                    ? 100
-                    : 0
-            );
+    if (value === 0) {
+
+        value = 50;
+
+    } else if (value === 50) {
+
+        value = 100;
+
+    } else {
+
+        value = 0;
+    }
 
 
     box.setAttribute(
-        'data-value',
-        v
+        "data-value",
+        value
     );
 
 
     box.className =
-        'checkbox-box ' +
-        (
-            v === 50
-                ? 'state-50'
-                : (
-                    v === 100
-                        ? 'state-100'
-                        : ''
-                )
+        "checkbox-box";
+
+
+    if (value === 50) {
+
+        box.classList.add(
+            "state-50"
         );
+
+    } else if (value === 100) {
+
+        box.classList.add(
+            "state-100"
+        );
+    }
 }
 
 
@@ -666,138 +1236,231 @@ function generateGutachten() {
 
     const res =
         document.getElementById(
-            'resultsContainer'
+            "resultsContainer"
         );
+
+
+    if (!res) {
+
+        console.error(
+            "resultsContainer wurde nicht gefunden."
+        );
+
+        return;
+    }
 
 
     res.innerHTML = "";
 
 
-    currentQuestions.forEach((cat, c) => {
+    // ========================================
+    // KEINE FRAGEN
+    // ========================================
 
-        let total = 0;
-        let list = "";
+    if (
+        !currentQuestions ||
+        currentQuestions.length === 0
+    ) {
+
+        res.innerHTML =
+            "<p>Es wurden noch keine Fragen geladen.</p>";
+
+        return;
+    }
 
 
-        cat.questions.forEach((q, i) => {
+    // ========================================
+    // KATEGORIEN AUSWERTEN
+    // ========================================
 
-            const v =
-                parseInt(
-                    document
-                        .getElementById(
+    currentQuestions.forEach(
+        (cat, c) => {
+
+            let total = 0;
+
+            let list = "";
+
+
+            cat.questions.forEach(
+                (q, i) => {
+
+                    const box =
+                        document.getElementById(
                             `q_${c}_${i}`
+                        );
+
+
+                    const value =
+                        box
+                            ? parseInt(
+                                box.getAttribute(
+                                    "data-value"
+                                )
+                            )
+                            : 0;
+
+
+                    total +=
+                        value;
+
+
+                    // ========================================
+                    // NICHT VOLLSTÄNDIG BEOBACHTETE FRAGEN
+                    // ========================================
+
+                    if (value < 100) {
+
+                        const stateClass =
+                            value === 50
+                                ? "state-50"
+                                : "";
+
+
+                        list += `
+
+                            <li
+                                style="
+                                    display:flex;
+                                    align-items:center;
+                                    gap:10px;
+                                    margin-bottom:8px;
+                                "
+                            >
+
+                                <div
+                                    class="checkbox-box ${stateClass}"
+                                    style="
+                                        width:20px;
+                                        height:20px;
+                                        cursor:default;
+                                        flex-shrink:0;
+                                    "
+                                ></div>
+
+                                <span>
+                                    ${q}
+                                </span>
+
+                            </li>
+
+                        `;
+                    }
+                }
+            );
+
+
+            // ========================================
+            // DURCHSCHNITT
+            // ========================================
+
+            const average =
+                total /
+                cat.questions.length;
+
+
+            const size =
+                (average / 100) * 40;
+
+
+            // ========================================
+            // ERGEBNIS AUSGEBEN
+            // ========================================
+
+            res.innerHTML += `
+
+                <div
+                    class="result-item"
+                    onclick="
+                        this.nextElementSibling.style.display =
+                        (
+                            this.nextElementSibling.style.display === 'block'
+                            ? 'none'
+                            : 'block'
                         )
-                        .getAttribute(
-                            'data-value'
-                        )
-                );
+                    "
+                >
+
+                    <div>
+                        <strong>
+                            ${cat.name}
+                        </strong>
+                    </div>
 
 
-            total += v;
+                    <div class="circle-container">
+
+                        <span
+                            class="dynamic-circle"
+                            style="
+                                width:${size}px;
+                                height:${size}px;
+                            "
+                        ></span>
+
+                    </div>
+
+                </div>
 
 
-            if (v < 100) {
+                <div
+                    class="details"
+                    style="display:none;"
+                >
 
-                let stateClass =
-                    v === 50
-                        ? 'state-50'
-                        : '';
+                    <b>
+                        Beobachtungsnotizen:
+                    </b>
 
 
-                list += `
-                    <li
+                    <ul
                         style="
-                            display:flex;
-                            align-items:center;
-                            gap:10px;
-                            margin-bottom:8px;
+                            list-style:none;
+                            padding-left:0;
+                            margin-top:8px;
                         "
                     >
 
-                        <div
-                            class="checkbox-box ${stateClass}"
-                            style="
-                                width:20px;
-                                height:20px;
-                                cursor:default;
-                            "
-                        ></div>
+                        ${
+                            list ||
+                            "Alles vollständig beobachtet!"
+                        }
 
-                        ${q}
+                    </ul>
 
-                    </li>
-                `;
-            }
-
-        });
-
-
-        const avg =
-            total / cat.questions.length;
-
-
-        const size =
-            (avg / 100) * 40;
-
-
-        res.innerHTML += `
-            <div
-                class="result-item"
-                onclick="
-                    this.nextElementSibling.style.display =
-                    (
-                        this.nextElementSibling.style.display === 'block'
-                        ? 'none'
-                        : 'block'
-                    )
-                "
-            >
-
-                <div>
-                    <strong>${cat.name}</strong>
                 </div>
 
-                <div class="circle-container">
-                    <span
-                        class="dynamic-circle"
-                        style="
-                            width:${size}px;
-                            height:${size}px;
-                        "
-                    ></span>
-                </div>
-
-            </div>
+            `;
+        }
+    );
 
 
-            <div class="details">
+    // ========================================
+    // ZUR ERGEBNISSEITE
+    // ========================================
 
-                <b>Beobachtungsnotizen:</b>
+    const questionStep =
+        document.getElementById(
+            "step-questions"
+        );
 
-                <ul
-                    style="
-                        list-style:none;
-                        padding-left:0;
-                        margin-top:8px;
-                    "
-                >
-                    ${list || "Alles vollständig beobachtet!"}
-                </ul>
-
-            </div>
-        `;
-
-    });
+    const resultStep =
+        document.getElementById(
+            "step-result"
+        );
 
 
-    document
-        .getElementById('step-questions')
-        .classList
-        .remove('active');
+    if (questionStep) {
+
+        questionStep.classList.remove(
+            "active"
+        );
+    }
 
 
-    document
-        .getElementById('step-result')
-        .classList
-        .add('active');
+    if (resultStep) {
+
+        resultStep.classList.add(
+            "active"
+        );
+    }
 }
