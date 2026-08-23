@@ -57,7 +57,6 @@ async function loadUserProfile(userId) {
     currentProfile = null;
     currentInstitution = null;
 
-
     const {
         data: profile,
         error: profileError
@@ -132,10 +131,6 @@ async function loadUserProfile(userId) {
     }
 
 
-    // ========================================================
-    // KONTROLLE
-    // ========================================================
-
     console.log(
         "========================================"
     );
@@ -186,10 +181,6 @@ function updateUserInterface() {
         document.getElementById("userRole");
 
 
-    // ========================================================
-    // NAME
-    // ========================================================
-
     if (userName) {
 
         userName.textContent =
@@ -200,10 +191,6 @@ function updateUserInterface() {
     }
 
 
-    // ========================================================
-    // INSTITUTION
-    // ========================================================
-
     if (userInstitution) {
 
         userInstitution.textContent =
@@ -213,10 +200,6 @@ function updateUserInterface() {
                 : "Keine Institution";
     }
 
-
-    // ========================================================
-    // ROLLE
-    // ========================================================
 
     if (userRole) {
 
@@ -286,7 +269,7 @@ async function checkLogin() {
 
 
         // ====================================================
-        // USER GEFUNDEN
+        // BENUTZER
         // ====================================================
 
         currentUser =
@@ -302,10 +285,6 @@ async function checkLogin() {
                 currentUser.id
             );
 
-
-        // ====================================================
-        // PROFIL FEHLT
-        // ====================================================
 
         if (!profileLoaded) {
 
@@ -331,7 +310,7 @@ async function checkLogin() {
 
 
         // ====================================================
-        // EINGELOGGT
+        // APP ANZEIGEN
         // ====================================================
 
         if (loginScreen) {
@@ -427,19 +406,16 @@ if (loginForm) {
             }
 
 
-            // ==================================================
-            // LOGIN
-            // ==================================================
-
             const {
                 error
-            } = await supabaseClient.auth.signInWithPassword({
+            } =
+                await supabaseClient.auth.signInWithPassword({
 
-                email: email,
+                    email: email,
 
-                password: password
+                    password: password
 
-            });
+                });
 
 
             if (error) {
@@ -528,7 +504,8 @@ async function logout() {
 
     const {
         error
-    } = await supabaseClient.auth.signOut();
+    } =
+        await supabaseClient.auth.signOut();
 
 
     if (error) {
@@ -564,21 +541,10 @@ async function logout() {
 
 
 // ============================================================
-// BEIM LADEN DER SEITE PRÜFEN
-// ============================================================
-
-checkLogin();
-
-
-// ============================================================
 // ENTWICKLUNGSKOMPASS – FRAGEN
 // ============================================================
 
 const data = {
-
-    // ========================================================
-    // 1 – 2,5 JAHRE
-    // ========================================================
 
     "1-2.5": [
 
@@ -599,7 +565,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Wortschatz/Wortbedeutung",
 
@@ -610,7 +575,6 @@ const data = {
                 "12. Es kann bis zu 50 Wörter sprechen."
             ]
         },
-
 
         {
             name: "Lautproduktion/Lautwahrnehmung",
@@ -623,7 +587,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Wortbildung/Satzbau",
 
@@ -635,7 +598,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Betonung",
 
@@ -644,7 +606,6 @@ const data = {
                 "53. Das Kind variiert die Lautstärke je nach Stimmung und Situation."
             ]
         },
-
 
         {
             name: "Verbale/nonverbale Kommunikation",
@@ -663,7 +624,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Literacy",
 
@@ -674,7 +634,6 @@ const data = {
                 "74. Es zeigt und benennt Dinge oder Tiere in Bilderbüchern oder ahmt sie nach."
             ]
         },
-
 
         {
             name: "Grundlegende Voraussetzungen",
@@ -709,10 +668,6 @@ const data = {
     ],
 
 
-    // ========================================================
-    // 2,5 – 4,5 JAHRE
-    // ========================================================
-
     "2.5-4.5": [
 
         {
@@ -727,7 +682,6 @@ const data = {
                 "8. Es versteht Zeitangaben wie heute, gestern, morgen."
             ]
         },
-
 
         {
             name: "Wortschatz/Wortbedeutung",
@@ -744,7 +698,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Lautproduktion/Lautwahrnehmung",
 
@@ -757,7 +710,6 @@ const data = {
                 "25. Es produziert Konsonantenverbindungen, z.B. kl, fl, bl, gl, br, fr, gr."
             ]
         },
-
 
         {
             name: "Wortbildung/Satzbau",
@@ -780,7 +732,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Betonung",
 
@@ -791,7 +742,6 @@ const data = {
                 "55. Es kann einzelne Wörter betonen/akzentuieren, um diesen eine besondere Bedeutung zu verleihen."
             ]
         },
-
 
         {
             name: "Verbale/nonverbale Kommunikation",
@@ -810,7 +760,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Literacy",
 
@@ -823,7 +772,6 @@ const data = {
                 "77. Es konzentriert sich über einen längeren Zeitraum auf Geschichten und Erzählungen."
             ]
         },
-
 
         {
             name: "Grundlegende Voraussetzungen",
@@ -850,10 +798,6 @@ const data = {
     ],
 
 
-    // ========================================================
-    // 4,5 – 6 JAHRE
-    // ========================================================
-
     "4.5-6": [
 
         {
@@ -866,7 +810,6 @@ const data = {
                 "10. Es versteht W-Fragen (das Kind antwortet richtig auf die ihm gestellten Fragen)."
             ]
         },
-
 
         {
             name: "Wortschatz/Wortbedeutung",
@@ -882,7 +825,6 @@ const data = {
                 "20. Es kann sich differenziert ausdrücken (z.B. Abläufe genau erklären oder beschreiben)."
             ]
         },
-
 
         {
             name: "Lautproduktion/Lautwahrnehmung",
@@ -911,7 +853,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Wortbildung/Satzbau",
 
@@ -933,7 +874,6 @@ const data = {
             ]
         },
 
-
         {
             name: "Betonung",
 
@@ -942,7 +882,6 @@ const data = {
                 "56. Es ist in der Lage, einen sinnvollen Rhythmus einzuhalten."
             ]
         },
-
 
         {
             name: "Verbale/nonverbale Kommunikation",
@@ -962,7 +901,6 @@ const data = {
                 "72. Es beschreibt etwas Besonderes."
             ]
         },
-
 
         {
             name: "Literacy",
@@ -992,7 +930,19 @@ let currentQuestions = [];
 
 
 // ============================================================
-// STATUS-ERKLÄRUNG
+// STATUS
+// ============================================================
+
+const STATUS_VALUES = {
+    NOT_RATED: null,
+    NOT_SHOWN: 0,
+    PARTIAL: 50,
+    FULL: 100
+};
+
+
+// ============================================================
+// STATUS-TEXT
 // ============================================================
 
 function getStatusText(value) {
@@ -1040,7 +990,7 @@ function getStatusClass(value) {
 
 
 // ============================================================
-// FRAGE-STATUS AUSLESEN
+// STATUS AUS BOX LESEN
 // ============================================================
 
 function getBoxValue(box) {
@@ -1051,7 +1001,9 @@ function getBoxValue(box) {
 
 
     const rawValue =
-        box.getAttribute("data-value");
+        box.getAttribute(
+            "data-value"
+        );
 
 
     if (
@@ -1064,10 +1016,7 @@ function getBoxValue(box) {
 
 
     const value =
-        parseInt(
-            rawValue,
-            10
-        );
+        Number(rawValue);
 
 
     if (
@@ -1085,21 +1034,84 @@ function getBoxValue(box) {
 
 
 // ============================================================
+// ALTER BERECHNEN
+// ============================================================
+
+function calculateAgeFromBirthDate(
+    birthDateString
+) {
+
+    if (!birthDateString) {
+        return null;
+    }
+
+
+    const birthDate =
+        new Date(
+            birthDateString + "T00:00:00"
+        );
+
+
+    if (
+        Number.isNaN(
+            birthDate.getTime()
+        )
+    ) {
+
+        return null;
+    }
+
+
+    const today =
+        new Date();
+
+
+    let age =
+        today.getFullYear() -
+        birthDate.getFullYear();
+
+
+    const monthDifference =
+        today.getMonth() -
+        birthDate.getMonth();
+
+
+    if (
+        monthDifference < 0 ||
+        (
+            monthDifference === 0 &&
+            today.getDate() < birthDate.getDate()
+        )
+    ) {
+
+        age--;
+    }
+
+
+    return age;
+}
+
+
+// ============================================================
 // ALTER / FRAGEN LADEN
 // ============================================================
 
 function startAssessment() {
 
     const ageElement =
-        document.getElementById("ageInput");
+        document.getElementById(
+            "ageInput"
+        );
 
     const dobElement =
-        document.getElementById("dobInput");
+        document.getElementById(
+            "dobInput"
+        );
 
 
     const ageInput =
         ageElement
-            ? ageElement.value
+            ? ageElement.value.trim()
             : "";
 
 
@@ -1109,7 +1121,7 @@ function startAssessment() {
             : "";
 
 
-    let age = 0;
+    let age = null;
 
 
     // ========================================================
@@ -1119,46 +1131,22 @@ function startAssessment() {
     if (ageInput) {
 
         age =
-            parseFloat(ageInput);
+            Number(
+                ageInput
+            );
     }
 
 
     // ========================================================
-    // GEBURTSDATUM
+    // ALTERNATIV GEBURTSDATUM
     // ========================================================
 
     else if (dobInput) {
 
-        const birthDate =
-            new Date(
-                dobInput + "T00:00:00"
-            );
-
-
-        const today =
-            new Date();
-
-
         age =
-            today.getFullYear() -
-            birthDate.getFullYear();
-
-
-        const monthDifference =
-            today.getMonth() -
-            birthDate.getMonth();
-
-
-        if (
-            monthDifference < 0 ||
-            (
-                monthDifference === 0 &&
-                today.getDate() < birthDate.getDate()
-            )
-        ) {
-
-            age--;
-        }
+            calculateAgeFromBirthDate(
+                dobInput
+            );
     }
 
 
@@ -1167,12 +1155,13 @@ function startAssessment() {
     // ========================================================
 
     if (
-        !age ||
+        age === null ||
+        !Number.isFinite(age) ||
         age <= 0
     ) {
 
         alert(
-            "Bitte Alter oder Geburtsdatum eingeben."
+            "Bitte ein gültiges Alter oder Geburtsdatum eingeben."
         );
 
         return;
@@ -1219,7 +1208,7 @@ function startAssessment() {
 
 
     // ========================================================
-    // CONTAINER
+    // FRAGEN-CONTAINER
     // ========================================================
 
     const container =
@@ -1242,64 +1231,109 @@ function startAssessment() {
 
 
     // ========================================================
-    // FRAGEN AUFBAUEN
+    // FRAGEN ERSTELLEN
     // ========================================================
 
     currentQuestions.forEach(
-        (cat, c) => {
+        (category, categoryIndex) => {
 
-            let html = `
-
-                <div class="question-group">
-
-                    <h3>
-                        ${cat.name}
-                    </h3>
-
-            `;
+            const group =
+                document.createElement(
+                    "div"
+                );
 
 
-            cat.questions.forEach(
-                (question, i) => {
+            group.className =
+                "question-group";
 
-                    html += `
 
-                        <div class="question-item">
+            const heading =
+                document.createElement(
+                    "h3"
+                );
 
-                            <span>
-                                ${question}
-                            </span>
 
-                            <div
-                                class="checkbox-box"
-                                data-value=""
-                                title="Noch nicht bewertet"
-                                onclick="toggleBox(this)"
-                                id="q_${c}_${i}">
-                            </div>
+            heading.textContent =
+                category.name;
 
-                        </div>
 
-                    `;
+            group.appendChild(
+                heading
+            );
+
+
+            category.questions.forEach(
+                (question, questionIndex) => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "question-item";
+
+
+                    const text =
+                        document.createElement(
+                            "span"
+                        );
+
+
+                    text.textContent =
+                        question;
+
+
+                    const box =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    box.className =
+                        "checkbox-box";
+
+
+                    box.id =
+                        `q_${categoryIndex}_${questionIndex}`;
+
+
+                    box.title =
+                        "Noch nicht bewertet";
+
+
+                    box.addEventListener(
+                        "click",
+                        () => toggleBox(box)
+                    );
+
+
+                    item.appendChild(
+                        text
+                    );
+
+                    item.appendChild(
+                        box
+                    );
+
+
+                    group.appendChild(
+                        item
+                    );
                 }
             );
 
 
-            html += `
-
-                </div>
-
-            `;
-
-
-            container.innerHTML +=
-                html;
+            container.appendChild(
+                group
+            );
         }
     );
 
 
     // ========================================================
-    // ALTERSEITE AUSBLENDEN
+    // SEITEN WECHSELN
     // ========================================================
 
     const ageStep =
@@ -1334,16 +1368,14 @@ function startAssessment() {
 // CHECKBOX / STATUS WECHSELN
 // ============================================================
 //
-// Reihenfolge:
-//
 // leer
-// ↓
-// 0 % = Kind zeigt es nicht
-// ↓
-// 50 % = Kind zeigt es teilweise
-// ↓
-// 100 % = Kind zeigt es vollständig
-// ↓
+//   ↓
+// 0 % = Kind zeigt Fähigkeit nicht
+//   ↓
+// 50 % = Kind zeigt Fähigkeit teilweise
+//   ↓
+// 100 % = Kind zeigt Fähigkeit vollständig
+//   ↓
 // leer
 //
 // ============================================================
@@ -1364,19 +1396,24 @@ function toggleBox(box) {
 
     if (currentValue === null) {
 
-        newValue = 0;
+        newValue = STATUS_VALUES.NOT_SHOWN;
 
-    } else if (currentValue === 0) {
+    } else if (
+        currentValue === STATUS_VALUES.NOT_SHOWN
+    ) {
 
-        newValue = 50;
+        newValue = STATUS_VALUES.PARTIAL;
 
-    } else if (currentValue === 50) {
+    } else if (
+        currentValue === STATUS_VALUES.PARTIAL
+    ) {
 
-        newValue = 100;
+        newValue = STATUS_VALUES.FULL;
 
     } else {
 
-        newValue = null;
+        newValue =
+            STATUS_VALUES.NOT_RATED;
     }
 
 
@@ -1394,13 +1431,13 @@ function toggleBox(box) {
 
         box.setAttribute(
             "data-value",
-            newValue
+            String(newValue)
         );
     }
 
 
     // ========================================================
-    // KLASSEN ZURÜCKSETZEN
+    // KLASSEN
     // ========================================================
 
     box.className =
@@ -1458,7 +1495,7 @@ function generateGutachten() {
 
 
     // ========================================================
-    // KEINE FRAGEN
+    // PRÜFEN
     // ========================================================
 
     if (
@@ -1474,8 +1511,19 @@ function generateGutachten() {
 
 
     let totalAll = 0;
+
     let countAll = 0;
+
     let notObservedAll = 0;
+
+
+    const totalQuestions =
+        currentQuestions.reduce(
+            (sum, category) =>
+                sum +
+                category.questions.length,
+            0
+        );
 
 
     // ========================================================
@@ -1514,12 +1562,17 @@ function generateGutachten() {
 
 
                     // ==========================================
-                    // NOCH NICHT BEWERTET
+                    // NICHT BEWERTET
                     // ==========================================
 
                     if (value === null) {
 
                         notRatedCount++;
+
+                        list += createResultQuestion(
+                            question,
+                            null
+                        );
 
                         return;
                     }
@@ -1539,10 +1592,13 @@ function generateGutachten() {
 
 
                     // ==========================================
-                    // KIND ZEIGT FÄHIGKEIT NICHT
+                    // KIND ZEIGT ES NICHT
                     // ==========================================
 
-                    if (value === 0) {
+                    if (
+                        value ===
+                        STATUS_VALUES.NOT_SHOWN
+                    ) {
 
                         notObservedCount++;
 
@@ -1551,50 +1607,18 @@ function generateGutachten() {
 
 
                     // ==========================================
-                    // ALLE NICHT VOLLSTÄNDIGEN
+                    // NICHT VOLLSTÄNDIG
                     // ==========================================
 
-                    if (value < 100) {
+                    if (
+                        value <
+                        STATUS_VALUES.FULL
+                    ) {
 
-                        const stateClass =
-                            getStatusClass(
-                                value
-                            );
-
-
-                        list += `
-
-                            <li
-                                style="
-                                    display:flex;
-                                    align-items:flex-start;
-                                    gap:10px;
-                                    margin-bottom:10px;
-                                "
-                            >
-
-                                <div
-                                    class="
-                                        checkbox-box
-                                        ${stateClass}
-                                    "
-                                    style="
-                                        width:20px;
-                                        height:20px;
-                                        min-width:20px;
-                                        cursor:default;
-                                        flex-shrink:0;
-                                    "
-                                    title="${getStatusText(value)}"
-                                ></div>
-
-                                <span>
-                                    ${question}
-                                </span>
-
-                            </li>
-
-                        `;
+                        list += createResultQuestion(
+                            question,
+                            value
+                        );
                     }
                 }
             );
@@ -1615,10 +1639,6 @@ function generateGutachten() {
             }
 
 
-            const size =
-                (average / 100) * 40;
-
-
             // ==================================================
             // KATEGORIE-STATUS
             // ==================================================
@@ -1627,7 +1647,7 @@ function generateGutachten() {
                 "Noch nicht bewertet";
 
 
-            if (assessedCount > 0) {
+            if (notRatedCount === 0) {
 
                 if (average === 100) {
 
@@ -1644,134 +1664,147 @@ function generateGutachten() {
                     categoryStatus =
                         "Teilweise erfüllt";
                 }
+
+            } else if (assessedCount > 0) {
+
+                categoryStatus =
+                    "Teilweise bewertet";
             }
 
 
             // ==================================================
-            // RESULT ITEM
+            // KREIS
             // ==================================================
 
-            res.innerHTML += `
+            const size =
+                assessedCount > 0
+                    ? Math.max(
+                        8,
+                        (average / 100) * 40
+                    )
+                    : 8;
 
-                <div
-                    class="result-item"
-                    onclick="toggleResultDetails(this)"
-                    style="cursor:pointer;"
-                >
 
-                    <div>
+            // ==================================================
+            // ERGEBNIS
+            // ==================================================
 
-                        <strong>
-                            ${category.name}
-                        </strong>
+            res.insertAdjacentHTML(
+                "beforeend",
+                `
+
+                    <div
+                        class="result-item"
+                        onclick="toggleResultDetails(this)"
+                        style="cursor:pointer;"
+                    >
+
+                        <div>
+
+                            <strong>
+                                ${escapeHtml(category.name)}
+                            </strong>
+
+                            <div
+                                style="
+                                    font-size:0.9em;
+                                    margin-top:4px;
+                                    opacity:0.75;
+                                "
+                            >
+                                ${categoryStatus}
+                            </div>
+
+                        </div>
+
 
                         <div
-                            style="
-                                font-size:0.9em;
-                                margin-top:4px;
-                                opacity:0.75;
-                            "
+                            class="circle-container"
+                            title="${Math.round(average)} %"
                         >
-                            ${categoryStatus}
+
+                            <span
+                                class="dynamic-circle"
+                                style="
+                                    width:${size}px;
+                                    height:${size}px;
+                                "
+                            ></span>
+
                         </div>
 
                     </div>
 
 
                     <div
-                        class="circle-container"
-                        title="${Math.round(average)} %"
+                        class="details"
+                        style="display:none;"
                     >
 
-                        <span
-                            class="dynamic-circle"
+                        <div
                             style="
-                                width:${size}px;
-                                height:${size}px;
+                                margin-bottom:12px;
+                                padding:10px;
+                                border-radius:8px;
+                                background:rgba(0,0,0,0.04);
                             "
-                        ></span>
+                        >
+
+                            <strong>
+                                ${Math.round(average)} %
+                            </strong>
+
+                            <br>
+
+                            Bewertet:
+                            ${assessedCount}
+                            von
+                            ${category.questions.length}
+
+                            <br>
+
+                            Nicht gezeigt:
+                            ${notObservedCount}
+
+                            <br>
+
+                            Noch nicht bewertet:
+                            ${notRatedCount}
+
+                        </div>
+
+
+                        <b>
+                            Beobachtungsübersicht:
+                        </b>
+
+
+                        <ul
+                            style="
+                                list-style:none;
+                                padding-left:0;
+                                margin-top:8px;
+                            "
+                        >
+
+                            ${
+                                list ||
+                                "<li>Alle Fähigkeiten werden vollständig gezeigt.</li>"
+                            }
+
+                        </ul>
 
                     </div>
 
-                </div>
-
-
-                <div
-                    class="details"
-                    style="display:none;"
-                >
-
-                    <div
-                        style="
-                            margin-bottom:12px;
-                            padding:10px;
-                            border-radius:8px;
-                            background:rgba(0,0,0,0.04);
-                        "
-                    >
-
-                        <strong>
-                            ${Math.round(average)} %
-                        </strong>
-
-                        <br>
-
-                        Bewertet:
-                        ${assessedCount}
-                        von
-                        ${category.questions.length}
-
-                        <br>
-
-                        Nicht gezeigt:
-                        ${notObservedCount}
-
-                        <br>
-
-                        Noch nicht bewertet:
-                        ${notRatedCount}
-
-                    </div>
-
-
-                    <b>
-                        Beobachtungsnotizen:
-                    </b>
-
-
-                    <ul
-                        style="
-                            list-style:none;
-                            padding-left:0;
-                            margin-top:8px;
-                        "
-                    >
-
-                        ${
-                            list ||
-                            "Alle bewerteten Fähigkeiten werden vollständig gezeigt."
-                        }
-
-                    </ul>
-
-                </div>
-
-            `;
+                `
+            );
         }
     );
 
 
     // ========================================================
-    // GESAMTÜBERSICHT
+    // GESAMT
     // ========================================================
-
-    const totalQuestions =
-        currentQuestions.reduce(
-            (sum, category) =>
-                sum + category.questions.length,
-            0
-        );
-
 
     const totalNotRated =
         totalQuestions -
@@ -1790,7 +1823,7 @@ function generateGutachten() {
 
 
     // ========================================================
-    // GESAMTERGEBNIS OBEN EINSETZEN
+    // GESAMTÜBERSICHT
     // ========================================================
 
     res.insertAdjacentHTML(
@@ -1811,14 +1844,18 @@ function generateGutachten() {
                     Gesamtübersicht
                 </strong>
 
+
                 <div
                     style="
                         margin-top:8px;
                         font-size:1.1em;
                     "
                 >
+
                     ${Math.round(overallAverage)} %
+
                 </div>
+
 
                 <div
                     style="
@@ -1826,28 +1863,36 @@ function generateGutachten() {
                         font-size:0.9em;
                     "
                 >
+
                     Bewertet:
                     ${countAll}
                     von
                     ${totalQuestions}
+
                 </div>
+
 
                 <div
                     style="
                         font-size:0.9em;
                     "
                 >
+
                     Nicht gezeigt:
                     ${notObservedAll}
+
                 </div>
+
 
                 <div
                     style="
                         font-size:0.9em;
                     "
                 >
+
                     Noch nicht bewertet:
                     ${totalNotRated}
+
                 </div>
 
             </div>
@@ -1857,7 +1902,7 @@ function generateGutachten() {
 
 
     // ========================================================
-    // ZUR ERGEBNISSEITE
+    // SEITEN WECHSELN
     // ========================================================
 
     const questionStep =
@@ -1889,6 +1934,98 @@ function generateGutachten() {
 
 
 // ============================================================
+// ERGEBNIS-FRAGE ERSTELLEN
+// ============================================================
+
+function createResultQuestion(
+    question,
+    value
+) {
+
+    const stateClass =
+        getStatusClass(
+            value
+        );
+
+
+    const statusText =
+        getStatusText(
+            value
+        );
+
+
+    return `
+
+        <li
+            style="
+                display:flex;
+                align-items:flex-start;
+                gap:10px;
+                margin-bottom:10px;
+            "
+        >
+
+            <div
+                class="
+                    checkbox-box
+                    ${stateClass}
+                "
+                style="
+                    width:20px;
+                    height:20px;
+                    min-width:20px;
+                    cursor:default;
+                    flex-shrink:0;
+                "
+                title="${statusText}"
+            ></div>
+
+
+            <div>
+
+                <div>
+                    ${escapeHtml(question)}
+                </div>
+
+                <div
+                    style="
+                        font-size:0.85em;
+                        opacity:0.7;
+                        margin-top:3px;
+                    "
+                >
+                    ${statusText}
+                </div>
+
+            </div>
+
+        </li>
+
+    `;
+}
+
+
+// ============================================================
+// HTML SICHER AUSGEBEN
+// ============================================================
+
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+// ============================================================
 // DETAILS EIN-/AUSBLENDEN
 // ============================================================
 
@@ -1909,7 +2046,8 @@ function toggleResultDetails(element) {
 
 
     if (
-        details.style.display === "block"
+        details.style.display ===
+        "block"
     ) {
 
         details.style.display =
@@ -1921,6 +2059,13 @@ function toggleResultDetails(element) {
             "block";
     }
 }
+
+
+// ============================================================
+// INITIALISIERUNG
+// ============================================================
+
+checkLogin();
 
 
 // ============================================================
