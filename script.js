@@ -1,26 +1,153 @@
 // ========================================
-// SUPABASE LOGIN
+// SUPABASE LOGIN & BENUTZERPROFIL
 // ========================================
 
-const SUPABASE_URL = "https://sjekwvalxujnfparxees.supabase.co";
+const SUPABASE_URL =
+    "https://sjekwvalxujnfparxees.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
 
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
-
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-);
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
 
 
 // ========================================
 // LOGIN-ELEMENTE
 // ========================================
 
-const loginForm = document.getElementById("loginForm");
-const loginScreen = document.getElementById("loginScreen");
-const appContent = document.getElementById("appContent");
-const loginError = document.getElementById("loginError");
+const loginForm =
+    document.getElementById("loginForm");
+
+const loginScreen =
+    document.getElementById("loginScreen");
+
+const appContent =
+    document.getElementById("appContent");
+
+const loginError =
+    document.getElementById("loginError");
+
+
+// ========================================
+// AKTUELLER BENUTZER
+// ========================================
+
+let currentUser = null;
+let currentProfile = null;
+let currentInstitution = null;
+
+
+// ========================================
+// PROFIL LADEN
+// ========================================
+
+async function loadUserProfile(userId) {
+
+    const {
+        data: profile,
+        error: profileError
+    } = await supabaseClient
+        .from("profiles")
+        .select(`
+            id,
+            full_name,
+            role,
+            institution_id,
+            phone
+        `)
+        .eq("id", userId)
+        .single();
+
+
+    if (profileError) {
+
+        console.error(
+            "Profil konnte nicht geladen werden:",
+            profileError
+        );
+
+        return false;
+    }
+
+
+    currentProfile = profile;
+
+
+    // ========================================
+    // INSTITUTION LADEN
+    // ========================================
+
+    if (profile.institution_id) {
+
+        const {
+            data: institution,
+            error: institutionError
+        } = await supabaseClient
+            .from("institutions")
+            .select(`
+                id,
+                name
+            `)
+            .eq("id", profile.institution_id)
+            .single();
+
+
+        if (institutionError) {
+
+            console.error(
+                "Institution konnte nicht geladen werden:",
+                institutionError
+            );
+
+            return false;
+        }
+
+
+        currentInstitution = institution;
+    }
+
+
+    // ========================================
+    // KONTROLLE IN DER BROWSER-CONSOLE
+    // ========================================
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "BENUTZERPROFIL GELADEN"
+    );
+
+    console.log(
+        "Name:",
+        currentProfile.full_name
+    );
+
+    console.log(
+        "Rolle:",
+        currentProfile.role
+    );
+
+    console.log(
+        "Institution:",
+        currentInstitution
+            ? currentInstitution.name
+            : "Keine Institution"
+    );
+
+    console.log(
+        "========================================"
+    );
+
+
+    return true;
+}
 
 
 // ========================================
@@ -35,19 +162,59 @@ async function checkLogin() {
         }
     } = await supabaseClient.auth.getSession();
 
-    if (session) {
 
-        // Eingeloggt
-        loginScreen.style.display = "none";
-        appContent.style.display = "block";
+    // ========================================
+    // NICHT EINGELOGGT
+    // ========================================
 
-    } else {
+    if (!session) {
 
-        // Nicht eingeloggt
+        currentUser = null;
+        currentProfile = null;
+        currentInstitution = null;
+
         loginScreen.style.display = "flex";
         appContent.style.display = "none";
 
+        return;
     }
+
+
+    // ========================================
+    // USER GEFUNDEN
+    // ========================================
+
+    currentUser = session.user;
+
+
+    // ========================================
+    // PROFIL LADEN
+    // ========================================
+
+    const profileLoaded =
+        await loadUserProfile(
+            currentUser.id
+        );
+
+
+    if (!profileLoaded) {
+
+        loginScreen.style.display = "flex";
+        appContent.style.display = "none";
+
+        loginError.textContent =
+            "Das Benutzerprofil konnte nicht geladen werden.";
+
+        return;
+    }
+
+
+    // ========================================
+    // EINGELOGGT
+    // ========================================
+
+    loginScreen.style.display = "none";
+    appContent.style.display = "block";
 }
 
 
@@ -55,48 +222,62 @@ async function checkLogin() {
 // LOGIN
 // ========================================
 
-loginForm.addEventListener("submit", async (event) => {
+loginForm.addEventListener(
+    "submit",
+    async (event) => {
 
-    event.preventDefault();
+        event.preventDefault();
 
-    loginError.textContent = "";
-
-    const email =
-        document.getElementById("loginEmail").value.trim();
-
-    const password =
-        document.getElementById("loginPassword").value;
+        loginError.textContent = "";
 
 
-    const {
-        error
-    } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
+        const email =
+            document
+                .getElementById("loginEmail")
+                .value
+                .trim();
 
 
-    if (error) {
+        const password =
+            document
+                .getElementById("loginPassword")
+                .value;
 
-        loginError.textContent =
-            "Anmeldung fehlgeschlagen: " + error.message;
 
-        return;
+        const {
+            error
+        } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+
+        if (error) {
+
+            loginError.textContent =
+                "Anmeldung fehlgeschlagen: " +
+                error.message;
+
+            return;
+        }
+
+
+        await checkLogin();
     }
-
-
-    await checkLogin();
-
-});
+);
 
 
 // ========================================
 // AUTH-ÄNDERUNGEN ÜBERWACHEN
 // ========================================
 
-supabaseClient.auth.onAuthStateChange(() => {
-    checkLogin();
-});
+supabaseClient.auth.onAuthStateChange(
+    () => {
+
+        checkLogin();
+
+    }
+);
 
 
 // ========================================
@@ -104,7 +285,6 @@ supabaseClient.auth.onAuthStateChange(() => {
 // ========================================
 
 checkLogin();
-
 
 // ========================================
 // ENTWICKLUNGSKOMPASS
