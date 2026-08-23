@@ -12,7 +12,7 @@ const SUPABASE_URL =
     "https://sjekwvalxujnfparxees.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY2UiLCJyZWYiOiJzamt3d2FseHVqbmZwYXJ4ZWVzIiwiaWF0IjoxNzg3NTA1OTQ0LCJleHAiOjIxMDMwODE5NDl9.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmF0ZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwiaWF0IjoxNzg3NTA1OTQ0LCJleHAiOjIxMDMwODE5NDl9.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
 const supabaseClient =
     window.supabase.createClient(
@@ -56,7 +56,6 @@ async function loadUserProfile(userId) {
     currentProfile = null;
     currentInstitution = null;
 
-
     const {
         data: profile,
         error: profileError
@@ -72,7 +71,6 @@ async function loadUserProfile(userId) {
         .eq("id", userId)
         .single();
 
-
     if (profileError) {
 
         console.error(
@@ -83,7 +81,6 @@ async function loadUserProfile(userId) {
         return false;
     }
 
-
     if (!profile) {
 
         console.error(
@@ -92,7 +89,6 @@ async function loadUserProfile(userId) {
 
         return false;
     }
-
 
     currentProfile = profile;
 
@@ -115,7 +111,6 @@ async function loadUserProfile(userId) {
             .eq("id", profile.institution_id)
             .single();
 
-
         if (institutionError) {
 
             console.error(
@@ -126,10 +121,13 @@ async function loadUserProfile(userId) {
             return false;
         }
 
-
         currentInstitution = institution;
     }
 
+
+    // ========================================================
+    // DEBUG
+    // ========================================================
 
     console.log(
         "========================================"
@@ -188,7 +186,8 @@ function updateUserInterface() {
     if (userName) {
 
         userName.textContent =
-            currentProfile?.full_name || "Benutzer";
+            currentProfile?.full_name ||
+            "Benutzer";
     }
 
 
@@ -210,13 +209,17 @@ function updateUserInterface() {
 
     if (userRole) {
 
-        if (currentProfile?.role === "admin") {
+        if (
+            currentProfile?.role ===
+            "admin"
+        ) {
 
             userRole.textContent =
                 " · Administrator";
 
         } else if (
-            currentProfile?.role === "teacher"
+            currentProfile?.role ===
+            "teacher"
         ) {
 
             userRole.textContent =
@@ -226,7 +229,8 @@ function updateUserInterface() {
 
             userRole.textContent =
                 currentProfile?.role
-                    ? " · " + currentProfile.role
+                    ? " · " +
+                      currentProfile.role
                     : "";
         }
     }
@@ -253,8 +257,7 @@ async function checkLogin() {
             data: {
                 session
             }
-        } =
-            await supabaseClient.auth.getSession();
+        } = await supabaseClient.auth.getSession();
 
 
         // ====================================================
@@ -429,7 +432,10 @@ if (loginForm) {
                 passwordElement.value;
 
 
-            if (!email || !password) {
+            if (
+                !email ||
+                !password
+            ) {
 
                 if (loginError) {
 
@@ -446,10 +452,11 @@ if (loginForm) {
             } =
                 await supabaseClient.auth.signInWithPassword({
 
-                    email: email,
+                    email:
+                        email,
 
-                    password: password
-
+                    password:
+                        password
                 });
 
 
@@ -975,14 +982,7 @@ let currentQuestions = [];
 
 
 // ============================================================
-// STATUSWERTE
-// ============================================================
-//
-// null = NOCH NICHT BEARBEITET
-// 0    = WIRD NICHT GEZEIGT
-// 50   = WIRD TEILWEISE GEZEIGT
-// 100  = WIRD VOLLSTÄNDIG GEZEIGT
-//
+// STATUS
 // ============================================================
 
 const STATUS_VALUES = {
@@ -1008,24 +1008,20 @@ function getStatusText(value) {
         return "Noch nicht bewertet";
     }
 
-
     if (value === 0) {
 
         return "Wird nicht gezeigt";
     }
-
 
     if (value === 50) {
 
         return "Wird teilweise gezeigt";
     }
 
-
     if (value === 100) {
 
         return "Wird vollständig gezeigt";
     }
-
 
     return "Noch nicht bewertet";
 }
@@ -1037,56 +1033,27 @@ function getStatusText(value) {
 
 function getStatusClass(value) {
 
-    // NICHT BEARBEITET
-    if (value === null) {
-
-        return "state-not-rated";
-    }
-
-
-    // 0 %
     if (value === 0) {
 
         return "state-0";
     }
 
-
-    // 50 %
     if (value === 50) {
 
         return "state-50";
     }
 
-
-    // 100 %
     if (value === 100) {
 
         return "state-100";
     }
 
-
-    return "state-not-rated";
+    return "";
 }
 
 
 // ============================================================
 // STATUS AUS BOX LESEN
-// ============================================================
-//
-// WICHTIG:
-//
-// Kein data-value
-//       = NICHT BEARBEITET
-//
-// data-value="0"
-//       = BEWUSST 0 %
-//
-// data-value="50"
-//       = 50 %
-//
-// data-value="100"
-//       = 100 %
-//
 // ============================================================
 
 function getBoxValue(box) {
@@ -1103,14 +1070,6 @@ function getBoxValue(box) {
         );
 
 
-    // ========================================================
-    // KEIN WERT
-    // ========================================================
-    //
-    // Das bedeutet NICHT BEARBEITET.
-    //
-    // ========================================================
-
     if (
         rawValue === null ||
         rawValue === ""
@@ -1123,10 +1082,6 @@ function getBoxValue(box) {
     const value =
         Number(rawValue);
 
-
-    // ========================================================
-    // NUR 0 / 50 / 100 ERLAUBEN
-    // ========================================================
 
     if (
         value !== 0 &&
@@ -1250,7 +1205,7 @@ function startAssessment() {
 
 
     // ========================================================
-    // GEBURTSDATUM
+    // ALTERNATIV GEBURTSDATUM
     // ========================================================
 
     else if (dobInput) {
@@ -1342,7 +1297,8 @@ function startAssessment() {
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     // ========================================================
@@ -1350,7 +1306,10 @@ function startAssessment() {
     // ========================================================
 
     currentQuestions.forEach(
-        (category, categoryIndex) => {
+        (
+            category,
+            categoryIndex
+        ) => {
 
             const group =
                 document.createElement(
@@ -1378,7 +1337,10 @@ function startAssessment() {
 
 
             category.questions.forEach(
-                (question, questionIndex) => {
+                (
+                    question,
+                    questionIndex
+                ) => {
 
                     const item =
                         document.createElement(
@@ -1406,35 +1368,22 @@ function startAssessment() {
                         );
 
 
-                    // =================================================
-                    // STANDARD = NICHT BEARBEITET
-                    // =================================================
-
                     box.className =
-                        "checkbox-box state-not-rated";
+                        "checkbox-box";
 
 
                     box.id =
                         `q_${categoryIndex}_${questionIndex}`;
 
 
-                    // Kein data-value!
-                    // Dadurch ist der Zustand eindeutig NICHT BEARBEITET.
-
-
                     box.title =
                         "Noch nicht bewertet";
 
 
-                    box.setAttribute(
-                        "aria-label",
-                        "Noch nicht bewertet"
-                    );
-
-
                     box.addEventListener(
                         "click",
-                        () => toggleBox(box)
+                        () =>
+                            toggleBox(box)
                     );
 
 
@@ -1498,15 +1447,15 @@ function startAssessment() {
 // CHECKBOX / STATUS WECHSELN
 // ============================================================
 //
-// NICHT BEARBEITET
-//       ↓
-// 0 %
-//       ↓
-// 50 %
-//       ↓
-// 100 %
-//       ↓
-// NICHT BEARBEITET
+// leer
+//   ↓
+// 0 % = Kind zeigt Fähigkeit nicht
+//   ↓
+// 50 % = Kind zeigt Fähigkeit teilweise
+//   ↓
+// 100 % = Kind zeigt Fähigkeit vollständig
+//   ↓
+// leer
 //
 // ============================================================
 
@@ -1525,21 +1474,12 @@ function toggleBox(box) {
     let newValue;
 
 
-    // ========================================================
-    // NICHT BEARBEITET → 0 %
-    // ========================================================
-
     if (
         currentValue === null
     ) {
 
         newValue =
             STATUS_VALUES.NOT_SHOWN;
-
-
-    // ========================================================
-    // 0 % → 50 %
-    // ========================================================
 
     } else if (
         currentValue ===
@@ -1549,11 +1489,6 @@ function toggleBox(box) {
         newValue =
             STATUS_VALUES.PARTIAL;
 
-
-    // ========================================================
-    // 50 % → 100 %
-    // ========================================================
-
     } else if (
         currentValue ===
         STATUS_VALUES.PARTIAL
@@ -1561,11 +1496,6 @@ function toggleBox(box) {
 
         newValue =
             STATUS_VALUES.FULL;
-
-
-    // ========================================================
-    // 100 % → NICHT BEARBEITET
-    // ========================================================
 
     } else {
 
@@ -1579,22 +1509,14 @@ function toggleBox(box) {
     // ========================================================
 
     if (
-        newValue ===
-        STATUS_VALUES.NOT_RATED
+        newValue === null
     ) {
-
-        // KEIN data-value
-        //
-        // Dadurch wird eindeutig gespeichert:
-        // NICHT BEARBEITET
 
         box.removeAttribute(
             "data-value"
         );
 
     } else {
-
-        // 0 / 50 / 100 speichern
 
         box.setAttribute(
             "data-value",
@@ -1604,16 +1526,12 @@ function toggleBox(box) {
 
 
     // ========================================================
-    // KLASSEN ZURÜCKSETZEN
+    // KLASSEN
     // ========================================================
 
     box.className =
         "checkbox-box";
 
-
-    // ========================================================
-    // NEUE STATUS-KLASSE
-    // ========================================================
 
     const statusClass =
         getStatusClass(
@@ -1633,30 +1551,10 @@ function toggleBox(box) {
     // TOOLTIP
     // ========================================================
 
-    const statusText =
+    box.title =
         getStatusText(
             newValue
         );
-
-
-    box.title =
-        statusText;
-
-
-    box.setAttribute(
-        "aria-label",
-        statusText
-    );
-
-
-    console.log(
-        "Frage:",
-        box.id,
-        "| Status:",
-        statusText,
-        "| Wert:",
-        newValue
-    );
 }
 
 
@@ -1682,7 +1580,8 @@ function generateGutachten() {
     }
 
 
-    res.innerHTML = "";
+    res.innerHTML =
+        "";
 
 
     // ========================================================
@@ -1710,7 +1609,10 @@ function generateGutachten() {
 
     const totalQuestions =
         currentQuestions.reduce(
-            (sum, category) =>
+            (
+                sum,
+                category
+            ) =>
                 sum +
                 category.questions.length,
             0
@@ -1722,7 +1624,10 @@ function generateGutachten() {
     // ========================================================
 
     currentQuestions.forEach(
-        (category, categoryIndex) => {
+        (
+            category,
+            categoryIndex
+        ) => {
 
             let total = 0;
 
@@ -1740,7 +1645,10 @@ function generateGutachten() {
             // ==================================================
 
             category.questions.forEach(
-                (question, questionIndex) => {
+                (
+                    question,
+                    questionIndex
+                ) => {
 
                     const box =
                         document.getElementById(
@@ -1753,7 +1661,7 @@ function generateGutachten() {
 
 
                     // ==========================================
-                    // NICHT BEARBEITET
+                    // NICHT BEWERTET
                     // ==========================================
 
                     if (
@@ -1793,7 +1701,7 @@ function generateGutachten() {
 
 
                     // ==========================================
-                    // BEWUSST 0 %
+                    // KIND ZEIGT ES NICHT
                     // ==========================================
 
                     if (
@@ -1914,7 +1822,9 @@ function generateGutachten() {
                         <div>
 
                             <strong>
-                                ${escapeHtml(category.name)}
+                                ${escapeHtml(
+                                    category.name
+                                )}
                             </strong>
 
                             <div
@@ -1924,7 +1834,7 @@ function generateGutachten() {
                                     opacity:0.75;
                                 "
                             >
-                                ${escapeHtml(categoryStatus)}
+                                ${categoryStatus}
                             </div>
 
                         </div>
@@ -1932,7 +1842,9 @@ function generateGutachten() {
 
                         <div
                             class="circle-container"
-                            title="${Math.round(average)} %"
+                            title="${Math.round(
+                                average
+                            )} %"
                         >
 
                             <span
@@ -1963,22 +1875,30 @@ function generateGutachten() {
                         >
 
                             <strong>
-                                ${Math.round(average)} %
+                                ${Math.round(
+                                    average
+                                )} %
                             </strong>
 
+
                             <br>
+
 
                             Bewertet:
                             ${assessedCount}
                             von
                             ${category.questions.length}
 
+
                             <br>
 
-                            Bewusst 0 %:
+
+                            Nicht gezeigt:
                             ${notObservedCount}
 
+
                             <br>
+
 
                             Noch nicht bewertet:
                             ${notRatedCount}
@@ -2066,7 +1986,9 @@ function generateGutachten() {
                     "
                 >
 
-                    ${Math.round(overallAverage)} %
+                    ${Math.round(
+                        overallAverage
+                    )} %
 
                 </div>
 
@@ -2092,7 +2014,7 @@ function generateGutachten() {
                     "
                 >
 
-                    Bewusst 0 %:
+                    Nicht gezeigt:
                     ${notObservedAll}
 
                 </div>
@@ -2191,16 +2113,18 @@ function createResultQuestion(
                     cursor:default;
                     flex-shrink:0;
                 "
-                title="${escapeHtml(statusText)}"
-                aria-label="${escapeHtml(statusText)}"
+                title="${statusText}"
             ></div>
 
 
             <div>
 
                 <div>
-                    ${escapeHtml(question)}
+                    ${escapeHtml(
+                        question
+                    )}
                 </div>
+
 
                 <div
                     style="
@@ -2209,9 +2133,7 @@ function createResultQuestion(
                         margin-top:3px;
                     "
                 >
-
-                    ${escapeHtml(statusText)}
-
+                    ${statusText}
                 </div>
 
             </div>
