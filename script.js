@@ -543,6 +543,35 @@ checkLogin();
 
 
 // ========================================
+// LOGOUT
+// ========================================
+
+async function logout() {
+
+    const { error } =
+        await supabaseClient.auth.signOut();
+
+    if (error) {
+
+        console.error(
+            "Abmeldung fehlgeschlagen:",
+            error
+        );
+
+        return;
+    }
+
+    currentUser = null;
+    currentProfile = null;
+    currentInstitution = null;
+
+    loginScreen.style.display = "flex";
+    appContent.style.display = "none";
+
+    loginError.textContent = "";
+}
+
+// ========================================
 // ENTWICKLUNGSKOMPASS
 // ========================================
 
