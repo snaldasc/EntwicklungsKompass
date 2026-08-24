@@ -377,6 +377,7 @@ function showApp() {
     }
 
     updateUserInterface();
+    await loadChildren();
 }
 
 
