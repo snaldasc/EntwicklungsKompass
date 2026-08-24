@@ -372,7 +372,89 @@
         </div>
 
 
+<!-- =========================================================
+     KINDERVERWALTUNG
+     ========================================================= -->
 
+<div id="childrenSection" class="children-section">
+
+    <h2>Kinder</h2>
+
+    <p>
+        Hier kannst du Kinder für deine Einrichtung anlegen.
+    </p>
+
+    <button
+        type="button"
+        id="showAddChildButton"
+    >
+        + Kind anlegen
+    </button>
+
+
+    <!-- KIND ANLEGEN -->
+
+    <div
+        id="addChildFormContainer"
+        style="display:none;"
+    >
+
+        <h3>Neues Kind anlegen</h3>
+
+        <form id="addChildForm">
+
+            <label for="childDisplayName">
+                Name des Kindes:
+            </label>
+
+            <input
+                type="text"
+                id="childDisplayName"
+                placeholder="z.B. Max Mustermann"
+                required
+            >
+
+
+            <label for="childCode">
+                Kind-Code:
+            </label>
+
+            <input
+                type="text"
+                id="childCode"
+                placeholder="z.B. KIND-001"
+            >
+
+
+            <button type="submit">
+                Kind speichern
+            </button>
+
+            <button
+                type="button"
+                id="cancelAddChildButton"
+            >
+                Abbrechen
+            </button>
+
+            <p id="childFormMessage"></p>
+
+        </form>
+
+    </div>
+
+
+    <!-- KINDERLISTE -->
+
+    <div id="childrenList">
+
+        <p>
+            Kinder werden geladen...
+        </p>
+
+    </div>
+
+</div>
         <!-- =====================================================
              ADMIN BEREICH
              ===================================================== -->
