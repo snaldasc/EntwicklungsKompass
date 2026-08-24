@@ -1,6 +1,7 @@
 // ============================================================
 // ENTWICKLUNGSKOMPASS
 // SUPABASE AUTH + BENUTZERPROFILE + ADMIN-FREIGABE
+// + KINDERVERWALTUNG
 // + ENTWICKLUNGSKOMPASS
 // ============================================================
 
@@ -13,7 +14,7 @@ const SUPABASE_URL =
     "https://sjekwvalxujnfparxees.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "sb_publishable_BfusSMc15dqe3SlyxrXiFQ_Spe6Zr3r";
+    "sb_publishable_BfusSMc15dqe3SlyxrXiFQ_Spe6Zr3";
 
 const supabaseClient =
     window.supabase.createClient(
@@ -274,10 +275,6 @@ function updateUserInterface() {
         document.getElementById("userRole");
 
 
-    // ========================================================
-    // NAME
-    // ========================================================
-
     if (userName) {
 
         userName.textContent =
@@ -285,10 +282,6 @@ function updateUserInterface() {
             "Benutzer";
     }
 
-
-    // ========================================================
-    // E-MAIL
-    // ========================================================
 
     if (userEmail) {
 
@@ -298,10 +291,6 @@ function updateUserInterface() {
     }
 
 
-    // ========================================================
-    // INSTITUTION
-    // ========================================================
-
     if (userInstitution) {
 
         userInstitution.textContent =
@@ -309,10 +298,6 @@ function updateUserInterface() {
             "Keine Institution";
     }
 
-
-    // ========================================================
-    // ROLLE
-    // ========================================================
 
     if (userRole) {
 
@@ -365,8 +350,10 @@ function showAuthScreen() {
 // ============================================================
 // APP ANZEIGEN
 // ============================================================
+// WICHTIG: async, weil loadChildren() mit await aufgerufen wird.
+// ============================================================
 
-function showApp() {
+async function showApp() {
 
     if (loginScreen) {
         loginScreen.style.display = "none";
@@ -377,6 +364,7 @@ function showApp() {
     }
 
     updateUserInterface();
+
     await loadChildren();
 }
 
@@ -588,7 +576,7 @@ async function handleAuthenticatedUser(user) {
     // APP
     // ========================================================
 
-    showApp();
+    await showApp();
 
 
     // ========================================================
@@ -610,30 +598,45 @@ async function handleAuthenticatedUser(user) {
     return true;
 }
 
+
 // ============================================================
 // KINDERVERWALTUNG
 // ============================================================
 
 const childrenSection =
-    document.getElementById("childrenSection");
+    document.getElementById(
+        "childrenSection"
+    );
 
 const showAddChildButton =
-    document.getElementById("showAddChildButton");
+    document.getElementById(
+        "showAddChildButton"
+    );
 
 const addChildFormContainer =
-    document.getElementById("addChildFormContainer");
+    document.getElementById(
+        "addChildFormContainer"
+    );
 
 const addChildForm =
-    document.getElementById("addChildForm");
+    document.getElementById(
+        "addChildForm"
+    );
 
 const cancelAddChildButton =
-    document.getElementById("cancelAddChildButton");
+    document.getElementById(
+        "cancelAddChildButton"
+    );
 
 const childrenList =
-    document.getElementById("childrenList");
+    document.getElementById(
+        "childrenList"
+    );
 
 const childFormMessage =
-    document.getElementById("childFormMessage");
+    document.getElementById(
+        "childFormMessage"
+    );
 
 
 // ============================================================
@@ -707,7 +710,10 @@ async function loadChildren() {
     }
 
 
-    if (!children || children.length === 0) {
+    if (
+        !children ||
+        children.length === 0
+    ) {
 
         childrenList.innerHTML =
             `
@@ -728,7 +734,9 @@ async function loadChildren() {
         child => {
 
             const item =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
 
             item.className =
@@ -859,7 +867,6 @@ if (addChildForm) {
 
                     childFormMessage.textContent =
                         "Du bist nicht angemeldet.";
-
                 }
 
                 return;
@@ -919,7 +926,6 @@ if (addChildForm) {
 
                 child_code:
                     childCode || null
-
             };
 
 
@@ -1053,10 +1059,6 @@ async function checkLogin() {
             await supabaseClient.auth.getSession();
 
 
-        // ====================================================
-        // NICHT EINGELOGGT
-        // ====================================================
-
         if (!session) {
 
             currentUser = null;
@@ -1070,10 +1072,6 @@ async function checkLogin() {
             return;
         }
 
-
-        // ====================================================
-        // BENUTZER VERARBEITEN
-        // ====================================================
 
         await handleAuthenticatedUser(
             session.user
@@ -1102,7 +1100,7 @@ if (loginForm) {
 
     loginForm.addEventListener(
         "submit",
-        async (event) => {
+        async event => {
 
             event.preventDefault();
 
@@ -1232,7 +1230,7 @@ if (registerForm) {
 
     registerForm.addEventListener(
         "submit",
-        async (event) => {
+        async event => {
 
             event.preventDefault();
 
@@ -1253,6 +1251,7 @@ if (registerForm) {
             }
 
             if (successElement) {
+
                 successElement.style.display =
                     "none";
 
@@ -1313,10 +1312,6 @@ if (registerForm) {
             const passwordConfirm =
                 confirmElement.value;
 
-
-            // =================================================
-            // VALIDIERUNG
-            // =================================================
 
             if (!fullName) {
 
@@ -1416,10 +1411,6 @@ if (registerForm) {
             }
 
 
-            // =================================================
-            // AUTH USER
-            // =================================================
-
             const newUser =
                 data?.user;
 
@@ -1444,13 +1435,6 @@ if (registerForm) {
 
             // =================================================
             // PROFIL ERSTELLEN
-            // =================================================
-            //
-            // Neue Benutzer werden IMMER als ERZIEHER
-            // angelegt und müssen vom ADMIN freigegeben werden.
-            //
-            // Der ADMIN kann später ELTERN setzen.
-            //
             // =================================================
 
             const {
@@ -1500,9 +1484,15 @@ if (registerForm) {
 
                 successElement.innerHTML =
                     `
-                    <strong>Registrierung erfolgreich.</strong>
+                    <strong>
+                        Registrierung erfolgreich.
+                    </strong>
+
                     <br><br>
-                    Bitte bestätige zuerst deine E-Mail-Adresse.
+
+                    Bitte bestätige zuerst deine
+                    E-Mail-Adresse.
+
                     Danach muss dein Konto noch von einem
                     Administrator freigegeben werden.
                     `;
@@ -1514,10 +1504,6 @@ if (registerForm) {
 
             registerForm.reset();
 
-
-            // =================================================
-            // E-MAIL BESTÄTIGUNG
-            // =================================================
 
             showEmailVerificationScreen();
         }
@@ -1564,11 +1550,6 @@ supabaseClient.auth.onAuthStateChange(
             event === "TOKEN_REFRESHED" ||
             event === "USER_UPDATED"
         ) {
-
-            /*
-             * Kleiner Timeout, damit Supabase seinen
-             * Auth-Zustand vollständig aktualisieren kann.
-             */
 
             setTimeout(
                 async () => {
@@ -1658,10 +1639,6 @@ function hideAdminPanel() {
 
 async function loadAdminUsers() {
 
-    // ========================================================
-    // SICHERHEIT
-    // ========================================================
-
     if (
         !currentProfile ||
         currentProfile.role !== "ADMIN"
@@ -1694,10 +1671,6 @@ async function loadAdminUsers() {
     container.innerHTML =
         "<p>Benutzer werden geladen...</p>";
 
-
-    // ========================================================
-    // BENUTZER LADEN
-    // ========================================================
 
     const {
         data: users,
@@ -1752,10 +1725,6 @@ async function loadAdminUsers() {
         return;
     }
 
-
-    // ========================================================
-    // AUSGABE
-    // ========================================================
 
     container.innerHTML =
         "";
@@ -2041,12 +2010,6 @@ async function approveUser(userId) {
     }
 
 
-    console.log(
-        "Benutzer freigegeben:",
-        userId
-    );
-
-
     await loadAdminUsers();
 }
 
@@ -2139,7 +2102,6 @@ async function saveUserRole(userId) {
 
 
     if (!roleElement) {
-
         return;
     }
 
@@ -2611,22 +2573,18 @@ const STATUS_VALUES = {
 function getStatusText(value) {
 
     if (value === null) {
-
         return "Noch nicht bewertet";
     }
 
     if (value === 0) {
-
         return "0 % – Fähigkeit wird nicht gezeigt";
     }
 
     if (value === 50) {
-
         return "50 % – Fähigkeit wird teilweise gezeigt";
     }
 
     if (value === 100) {
-
         return "100 % – Fähigkeit wird vollständig gezeigt";
     }
 
@@ -2641,17 +2599,14 @@ function getStatusText(value) {
 function getStatusClass(value) {
 
     if (value === 0) {
-
         return "state-0";
     }
 
     if (value === 50) {
-
         return "state-50";
     }
 
     if (value === 100) {
-
         return "state-100";
     }
 
@@ -2666,7 +2621,6 @@ function getStatusClass(value) {
 function getBoxValue(box) {
 
     if (!box) {
-
         return null;
     }
 
@@ -2681,7 +2635,6 @@ function getBoxValue(box) {
         rawValue === null ||
         rawValue === ""
     ) {
-
         return null;
     }
 
@@ -2695,7 +2648,6 @@ function getBoxValue(box) {
         value !== 50 &&
         value !== 100
     ) {
-
         return null;
     }
 
@@ -2713,7 +2665,6 @@ function calculateAgeFromBirthDate(
 ) {
 
     if (!birthDateString) {
-
         return null;
     }
 
@@ -2730,7 +2681,6 @@ function calculateAgeFromBirthDate(
             birthDate.getTime()
         )
     ) {
-
         return null;
     }
 
@@ -2757,7 +2707,6 @@ function calculateAgeFromBirthDate(
             birthDate.getDate()
         )
     ) {
-
         age--;
     }
 
@@ -3010,18 +2959,12 @@ function startAssessment() {
 
 
     if (ageStep) {
-
-        ageStep.classList.remove(
-            "active"
-        );
+        ageStep.classList.remove("active");
     }
 
 
     if (questionStep) {
-
-        questionStep.classList.add(
-            "active"
-        );
+        questionStep.classList.add("active");
     }
 }
 
@@ -3029,23 +2972,10 @@ function startAssessment() {
 // ============================================================
 // CHECKBOX / STATUS WECHSELN
 // ============================================================
-//
-// UNBEWERTET
-//     ↓
-// 0 %
-//     ↓
-// 50 %
-//     ↓
-// 100 %
-//     ↓
-// UNBEWERTET
-//
-// ============================================================
 
 function toggleBox(box) {
 
     if (!box) {
-
         return;
     }
 
@@ -3701,7 +3631,6 @@ function toggleResultDetails(
 ) {
 
     if (!element) {
-
         return;
     }
 
@@ -3711,7 +3640,6 @@ function toggleResultDetails(
 
 
     if (!details) {
-
         return;
     }
 
