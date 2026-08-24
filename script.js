@@ -1,6 +1,7 @@
 // ============================================================
 // ENTWICKLUNGSKOMPASS
-// SUPABASE LOGIN + BENUTZERPROFIL + ENTWICKLUNGSKOMPASS
+// SUPABASE AUTH + BENUTZERPROFILE + ADMIN-FREIGABE
+// + ENTWICKLUNGSKOMPASS
 // ============================================================
 
 
@@ -28,6 +29,9 @@ const supabaseClient =
 const loginForm =
     document.getElementById("loginForm");
 
+const registerForm =
+    document.getElementById("registerForm");
+
 const loginScreen =
     document.getElementById("loginScreen");
 
@@ -45,6 +49,81 @@ const loginError =
 let currentUser = null;
 let currentProfile = null;
 let currentInstitution = null;
+
+
+// ============================================================
+// AUTH-BEREICHE
+// ============================================================
+
+function hideAllAuthSections() {
+
+    const sections = [
+        "loginSection",
+        "registerSection",
+        "pendingSection",
+        "rejectedSection",
+        "emailVerificationSection"
+    ];
+
+    sections.forEach(id => {
+
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.style.display = "none";
+        }
+    });
+}
+
+
+// ============================================================
+// LOGIN ANZEIGEN
+// ============================================================
+
+function showLogin() {
+
+    hideAllAuthSections();
+
+    const section =
+        document.getElementById("loginSection");
+
+    if (section) {
+        section.style.display = "block";
+    }
+
+    if (loginError) {
+        loginError.textContent = "";
+    }
+
+    const registerError =
+        document.getElementById("registerError");
+
+    if (registerError) {
+        registerError.textContent = "";
+    }
+}
+
+
+// ============================================================
+// REGISTRIERUNG ANZEIGEN
+// ============================================================
+
+function showRegister() {
+
+    hideAllAuthSections();
+
+    const section =
+        document.getElementById("registerSection");
+
+    if (section) {
+        section.style.display = "block";
+    }
+
+    if (loginError) {
+        loginError.textContent = "";
+    }
+}
 
 
 // ============================================================
@@ -66,10 +145,14 @@ async function loadUserProfile(userId) {
             full_name,
             role,
             institution_id,
-            phone
+            phone,
+            approval_status,
+            approved_by,
+            approved_at
         `)
         .eq("id", userId)
         .single();
+
 
     if (profileError) {
 
@@ -81,6 +164,7 @@ async function loadUserProfile(userId) {
         return false;
     }
 
+
     if (!profile) {
 
         console.error(
@@ -89,6 +173,7 @@ async function loadUserProfile(userId) {
 
         return false;
     }
+
 
     currentProfile = profile;
 
@@ -111,17 +196,19 @@ async function loadUserProfile(userId) {
             .eq("id", profile.institution_id)
             .single();
 
+
         if (institutionError) {
 
-            console.error(
+            console.warn(
                 "Institution konnte nicht geladen werden:",
                 institutionError
             );
 
-            return false;
-        }
+        } else {
 
-        currentInstitution = institution;
+            currentInstitution =
+                institution;
+        }
     }
 
 
@@ -145,6 +232,11 @@ async function loadUserProfile(userId) {
     console.log(
         "Rolle:",
         currentProfile.role
+    );
+
+    console.log(
+        "Freigabe:",
+        currentProfile.approval_status
     );
 
     console.log(
@@ -172,6 +264,9 @@ function updateUserInterface() {
     const userName =
         document.getElementById("userName");
 
+    const userEmail =
+        document.getElementById("userEmail");
+
     const userInstitution =
         document.getElementById("userInstitution");
 
@@ -188,6 +283,18 @@ function updateUserInterface() {
         userName.textContent =
             currentProfile?.full_name ||
             "Benutzer";
+    }
+
+
+    // ========================================================
+    // E-MAIL
+    // ========================================================
+
+    if (userEmail) {
+
+        userEmail.textContent =
+            currentUser?.email ||
+            "";
     }
 
 
@@ -209,39 +316,297 @@ function updateUserInterface() {
 
     if (userRole) {
 
-        if (
-            currentProfile?.role ===
-            "admin"
-        ) {
+        const role =
+            currentProfile?.role;
+
+
+        if (role === "ADMIN") {
 
             userRole.textContent =
                 " · Administrator";
 
-        } else if (
-            currentProfile?.role ===
-            "teacher"
-        ) {
+        } else if (role === "ERZIEHER") {
 
             userRole.textContent =
-                " · Pädagogische Fachkraft";
+                " · Erzieher";
+
+        } else if (role === "ELTERN") {
+
+            userRole.textContent =
+                " · Eltern";
 
         } else {
 
             userRole.textContent =
-                currentProfile?.role
-                    ? " · " +
-                      currentProfile.role
+                role
+                    ? " · " + role
                     : "";
         }
     }
+}
 
 
-    console.log(
-        "Benutzeroberfläche aktualisiert:",
-        userName?.textContent,
-        userInstitution?.textContent,
-        userRole?.textContent
-    );
+// ============================================================
+// AUTH-BEREICH ANZEIGEN
+// ============================================================
+
+function showAuthScreen() {
+
+    if (loginScreen) {
+        loginScreen.style.display = "flex";
+    }
+
+    if (appContent) {
+        appContent.style.display = "none";
+    }
+}
+
+
+// ============================================================
+// APP ANZEIGEN
+// ============================================================
+
+function showApp() {
+
+    if (loginScreen) {
+        loginScreen.style.display = "none";
+    }
+
+    if (appContent) {
+        appContent.style.display = "block";
+    }
+
+    updateUserInterface();
+}
+
+
+// ============================================================
+// PENDING ANZEIGEN
+// ============================================================
+
+function showPendingScreen() {
+
+    showAuthScreen();
+
+    hideAllAuthSections();
+
+    const section =
+        document.getElementById("pendingSection");
+
+    if (section) {
+        section.style.display = "block";
+    }
+}
+
+
+// ============================================================
+// REJECTED ANZEIGEN
+// ============================================================
+
+function showRejectedScreen() {
+
+    showAuthScreen();
+
+    hideAllAuthSections();
+
+    const section =
+        document.getElementById("rejectedSection");
+
+    if (section) {
+        section.style.display = "block";
+    }
+}
+
+
+// ============================================================
+// E-MAIL-BESTÄTIGUNG ANZEIGEN
+// ============================================================
+
+function showEmailVerificationScreen() {
+
+    showAuthScreen();
+
+    hideAllAuthSections();
+
+    const section =
+        document.getElementById(
+            "emailVerificationSection"
+        );
+
+    if (section) {
+        section.style.display = "block";
+    }
+}
+
+
+// ============================================================
+// ROLLE / FREIGABE PRÜFEN
+// ============================================================
+
+async function handleAuthenticatedUser(user) {
+
+    if (!user) {
+        return false;
+    }
+
+
+    currentUser = user;
+
+
+    // ========================================================
+    // E-MAIL BESTÄTIGT?
+    // ========================================================
+
+    if (!user.email_confirmed_at) {
+
+        console.log(
+            "E-Mail-Adresse noch nicht bestätigt."
+        );
+
+        showEmailVerificationScreen();
+
+        return false;
+    }
+
+
+    // ========================================================
+    // PROFIL LADEN
+    // ========================================================
+
+    const profileLoaded =
+        await loadUserProfile(
+            user.id
+        );
+
+
+    if (!profileLoaded) {
+
+        showAuthScreen();
+
+        hideAllAuthSections();
+
+        showLogin();
+
+        if (loginError) {
+
+            loginError.textContent =
+                "Für dieses Konto wurde kein Benutzerprofil gefunden.";
+        }
+
+        return false;
+    }
+
+
+    // ========================================================
+    // FREIGABESTATUS
+    // ========================================================
+
+    const approvalStatus =
+        currentProfile.approval_status;
+
+
+    if (
+        approvalStatus === "pending"
+    ) {
+
+        console.log(
+            "Benutzer wartet auf Admin-Freigabe."
+        );
+
+        showPendingScreen();
+
+        return false;
+    }
+
+
+    if (
+        approvalStatus === "rejected"
+    ) {
+
+        console.log(
+            "Benutzer wurde abgelehnt."
+        );
+
+        showRejectedScreen();
+
+        return false;
+    }
+
+
+    if (
+        approvalStatus !== "approved"
+    ) {
+
+        console.error(
+            "Unbekannter Freigabestatus:",
+            approvalStatus
+        );
+
+        showPendingScreen();
+
+        return false;
+    }
+
+
+    // ========================================================
+    // ROLLE PRÜFEN
+    // ========================================================
+
+    const role =
+        currentProfile.role;
+
+
+    if (
+        role !== "ADMIN" &&
+        role !== "ERZIEHER" &&
+        role !== "ELTERN"
+    ) {
+
+        console.error(
+            "Unbekannte Benutzerrolle:",
+            role
+        );
+
+        showAuthScreen();
+
+        hideAllAuthSections();
+
+        showLogin();
+
+        if (loginError) {
+
+            loginError.textContent =
+                "Die Benutzerrolle dieses Kontos ist ungültig.";
+        }
+
+        return false;
+    }
+
+
+    // ========================================================
+    // APP
+    // ========================================================
+
+    showApp();
+
+
+    // ========================================================
+    // ADMIN
+    // ========================================================
+
+    if (role === "ADMIN") {
+
+        showAdminPanel();
+
+        await loadAdminUsers();
+
+    } else {
+
+        hideAdminPanel();
+    }
+
+
+    return true;
 }
 
 
@@ -257,7 +622,8 @@ async function checkLogin() {
             data: {
                 session
             }
-        } = await supabaseClient.auth.getSession();
+        } =
+            await supabaseClient.auth.getSession();
 
 
         // ====================================================
@@ -270,89 +636,21 @@ async function checkLogin() {
             currentProfile = null;
             currentInstitution = null;
 
+            showAuthScreen();
 
-            if (loginScreen) {
-
-                loginScreen.style.display =
-                    "flex";
-            }
-
-
-            if (appContent) {
-
-                appContent.style.display =
-                    "none";
-            }
-
+            showLogin();
 
             return;
         }
 
 
         // ====================================================
-        // BENUTZER
+        // BENUTZER VERARBEITEN
         // ====================================================
 
-        currentUser =
-            session.user;
-
-
-        // ====================================================
-        // PROFIL LADEN
-        // ====================================================
-
-        const profileLoaded =
-            await loadUserProfile(
-                currentUser.id
-            );
-
-
-        if (!profileLoaded) {
-
-            if (loginScreen) {
-
-                loginScreen.style.display =
-                    "flex";
-            }
-
-
-            if (appContent) {
-
-                appContent.style.display =
-                    "none";
-            }
-
-
-            if (loginError) {
-
-                loginError.textContent =
-                    "Das Benutzerprofil konnte nicht geladen werden.";
-            }
-
-
-            return;
-        }
-
-
-        // ====================================================
-        // APP ANZEIGEN
-        // ====================================================
-
-        if (loginScreen) {
-
-            loginScreen.style.display =
-                "none";
-        }
-
-
-        if (appContent) {
-
-            appContent.style.display =
-                "block";
-        }
-
-
-        updateUserInterface();
+        await handleAuthenticatedUser(
+            session.user
+        );
 
 
     } catch (error) {
@@ -362,19 +660,9 @@ async function checkLogin() {
             error
         );
 
+        showAuthScreen();
 
-        if (loginScreen) {
-
-            loginScreen.style.display =
-                "flex";
-        }
-
-
-        if (appContent) {
-
-            appContent.style.display =
-                "none";
-        }
+        showLogin();
     }
 }
 
@@ -393,9 +681,7 @@ if (loginForm) {
 
 
             if (loginError) {
-
-                loginError.textContent =
-                    "";
+                loginError.textContent = "";
             }
 
 
@@ -426,7 +712,9 @@ if (loginForm) {
 
 
             const email =
-                emailElement.value.trim();
+                emailElement.value
+                    .trim()
+                    .toLowerCase();
 
             const password =
                 passwordElement.value;
@@ -448,16 +736,18 @@ if (loginForm) {
 
 
             const {
+                data,
                 error
             } =
-                await supabaseClient.auth.signInWithPassword({
+                await supabaseClient.auth
+                    .signInWithPassword({
 
-                    email:
-                        email,
+                        email:
+                            email,
 
-                    password:
-                        password
-                });
+                        password:
+                            password
+                    });
 
 
             if (error) {
@@ -470,17 +760,32 @@ if (loginForm) {
 
                 if (loginError) {
 
-                    loginError.textContent =
-                        "Anmeldung fehlgeschlagen: " +
-                        error.message;
-                }
+                    if (
+                        error.message
+                            .toLowerCase()
+                            .includes(
+                                "email not confirmed"
+                            )
+                    ) {
 
+                        loginError.textContent =
+                            "Bitte bestätige zuerst deine E-Mail-Adresse.";
+
+                    } else {
+
+                        loginError.textContent =
+                            "Anmeldung fehlgeschlagen: " +
+                            error.message;
+                    }
+                }
 
                 return;
             }
 
 
-            await checkLogin();
+            await handleAuthenticatedUser(
+                data.user
+            );
         }
     );
 
@@ -488,6 +793,313 @@ if (loginForm) {
 
     console.error(
         "Das Element #loginForm wurde nicht gefunden."
+    );
+}
+
+
+// ============================================================
+// REGISTRIERUNG
+// ============================================================
+
+if (registerForm) {
+
+    registerForm.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+
+            const errorElement =
+                document.getElementById(
+                    "registerError"
+                );
+
+            const successElement =
+                document.getElementById(
+                    "registerSuccess"
+                );
+
+
+            if (errorElement) {
+                errorElement.textContent = "";
+            }
+
+            if (successElement) {
+                successElement.style.display =
+                    "none";
+
+                successElement.textContent =
+                    "";
+            }
+
+
+            const nameElement =
+                document.getElementById(
+                    "registerName"
+                );
+
+            const emailElement =
+                document.getElementById(
+                    "registerEmail"
+                );
+
+            const passwordElement =
+                document.getElementById(
+                    "registerPassword"
+                );
+
+            const confirmElement =
+                document.getElementById(
+                    "registerPasswordConfirm"
+                );
+
+
+            if (
+                !nameElement ||
+                !emailElement ||
+                !passwordElement ||
+                !confirmElement
+            ) {
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Registrierungsfelder wurden nicht gefunden.";
+                }
+
+                return;
+            }
+
+
+            const fullName =
+                nameElement.value.trim();
+
+            const email =
+                emailElement.value
+                    .trim()
+                    .toLowerCase();
+
+            const password =
+                passwordElement.value;
+
+            const passwordConfirm =
+                confirmElement.value;
+
+
+            // =================================================
+            // VALIDIERUNG
+            // =================================================
+
+            if (!fullName) {
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Bitte deinen Namen eingeben.";
+                }
+
+                return;
+            }
+
+
+            if (!email) {
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Bitte eine E-Mail-Adresse eingeben.";
+                }
+
+                return;
+            }
+
+
+            if (password.length < 6) {
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Das Passwort muss mindestens 6 Zeichen haben.";
+                }
+
+                return;
+            }
+
+
+            if (
+                password !==
+                passwordConfirm
+            ) {
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Die Passwörter stimmen nicht überein.";
+                }
+
+                return;
+            }
+
+
+            // =================================================
+            // SUPABASE AUTH BENUTZER ERSTELLEN
+            // =================================================
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient.auth
+                    .signUp({
+
+                        email:
+                            email,
+
+                        password:
+                            password,
+
+                        options: {
+
+                            data: {
+
+                                full_name:
+                                    fullName
+                            }
+                        }
+                    });
+
+
+            if (error) {
+
+                console.error(
+                    "Registrierung fehlgeschlagen:",
+                    error
+                );
+
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Registrierung fehlgeschlagen: " +
+                        error.message;
+                }
+
+                return;
+            }
+
+
+            // =================================================
+            // AUTH USER
+            // =================================================
+
+            const newUser =
+                data?.user;
+
+
+            if (!newUser) {
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Benutzer konnte nicht erstellt werden.";
+                }
+
+                return;
+            }
+
+
+            console.log(
+                "Neuer Auth-Benutzer:",
+                newUser.id
+            );
+
+
+            // =================================================
+            // PROFIL ERSTELLEN
+            // =================================================
+            //
+            // Neue Benutzer werden IMMER als ERZIEHER
+            // angelegt und müssen vom ADMIN freigegeben werden.
+            //
+            // Der ADMIN kann später ELTERN setzen.
+            //
+            // =================================================
+
+            const {
+                error: profileError
+            } =
+                await supabaseClient
+                    .from("profiles")
+                    .insert({
+
+                        id:
+                            newUser.id,
+
+                        full_name:
+                            fullName,
+
+                        role:
+                            "ERZIEHER",
+
+                        approval_status:
+                            "pending"
+                    });
+
+
+            if (profileError) {
+
+                console.error(
+                    "Profil konnte nicht erstellt werden:",
+                    profileError
+                );
+
+
+                if (errorElement) {
+
+                    errorElement.textContent =
+                        "Das Konto wurde erstellt, aber das Benutzerprofil konnte nicht angelegt werden. Bitte den Administrator informieren.";
+                }
+
+                return;
+            }
+
+
+            // =================================================
+            // ERFOLG
+            // =================================================
+
+            if (successElement) {
+
+                successElement.innerHTML =
+                    `
+                    <strong>Registrierung erfolgreich.</strong>
+                    <br><br>
+                    Bitte bestätige zuerst deine E-Mail-Adresse.
+                    Danach muss dein Konto noch von einem
+                    Administrator freigegeben werden.
+                    `;
+
+                successElement.style.display =
+                    "block";
+            }
+
+
+            registerForm.reset();
+
+
+            // =================================================
+            // E-MAIL BESTÄTIGUNG
+            // =================================================
+
+            showEmailVerificationScreen();
+        }
+    );
+
+} else {
+
+    console.warn(
+        "Das Element #registerForm wurde nicht gefunden."
     );
 }
 
@@ -511,20 +1123,9 @@ supabaseClient.auth.onAuthStateChange(
             currentProfile = null;
             currentInstitution = null;
 
+            showAuthScreen();
 
-            if (loginScreen) {
-
-                loginScreen.style.display =
-                    "flex";
-            }
-
-
-            if (appContent) {
-
-                appContent.style.display =
-                    "none";
-            }
-
+            showLogin();
 
             return;
         }
@@ -533,10 +1134,23 @@ supabaseClient.auth.onAuthStateChange(
         if (
             event === "SIGNED_IN" ||
             event === "INITIAL_SESSION" ||
-            event === "TOKEN_REFRESHED"
+            event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED"
         ) {
 
-            await checkLogin();
+            /*
+             * Kleiner Timeout, damit Supabase seinen
+             * Auth-Zustand vollständig aktualisieren kann.
+             */
+
+            setTimeout(
+                async () => {
+
+                    await checkLogin();
+
+                },
+                0
+            );
         }
     }
 );
@@ -570,25 +1184,591 @@ async function logout() {
     currentInstitution = null;
 
 
-    if (loginScreen) {
+    showAuthScreen();
 
-        loginScreen.style.display =
-            "flex";
-    }
-
-
-    if (appContent) {
-
-        appContent.style.display =
-            "none";
-    }
+    showLogin();
 
 
     if (loginError) {
-
-        loginError.textContent =
-            "";
+        loginError.textContent = "";
     }
+}
+
+
+// ============================================================
+// ADMIN-BEREICH
+// ============================================================
+
+function showAdminPanel() {
+
+    const panel =
+        document.getElementById(
+            "adminPanel"
+        );
+
+    if (panel) {
+        panel.style.display = "block";
+    }
+}
+
+
+function hideAdminPanel() {
+
+    const panel =
+        document.getElementById(
+            "adminPanel"
+        );
+
+    if (panel) {
+        panel.style.display = "none";
+    }
+}
+
+
+// ============================================================
+// ADMIN-BENUTZER LADEN
+// ============================================================
+
+async function loadAdminUsers() {
+
+    // ========================================================
+    // SICHERHEIT
+    // ========================================================
+
+    if (
+        !currentProfile ||
+        currentProfile.role !== "ADMIN"
+    ) {
+
+        console.warn(
+            "Nur ADMIN darf Benutzer verwalten."
+        );
+
+        return;
+    }
+
+
+    const container =
+        document.getElementById(
+            "pendingUsersContainer"
+        );
+
+
+    if (!container) {
+
+        console.error(
+            "pendingUsersContainer wurde nicht gefunden."
+        );
+
+        return;
+    }
+
+
+    container.innerHTML =
+        "<p>Benutzer werden geladen...</p>";
+
+
+    // ========================================================
+    // BENUTZER LADEN
+    // ========================================================
+
+    const {
+        data: users,
+        error
+    } =
+        await supabaseClient
+            .from("profiles")
+            .select(`
+                id,
+                full_name,
+                role,
+                approval_status,
+                created_at,
+                approved_at
+            `)
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Benutzer konnten nicht geladen werden:",
+            error
+        );
+
+
+        container.innerHTML =
+            `
+            <p class="error-message">
+                Benutzer konnten nicht geladen werden:
+                ${escapeHtml(error.message)}
+            </p>
+            `;
+
+        return;
+    }
+
+
+    if (
+        !users ||
+        users.length === 0
+    ) {
+
+        container.innerHTML =
+            "<p>Keine Benutzer vorhanden.</p>";
+
+        return;
+    }
+
+
+    // ========================================================
+    // AUSGABE
+    // ========================================================
+
+    container.innerHTML =
+        "";
+
+
+    users.forEach(
+        user => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "admin-user-card";
+
+
+            const statusText =
+                getApprovalStatusText(
+                    user.approval_status
+                );
+
+
+            card.innerHTML =
+                `
+                <div
+                    style="
+                        padding:15px;
+                        margin-bottom:12px;
+                        border-radius:12px;
+                        background:rgba(0,0,0,0.04);
+                    "
+                >
+
+                    <strong>
+                        ${escapeHtml(
+                            user.full_name ||
+                            "Unbekannter Benutzer"
+                        )}
+                    </strong>
+
+                    <br>
+
+                    <span>
+                        Rolle:
+                        ${escapeHtml(
+                            user.role ||
+                            "Keine"
+                        )}
+                    </span>
+
+                    <br>
+
+                    <span>
+                        Status:
+                        ${statusText}
+                    </span>
+
+                    <br><br>
+
+                    <label>
+                        Rolle ändern:
+                    </label>
+
+                    <select
+                        id="role_${user.id}"
+                    >
+
+                        <option
+                            value="ERZIEHER"
+                            ${
+                                user.role === "ERZIEHER"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
+                            ERZIEHER
+                        </option>
+
+                        <option
+                            value="ELTERN"
+                            ${
+                                user.role === "ELTERN"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
+                            ELTERN
+                        </option>
+
+                        ${
+                            user.role === "ADMIN"
+                                ? `
+                                    <option
+                                        value="ADMIN"
+                                        selected
+                                    >
+                                        ADMIN
+                                    </option>
+                                  `
+                                : ""
+                        }
+
+                    </select>
+
+                    <br><br>
+
+                    ${
+                        user.approval_status === "pending"
+                            ? `
+                                <button
+                                    type="button"
+                                    onclick="approveUser('${user.id}')"
+                                >
+                                    Benutzer freigeben
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onclick="rejectUser('${user.id}')"
+                                >
+                                    Ablehnen
+                                </button>
+                              `
+                            : ""
+                    }
+
+                    ${
+                        user.approval_status === "approved"
+                            ? `
+                                <button
+                                    type="button"
+                                    onclick="saveUserRole('${user.id}')"
+                                >
+                                    Rolle speichern
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onclick="rejectUser('${user.id}')"
+                                >
+                                    Freigabe entziehen
+                                </button>
+                              `
+                            : ""
+                    }
+
+                    ${
+                        user.approval_status === "rejected"
+                            ? `
+                                <button
+                                    type="button"
+                                    onclick="approveUser('${user.id}')"
+                                >
+                                    Wieder freigeben
+                                </button>
+                              `
+                            : ""
+                    }
+
+                </div>
+                `;
+
+
+            container.appendChild(
+                card
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// STATUS-TEXT
+// ============================================================
+
+function getApprovalStatusText(status) {
+
+    if (status === "approved") {
+
+        return "✅ Freigegeben";
+    }
+
+    if (status === "pending") {
+
+        return "⏳ Wartet auf Freigabe";
+    }
+
+    if (status === "rejected") {
+
+        return "❌ Abgelehnt";
+    }
+
+    return "Unbekannt";
+}
+
+
+// ============================================================
+// ADMIN: BENUTZER FREIGEBEN
+// ============================================================
+
+async function approveUser(userId) {
+
+    if (
+        !currentProfile ||
+        currentProfile.role !== "ADMIN"
+    ) {
+
+        alert(
+            "Nur ein Administrator darf Benutzer freigeben."
+        );
+
+        return;
+    }
+
+
+    const roleElement =
+        document.getElementById(
+            `role_${userId}`
+        );
+
+
+    const selectedRole =
+        roleElement
+            ? roleElement.value
+            : "ERZIEHER";
+
+
+    if (
+        selectedRole !== "ERZIEHER" &&
+        selectedRole !== "ELTERN" &&
+        selectedRole !== "ADMIN"
+    ) {
+
+        alert(
+            "Ungültige Rolle."
+        );
+
+        return;
+    }
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .from("profiles")
+            .update({
+
+                role:
+                    selectedRole,
+
+                approval_status:
+                    "approved",
+
+                approved_by:
+                    currentUser.id,
+
+                approved_at:
+                    new Date().toISOString()
+            })
+            .eq(
+                "id",
+                userId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Benutzer konnte nicht freigegeben werden:",
+            error
+        );
+
+
+        alert(
+            "Benutzer konnte nicht freigegeben werden:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "Benutzer freigegeben:",
+        userId
+    );
+
+
+    await loadAdminUsers();
+}
+
+
+// ============================================================
+// ADMIN: BENUTZER ABLEHNEN
+// ============================================================
+
+async function rejectUser(userId) {
+
+    if (
+        !currentProfile ||
+        currentProfile.role !== "ADMIN"
+    ) {
+
+        alert(
+            "Nur ein Administrator darf Benutzer ablehnen."
+        );
+
+        return;
+    }
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .from("profiles")
+            .update({
+
+                approval_status:
+                    "rejected",
+
+                approved_by:
+                    currentUser.id,
+
+                approved_at:
+                    null
+            })
+            .eq(
+                "id",
+                userId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Benutzer konnte nicht abgelehnt werden:",
+            error
+        );
+
+
+        alert(
+            "Benutzer konnte nicht abgelehnt werden:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadAdminUsers();
+}
+
+
+// ============================================================
+// ADMIN: ROLLE SPEICHERN
+// ============================================================
+
+async function saveUserRole(userId) {
+
+    if (
+        !currentProfile ||
+        currentProfile.role !== "ADMIN"
+    ) {
+
+        alert(
+            "Nur ein Administrator darf Rollen ändern."
+        );
+
+        return;
+    }
+
+
+    const roleElement =
+        document.getElementById(
+            `role_${userId}`
+        );
+
+
+    if (!roleElement) {
+
+        return;
+    }
+
+
+    const selectedRole =
+        roleElement.value;
+
+
+    if (
+        selectedRole !== "ADMIN" &&
+        selectedRole !== "ERZIEHER" &&
+        selectedRole !== "ELTERN"
+    ) {
+
+        alert(
+            "Ungültige Rolle."
+        );
+
+        return;
+    }
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .from("profiles")
+            .update({
+
+                role:
+                    selectedRole
+            })
+            .eq(
+                "id",
+                userId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Rolle konnte nicht gespeichert werden:",
+            error
+        );
+
+
+        alert(
+            "Rolle konnte nicht gespeichert werden:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadAdminUsers();
 }
 
 
@@ -1010,17 +2190,17 @@ function getStatusText(value) {
 
     if (value === 0) {
 
-        return "Wird nicht gezeigt";
+        return "0 % – Fähigkeit wird nicht gezeigt";
     }
 
     if (value === 50) {
 
-        return "Wird teilweise gezeigt";
+        return "50 % – Fähigkeit wird teilweise gezeigt";
     }
 
     if (value === 100) {
 
-        return "Wird vollständig gezeigt";
+        return "100 % – Fähigkeit wird vollständig gezeigt";
     }
 
     return "Noch nicht bewertet";
@@ -1181,7 +2361,6 @@ function startAssessment() {
             ? ageElement.value.trim()
             : "";
 
-
     const dobInput =
         dobElement
             ? dobElement.value
@@ -1191,24 +2370,14 @@ function startAssessment() {
     let age = null;
 
 
-    // ========================================================
-    // ALTER DIREKT
-    // ========================================================
-
     if (ageInput) {
 
         age =
             Number(
                 ageInput
             );
-    }
 
-
-    // ========================================================
-    // ALTERNATIV GEBURTSDATUM
-    // ========================================================
-
-    else if (dobInput) {
+    } else if (dobInput) {
 
         age =
             calculateAgeFromBirthDate(
@@ -1216,10 +2385,6 @@ function startAssessment() {
             );
     }
 
-
-    // ========================================================
-    // ALTER PRÜFEN
-    // ========================================================
 
     if (
         age === null ||
@@ -1235,10 +2400,6 @@ function startAssessment() {
     }
 
 
-    // ========================================================
-    // MAXIMALES ALTER
-    // ========================================================
-
     if (age > 6) {
 
         alert(
@@ -1248,10 +2409,6 @@ function startAssessment() {
         return;
     }
 
-
-    // ========================================================
-    // ALTERSBEREICH
-    // ========================================================
 
     let key;
 
@@ -1277,10 +2434,6 @@ function startAssessment() {
         data[key];
 
 
-    // ========================================================
-    // FRAGEN-CONTAINER
-    // ========================================================
-
     const container =
         document.getElementById(
             "questionsContainer"
@@ -1300,10 +2453,6 @@ function startAssessment() {
     container.innerHTML =
         "";
 
-
-    // ========================================================
-    // FRAGEN ERSTELLEN
-    // ========================================================
 
     currentQuestions.forEach(
         (
@@ -1391,11 +2540,9 @@ function startAssessment() {
                         text
                     );
 
-
                     item.appendChild(
                         box
                     );
-
 
                     group.appendChild(
                         item
@@ -1411,9 +2558,18 @@ function startAssessment() {
     );
 
 
-    // ========================================================
-    // SEITEN WECHSELN
-    // ========================================================
+    const assessmentInfo =
+        document.getElementById(
+            "assessmentInfo"
+        );
+
+
+    if (assessmentInfo) {
+
+        assessmentInfo.textContent =
+            `Alter: ${age.toFixed(1)} Jahre`;
+    }
+
 
     const ageStep =
         document.getElementById(
@@ -1447,15 +2603,15 @@ function startAssessment() {
 // CHECKBOX / STATUS WECHSELN
 // ============================================================
 //
-// leer
-//   ↓
-// 0 % = Kind zeigt Fähigkeit nicht
-//   ↓
-// 50 % = Kind zeigt Fähigkeit teilweise
-//   ↓
-// 100 % = Kind zeigt Fähigkeit vollständig
-//   ↓
-// leer
+// UNBEWERTET
+//     ↓
+// 0 %
+//     ↓
+// 50 %
+//     ↓
+// 100 %
+//     ↓
+// UNBEWERTET
 //
 // ============================================================
 
@@ -1504,10 +2660,6 @@ function toggleBox(box) {
     }
 
 
-    // ========================================================
-    // STATUS SPEICHERN
-    // ========================================================
-
     if (
         newValue === null
     ) {
@@ -1524,10 +2676,6 @@ function toggleBox(box) {
         );
     }
 
-
-    // ========================================================
-    // KLASSEN
-    // ========================================================
 
     box.className =
         "checkbox-box";
@@ -1546,10 +2694,6 @@ function toggleBox(box) {
         );
     }
 
-
-    // ========================================================
-    // TOOLTIP
-    // ========================================================
 
     box.title =
         getStatusText(
@@ -1584,10 +2728,6 @@ function generateGutachten() {
         "";
 
 
-    // ========================================================
-    // PRÜFEN
-    // ========================================================
-
     if (
         !currentQuestions ||
         currentQuestions.length === 0
@@ -1619,10 +2759,6 @@ function generateGutachten() {
         );
 
 
-    // ========================================================
-    // KATEGORIEN
-    // ========================================================
-
     currentQuestions.forEach(
         (
             category,
@@ -1640,10 +2776,6 @@ function generateGutachten() {
             let list = "";
 
 
-            // ==================================================
-            // FRAGEN
-            // ==================================================
-
             category.questions.forEach(
                 (
                     question,
@@ -1659,10 +2791,6 @@ function generateGutachten() {
                     const value =
                         getBoxValue(box);
 
-
-                    // ==========================================
-                    // NICHT BEWERTET
-                    // ==========================================
 
                     if (
                         value === null
@@ -1682,10 +2810,6 @@ function generateGutachten() {
                     }
 
 
-                    // ==========================================
-                    // BEWERTET
-                    // ==========================================
-
                     total +=
                         value;
 
@@ -1700,10 +2824,6 @@ function generateGutachten() {
                     countAll++;
 
 
-                    // ==========================================
-                    // KIND ZEIGT ES NICHT
-                    // ==========================================
-
                     if (
                         value ===
                         STATUS_VALUES.NOT_SHOWN
@@ -1714,10 +2834,6 @@ function generateGutachten() {
                         notObservedAll++;
                     }
 
-
-                    // ==========================================
-                    // NICHT VOLLSTÄNDIG
-                    // ==========================================
 
                     if (
                         value <
@@ -1734,10 +2850,6 @@ function generateGutachten() {
             );
 
 
-            // ==================================================
-            // DURCHSCHNITT
-            // ==================================================
-
             let average = 0;
 
 
@@ -1750,10 +2862,6 @@ function generateGutachten() {
                     assessedCount;
             }
 
-
-            // ==================================================
-            // KATEGORIE-STATUS
-            // ==================================================
 
             let categoryStatus =
                 "Noch nicht bewertet";
@@ -1792,10 +2900,6 @@ function generateGutachten() {
             }
 
 
-            // ==================================================
-            // KREIS
-            // ==================================================
-
             const size =
                 assessedCount > 0
                     ? Math.max(
@@ -1804,10 +2908,6 @@ function generateGutachten() {
                     )
                     : 8;
 
-
-            // ==================================================
-            // ERGEBNIS
-            // ==================================================
 
             res.insertAdjacentHTML(
                 "beforeend",
@@ -1880,25 +2980,19 @@ function generateGutachten() {
                                 )} %
                             </strong>
 
-
                             <br>
-
 
                             Bewertet:
                             ${assessedCount}
                             von
                             ${category.questions.length}
 
-
                             <br>
-
 
                             Nicht gezeigt:
                             ${notObservedCount}
 
-
                             <br>
-
 
                             Noch nicht bewertet:
                             ${notRatedCount}
@@ -1934,10 +3028,6 @@ function generateGutachten() {
     );
 
 
-    // ========================================================
-    // GESAMT
-    // ========================================================
-
     const totalNotRated =
         totalQuestions -
         countAll;
@@ -1955,10 +3045,6 @@ function generateGutachten() {
             countAll;
     }
 
-
-    // ========================================================
-    // GESAMTÜBERSICHT
-    // ========================================================
 
     res.insertAdjacentHTML(
         "afterbegin",
@@ -2036,10 +3122,6 @@ function generateGutachten() {
         `
     );
 
-
-    // ========================================================
-    // SEITEN WECHSELN
-    // ========================================================
 
     const questionStep =
         document.getElementById(
@@ -2224,10 +3306,74 @@ function toggleResultDetails(
 
 
 // ============================================================
+// NEUE BEOBACHTUNG
+// ============================================================
+
+function startNewObservation() {
+
+    currentQuestions = [];
+
+
+    const resultStep =
+        document.getElementById(
+            "step-result"
+        );
+
+    const ageStep =
+        document.getElementById(
+            "step-age"
+        );
+
+
+    if (resultStep) {
+
+        resultStep.classList.remove(
+            "active"
+        );
+    }
+
+
+    if (ageStep) {
+
+        ageStep.classList.add(
+            "active"
+        );
+    }
+
+
+    const ageInput =
+        document.getElementById(
+            "ageInput"
+        );
+
+    const dobInput =
+        document.getElementById(
+            "dobInput"
+        );
+
+
+    if (ageInput) {
+        ageInput.value = "";
+    }
+
+    if (dobInput) {
+        dobInput.value = "";
+    }
+}
+
+
+// ============================================================
 // INITIALISIERUNG
 // ============================================================
 
-checkLogin();
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        checkLogin();
+
+    }
+);
 
 
 // ============================================================
