@@ -609,6 +609,432 @@ async function handleAuthenticatedUser(user) {
     return true;
 }
 
+// ============================================================
+// KINDERVERWALTUNG
+// ============================================================
+
+const childrenSection =
+    document.getElementById("childrenSection");
+
+const showAddChildButton =
+    document.getElementById("showAddChildButton");
+
+const addChildFormContainer =
+    document.getElementById("addChildFormContainer");
+
+const addChildForm =
+    document.getElementById("addChildForm");
+
+const cancelAddChildButton =
+    document.getElementById("cancelAddChildButton");
+
+const childrenList =
+    document.getElementById("childrenList");
+
+const childFormMessage =
+    document.getElementById("childFormMessage");
+
+
+// ============================================================
+// KINDER LADEN
+// ============================================================
+
+async function loadChildren() {
+
+    if (!currentUser) {
+
+        console.error(
+            "Keine Anmeldung vorhanden."
+        );
+
+        return;
+    }
+
+
+    if (!childrenList) {
+
+        console.error(
+            "#childrenList wurde nicht gefunden."
+        );
+
+        return;
+    }
+
+
+    childrenList.innerHTML =
+        "<p>Kinder werden geladen...</p>";
+
+
+    const {
+        data: children,
+        error
+    } =
+        await supabaseClient
+            .from("children")
+            .select(`
+                id,
+                child_code,
+                display_name,
+                created_at
+            `)
+            .order(
+                "display_name",
+                {
+                    ascending: true
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Kinder konnten nicht geladen werden:",
+            error
+        );
+
+
+        childrenList.innerHTML =
+            `
+            <p style="color:red;">
+                Kinder konnten nicht geladen werden.
+                <br>
+                ${escapeHtml(error.message)}
+            </p>
+            `;
+
+        return;
+    }
+
+
+    if (!children || children.length === 0) {
+
+        childrenList.innerHTML =
+            `
+            <p>
+                Noch keine Kinder angelegt.
+            </p>
+            `;
+
+        return;
+    }
+
+
+    childrenList.innerHTML =
+        "";
+
+
+    children.forEach(
+        child => {
+
+            const item =
+                document.createElement("div");
+
+
+            item.className =
+                "child-item";
+
+
+            item.innerHTML =
+                `
+                <div>
+
+                    <strong>
+                        ${escapeHtml(
+                            child.display_name ||
+                            "Unbekanntes Kind"
+                        )}
+                    </strong>
+
+                    <br>
+
+                    <span>
+                        Code:
+                        ${escapeHtml(
+                            child.child_code ||
+                            "Kein Code"
+                        )}
+                    </span>
+
+                </div>
+                `;
+
+
+            childrenList.appendChild(
+                item
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// KIND ANLEGEN – FORMULAR ÖFFNEN
+// ============================================================
+
+if (showAddChildButton) {
+
+    showAddChildButton.addEventListener(
+        "click",
+        () => {
+
+            if (addChildFormContainer) {
+
+                addChildFormContainer.style.display =
+                    "block";
+            }
+
+
+            if (childFormMessage) {
+
+                childFormMessage.textContent =
+                    "";
+            }
+
+
+            const nameInput =
+                document.getElementById(
+                    "childDisplayName"
+                );
+
+
+            if (nameInput) {
+
+                nameInput.focus();
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// KIND ANLEGEN – ABBRECHEN
+// ============================================================
+
+if (cancelAddChildButton) {
+
+    cancelAddChildButton.addEventListener(
+        "click",
+        () => {
+
+            if (addChildFormContainer) {
+
+                addChildFormContainer.style.display =
+                    "none";
+            }
+
+
+            if (addChildForm) {
+
+                addChildForm.reset();
+            }
+
+
+            if (childFormMessage) {
+
+                childFormMessage.textContent =
+                    "";
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// KIND ANLEGEN
+// ============================================================
+
+if (addChildForm) {
+
+    addChildForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+
+            if (!currentUser) {
+
+                if (childFormMessage) {
+
+                    childFormMessage.textContent =
+                        "Du bist nicht angemeldet.";
+
+                }
+
+                return;
+            }
+
+
+            const nameInput =
+                document.getElementById(
+                    "childDisplayName"
+                );
+
+            const codeInput =
+                document.getElementById(
+                    "childCode"
+                );
+
+
+            const displayName =
+                nameInput
+                    ? nameInput.value.trim()
+                    : "";
+
+
+            const childCode =
+                codeInput
+                    ? codeInput.value.trim()
+                    : "";
+
+
+            if (!displayName) {
+
+                if (childFormMessage) {
+
+                    childFormMessage.textContent =
+                        "Bitte einen Namen eingeben.";
+                }
+
+                return;
+            }
+
+
+            if (childFormMessage) {
+
+                childFormMessage.textContent =
+                    "Kind wird gespeichert...";
+            }
+
+
+            // ==================================================
+            // DATEN
+            // ==================================================
+
+            const childData = {
+
+                display_name:
+                    displayName,
+
+                child_code:
+                    childCode || null
+
+            };
+
+
+            console.log(
+                "Kind wird angelegt:",
+                childData
+            );
+
+
+            // ==================================================
+            // SUPABASE INSERT
+            // ==================================================
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("children")
+                    .insert(
+                        childData
+                    )
+                    .select()
+                    .single();
+
+
+            // ==================================================
+            // FEHLER
+            // ==================================================
+
+            if (error) {
+
+                console.error(
+                    "Kind konnte nicht angelegt werden:",
+                    error
+                );
+
+
+                if (childFormMessage) {
+
+                    childFormMessage.innerHTML =
+                        `
+                        <span style="color:red;">
+                            Kind konnte nicht angelegt werden:
+                            ${escapeHtml(
+                                error.message
+                            )}
+                        </span>
+                        `;
+                }
+
+                return;
+            }
+
+
+            // ==================================================
+            // ERFOLG
+            // ==================================================
+
+            console.log(
+                "Kind erfolgreich angelegt:",
+                data
+            );
+
+
+            if (childFormMessage) {
+
+                childFormMessage.innerHTML =
+                    `
+                    <span style="color:green;">
+                        Kind wurde erfolgreich angelegt.
+                    </span>
+                    `;
+            }
+
+
+            if (addChildForm) {
+
+                addChildForm.reset();
+            }
+
+
+            // ==================================================
+            // KINDER NEU LADEN
+            // ==================================================
+
+            await loadChildren();
+
+
+            // ==================================================
+            // FORMULAR SCHLIESSEN
+            // ==================================================
+
+            setTimeout(
+                () => {
+
+                    if (addChildFormContainer) {
+
+                        addChildFormContainer.style.display =
+                            "none";
+                    }
+
+
+                    if (childFormMessage) {
+
+                        childFormMessage.textContent =
+                            "";
+                    }
+
+                },
+                1000
+            );
+        }
+    );
+}
+
 
 // ============================================================
 // LOGIN-STATUS PRÜFEN
