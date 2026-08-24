@@ -14,69 +14,353 @@
 
 <body>
 
-    <!-- LOGIN -->
+    <!-- =========================================================
+         LOGIN / REGISTRIERUNG
+         ========================================================= -->
+
     <div id="loginScreen">
 
         <div class="login-box">
 
             <div class="logo-container">
-                <img src="logo.jpg"
-                     alt="EntwicklungsKompass Logo"
-                     class="app-logo">
+                <img
+                    src="logo.jpg"
+                    alt="EntwicklungsKompass Logo"
+                    class="app-logo"
+                >
             </div>
 
             <h1>EntwicklungsKompass</h1>
 
-            <p>Bitte melde dich an.</p>
 
-            <form id="loginForm">
+            <!-- ================= LOGIN ================= -->
 
-                <label for="loginEmail">E-Mail-Adresse:</label>
-                <input
-                    type="email"
-                    id="loginEmail"
-                    placeholder="E-Mail-Adresse"
-                    required
+            <div id="loginSection">
+
+                <h2>Anmelden</h2>
+
+                <p>
+                    Bitte melde dich mit deiner E-Mail-Adresse und
+                    deinem Passwort an.
+                </p>
+
+                <form id="loginForm">
+
+                    <label for="loginEmail">
+                        E-Mail-Adresse:
+                    </label>
+
+                    <input
+                        type="email"
+                        id="loginEmail"
+                        placeholder="E-Mail-Adresse"
+                        autocomplete="email"
+                        required
+                    >
+
+
+                    <label for="loginPassword">
+                        Passwort:
+                    </label>
+
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        placeholder="Passwort"
+                        autocomplete="current-password"
+                        required
+                    >
+
+
+                    <button type="submit">
+                        Anmelden
+                    </button>
+
+                </form>
+
+                <p
+                    id="loginError"
+                    class="error-message"
+                    aria-live="polite"
+                ></p>
+
+
+                <div class="auth-switch">
+
+                    <p>
+                        Noch kein Konto?
+                    </p>
+
+                    <button
+                        type="button"
+                        onclick="showRegister()"
+                    >
+                        Konto erstellen
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= REGISTRIERUNG ================= -->
+
+            <div
+                id="registerSection"
+                style="display: none;"
+            >
+
+                <h2>Konto erstellen</h2>
+
+                <p>
+                    Erstelle ein neues Benutzerkonto.
+                    Dein Konto muss anschließend von einem
+                    Administrator freigegeben werden.
+                </p>
+
+                <form id="registerForm">
+
+
+                    <label for="registerName">
+                        Name:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="registerName"
+                        placeholder="Vor- und Nachname"
+                        autocomplete="name"
+                        required
+                    >
+
+
+                    <label for="registerEmail">
+                        E-Mail-Adresse:
+                    </label>
+
+                    <input
+                        type="email"
+                        id="registerEmail"
+                        placeholder="E-Mail-Adresse"
+                        autocomplete="email"
+                        required
+                    >
+
+
+                    <label for="registerPassword">
+                        Passwort:
+                    </label>
+
+                    <input
+                        type="password"
+                        id="registerPassword"
+                        placeholder="Mindestens 6 Zeichen"
+                        autocomplete="new-password"
+                        minlength="6"
+                        required
+                    >
+
+
+                    <label for="registerPasswordConfirm">
+                        Passwort wiederholen:
+                    </label>
+
+                    <input
+                        type="password"
+                        id="registerPasswordConfirm"
+                        placeholder="Passwort wiederholen"
+                        autocomplete="new-password"
+                        minlength="6"
+                        required
+                    >
+
+
+                    <button type="submit">
+                        Konto erstellen
+                    </button>
+
+                </form>
+
+
+                <p
+                    id="registerError"
+                    class="error-message"
+                    aria-live="polite"
+                ></p>
+
+
+                <div
+                    id="registerSuccess"
+                    class="success-message"
+                    style="display: none;"
+                    aria-live="polite"
+                ></div>
+
+
+                <div class="auth-switch">
+
+                    <p>
+                        Du hast bereits ein Konto?
+                    </p>
+
+                    <button
+                        type="button"
+                        onclick="showLogin()"
+                    >
+                        Zur Anmeldung
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= WARTEN AUF FREIGABE ================= -->
+
+            <div
+                id="pendingSection"
+                style="display: none;"
+            >
+
+                <h2>Konto wartet auf Freigabe</h2>
+
+                <p>
+                    Deine E-Mail-Adresse wurde bestätigt.
+                </p>
+
+                <p>
+                    Dein Benutzerkonto muss jetzt noch von einem
+                    Administrator freigegeben werden.
+                </p>
+
+                <p>
+                    Du kannst dich später erneut anmelden.
+                </p>
+
+                <button
+                    type="button"
+                    onclick="logout()"
                 >
-
-                <label for="loginPassword">Passwort:</label>
-                <input
-                    type="password"
-                    id="loginPassword"
-                    placeholder="Passwort"
-                    required
-                >
-
-                <button type="submit">
-                    Anmelden
+                    Abmelden
                 </button>
 
-                <p id="loginError"></p>
+            </div>
 
-            </form>
+
+            <!-- ================= ABGELEHNT ================= -->
+
+            <div
+                id="rejectedSection"
+                style="display: none;"
+            >
+
+                <h2>Konto abgelehnt</h2>
+
+                <p>
+                    Dein Benutzerkonto wurde vom Administrator
+                    nicht freigegeben.
+                </p>
+
+                <button
+                    type="button"
+                    onclick="logout()"
+                >
+                    Abmelden
+                </button>
+
+            </div>
+
+
+            <!-- ================= E-MAIL BESTÄTIGUNG ================= -->
+
+            <div
+                id="emailVerificationSection"
+                style="display: none;"
+            >
+
+                <h2>E-Mail bestätigen</h2>
+
+                <p>
+                    Wir haben dir eine E-Mail zur Bestätigung
+                    deiner E-Mail-Adresse geschickt.
+                </p>
+
+                <p>
+                    Bitte öffne die E-Mail und bestätige deine
+                    Adresse.
+                </p>
+
+                <button
+                    type="button"
+                    onclick="showLogin()"
+                >
+                    Zur Anmeldung
+                </button>
+
+            </div>
 
         </div>
 
     </div>
 
 
-    <!-- EIGENTLICHE APP -->
-    <div id="appContent" style="display: none;">
+
+    <!-- =========================================================
+         EIGENTLICHE APP
+         ========================================================= -->
+
+    <div
+        id="appContent"
+        style="display: none;"
+    >
+
+        <!-- ================= HEADER ================= -->
 
         <div class="logo-container">
-            <img src="logo.jpg"
-                 alt="EntwicklungsKompass Logo"
-                 class="app-logo">
+
+            <img
+                src="logo.jpg"
+                alt="EntwicklungsKompass Logo"
+                class="app-logo"
+            >
+
         </div>
-        
-        <div id="userInfo" class="user-info">
-        
+
+
+        <!-- ================= BENUTZERINFO ================= -->
+
+        <div
+            id="userInfo"
+            class="user-info"
+        >
+
             <div>
-                <strong id="userName">Benutzer</strong><br>
-                <span id="userInstitution">Institution</span>
-                <span id="userRole"></span>
+
+                <strong id="userName">
+                    Benutzer
+                </strong>
+
+                <br>
+
+                <span id="userEmail">
+                    E-Mail
+                </span>
+
+                <br>
+
+                <span id="userInstitution">
+                    Institution
+                </span>
+
+                <br>
+
+                <span id="userRole">
+                    Rolle
+                </span>
+
             </div>
-        
+
+
             <button
                 type="button"
                 onclick="logout()"
@@ -84,16 +368,74 @@
             >
                 Abmelden
             </button>
-        
+
         </div>
 
-        <div id="step-age" class="step active">
+
+
+        <!-- =====================================================
+             ADMIN BEREICH
+             ===================================================== -->
+
+        <div
+            id="adminPanel"
+            style="display: none;"
+        >
+
+            <h1>Administration</h1>
+
+            <p>
+                Hier kannst du Benutzer verwalten und
+                neue Benutzer freigeben.
+            </p>
+
+
+            <div id="adminMessage"></div>
+
+
+            <h2>Benutzerverwaltung</h2>
+
+
+            <div
+                id="pendingUsersContainer"
+            >
+
+                <p>
+                    Benutzer werden geladen...
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                onclick="loadAdminUsers()"
+            >
+                Benutzer aktualisieren
+            </button>
+
+            <hr>
+
+        </div>
+
+
+
+        <!-- =====================================================
+             ENTWICKLUNGSSCHNECKE
+             ===================================================== -->
+
+        <div
+            id="step-age"
+            class="step active"
+        >
 
             <h1>Entwicklungsschnecke</h1>
 
             <p>
-                Gib entweder das Alter in Jahren oder das Geburtsdatum ein:
+                Gib entweder das Alter in Jahren oder das
+                Geburtsdatum ein:
             </p>
+
 
             <label for="ageInput">
                 Alter (in Jahren, z.B. 3.5):
@@ -110,9 +452,14 @@
                 placeholder="z.B. 4"
             >
 
+
             <br><br>
 
-            <p>— ODER —</p>
+
+            <p>
+                — ODER —
+            </p>
+
 
             <label for="dobInput">
                 Geburtsdatum:
@@ -125,42 +472,85 @@
                 id="dobInput"
             >
 
+
             <br><br>
 
-            <button onclick="startAssessment()">
+
+            <button
+                type="button"
+                onclick="startAssessment()"
+            >
                 Fragen laden
             </button>
 
         </div>
 
 
-        <div id="step-questions" class="step">
+
+        <!-- =====================================================
+             FRAGEN
+             ===================================================== -->
+
+        <div
+            id="step-questions"
+            class="step"
+        >
 
             <h2>Fragenkatalog</h2>
 
-            <div id="questionsContainer"></div>
 
-            <button onclick="generateGutachten()">
+            <p id="assessmentInfo"></p>
+
+
+            <div
+                id="questionsContainer"
+            ></div>
+
+
+            <br>
+
+
+            <button
+                type="button"
+                onclick="generateGutachten()"
+            >
                 Gutachten erstellen
             </button>
 
         </div>
 
 
-        <div id="step-result" class="step">
+
+        <!-- =====================================================
+             GUTACHTEN
+             ===================================================== -->
+
+        <div
+            id="step-result"
+            class="step"
+        >
 
             <h2>Gutachten-Übersicht</h2>
+
 
             <p>
                 Klicke auf einen Bereich, um Details zu
                 unvollständigen Fragen zu sehen.
             </p>
 
-            <div id="resultsContainer"></div>
+
+            <div
+                id="resultsContainer"
+            ></div>
+
 
             <br>
 
-            <button onclick="location.reload()">
+
+            <button
+                type="button"
+                onclick="startNewObservation()"
+            >
                 Neue Beobachtung starten
             </button>
 
@@ -169,7 +559,11 @@
     </div>
 
 
-    <!-- Dein bestehendes JavaScript -->
+
+    <!-- =========================================================
+         JAVASCRIPT
+         ========================================================= -->
+
     <script src="script.js"></script>
 
 </body>
