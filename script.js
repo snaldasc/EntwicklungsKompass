@@ -4518,3 +4518,30 @@ document.addEventListener(
 
     }
 );
+document.querySelectorAll('.sidebar button[data-section]').forEach(button => {
+    button.addEventListener('click', function () {
+        console.log('NAVIGATION:', this.dataset.section);
+
+        const target = this.dataset.section;
+
+        document.querySelectorAll('.sidebar button[data-section]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        this.classList.add('active');
+
+        document.querySelectorAll('.section[data-section-content]').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        const targetSection = document.querySelector(
+            `.section[data-section-content="${target}"]`
+        );
+
+        console.log('ZIEL:', targetSection);
+
+        if (targetSection) {
+            targetSection.classList.add('active');
+        }
+    });
+});
