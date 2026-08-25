@@ -38,7 +38,23 @@ if (!window.supabase) {
 }
 
 
+window.addEventListener("error", function (event) {
+    console.error("GLOBALER JAVASCRIPT-FEHLER:", event.error || event.message);
 
+    const loginSection = document.getElementById("loginSection");
+    const appSection = document.getElementById("appSection");
+
+    if (loginSection && appSection) {
+        if (!window.currentUser) {
+            loginSection.style.display = "block";
+            appSection.style.display = "none";
+        }
+    }
+});
+
+window.addEventListener("unhandledrejection", function (event) {
+    console.error("GLOBALER PROMISE-FEHLER:", event.reason);
+});
 
 // ============================================================
 // GLOBALE VARIABLEN
