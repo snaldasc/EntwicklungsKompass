@@ -2992,7 +2992,7 @@ function ensureDevelopmentRatingStyles() {
    KIND GEÄNDERT
    ============================================================ */
 
-function handleDevelopmentChildChange(event) {
+async function handleDevelopmentChildChange(event) {
 
     currentChildId =
     event.target.value ||
