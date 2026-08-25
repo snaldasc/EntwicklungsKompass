@@ -3540,7 +3540,6 @@ function calculateDevelopmentResult() {
     }
 
 
-    return result;
 
 }
 
