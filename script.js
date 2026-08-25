@@ -347,6 +347,233 @@ async function loadGroupsForCurrentInstitution() {
     return true;
 }
 
+// ============================================================
+// NEUE GRUPPE – FORMULAR ÖFFNEN
+// ============================================================
+
+const createGroupButton =
+    document.getElementById(
+        "createGroupButton"
+    );
+
+const newGroupContainer =
+    document.getElementById(
+        "newGroupContainer"
+    );
+
+const saveNewGroupButton =
+    document.getElementById(
+        "saveNewGroupButton"
+    );
+
+const cancelNewGroupButton =
+    document.getElementById(
+        "cancelNewGroupButton"
+    );
+
+
+if (createGroupButton) {
+
+    createGroupButton.addEventListener(
+        "click",
+        () => {
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "block";
+
+            }
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// NEUE GRUPPE – ABBRECHEN
+// ============================================================
+
+if (cancelNewGroupButton) {
+
+    cancelNewGroupButton.addEventListener(
+        "click",
+        () => {
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "none";
+
+            }
+
+            const input =
+                document.getElementById(
+                    "newGroupName"
+                );
+
+            if (input) {
+
+                input.value = "";
+
+            }
+
+        }
+    );
+
+}
+
+
+
+// ============================================================
+// NEUE GRUPPE SPEICHERN
+// ============================================================
+
+if (saveNewGroupButton) {
+
+    saveNewGroupButton.addEventListener(
+        "click",
+        async () => {
+
+            if (!currentUser) {
+
+                alert(
+                    "Du bist nicht angemeldet."
+                );
+
+                return;
+            }
+
+
+            if (!currentProfile?.institution_id) {
+
+                alert(
+                    "Deinem Benutzer ist keine Institution zugeordnet."
+                );
+
+                return;
+            }
+
+
+            const input =
+                document.getElementById(
+                    "newGroupName"
+                );
+
+
+            const groupName =
+                input
+                    ? input.value.trim()
+                    : "";
+
+
+            if (!groupName) {
+
+                alert(
+                    "Bitte einen Gruppennamen eingeben."
+                );
+
+                return;
+            }
+
+
+            saveNewGroupButton.disabled =
+                true;
+
+
+            const {
+                data: newGroup,
+                error
+            } = await supabaseClient
+
+                .from("Groups")
+
+                .insert({
+                    group_name:
+                        groupName,
+
+                    institution_id:
+                        currentProfile.institution_id
+                })
+
+                .select(`
+                    id,
+                    group_name,
+                    description
+                `)
+
+                .single();
+
+
+            saveNewGroupButton.disabled =
+                false;
+
+
+            if (error) {
+
+                console.error(
+                    "Gruppe konnte nicht erstellt werden:",
+                    error
+                );
+
+                alert(
+                    "Gruppe konnte nicht erstellt werden:\n\n" +
+                    error.message
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // GRUPPEN NEU LADEN
+            // ================================================
+
+            await loadGroupsForCurrentInstitution();
+
+
+            // ================================================
+            // NEUE GRUPPE AUTOMATISCH AUSWÄHLEN
+            // ================================================
+
+            const groupSelect =
+                document.getElementById(
+                    "childGroup"
+                );
+
+
+            if (groupSelect) {
+
+                groupSelect.value =
+                    newGroup.id;
+
+            }
+
+
+            // ================================================
+            // FORMULAR ZURÜCKSETZEN
+            // ================================================
+
+            if (input) {
+
+                input.value = "";
+
+            }
+
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+}
+
 
 // ============================================================
 // BENUTZERINFO ANZEIGEN
@@ -694,41 +921,1204 @@ async function handleAuthenticatedUser(user) {
 // ============================================================
 // KINDERVERWALTUNG
 // ============================================================
+//
+// FUNKTIONEN:
+//
+// - Admin und Erzieher können Kinder anlegen
+// - Kinder haben KEINEN Namen
+// - Kinder werden ausschließlich über child_code identifiziert
+// - Gruppen werden aus der eigenen Institution geladen
+// - Neue Gruppen können direkt angelegt werden
+// - Neue Gruppe wird automatisch ausgewählt
+//
+// ============================================================
+
 
 const childrenSection =
     document.getElementById(
         "childrenSection"
     );
 
+
 const showAddChildButton =
     document.getElementById(
         "showAddChildButton"
     );
+
 
 const addChildFormContainer =
     document.getElementById(
         "addChildFormContainer"
     );
 
+
 const addChildForm =
     document.getElementById(
         "addChildForm"
     );
+
 
 const cancelAddChildButton =
     document.getElementById(
         "cancelAddChildButton"
     );
 
+
 const childrenList =
     document.getElementById(
         "childrenList"
     );
 
+
 const childFormMessage =
     document.getElementById(
         "childFormMessage"
     );
+
+
+// ============================================================
+// GRUPPEN-ELEMENTE
+// ============================================================
+
+const childGroupSelect =
+    document.getElementById(
+        "childGroup"
+    );
+
+
+const createGroupButton =
+    document.getElementById(
+        "createGroupButton"
+    );
+
+
+const newGroupContainer =
+    document.getElementById(
+        "newGroupContainer"
+    );
+
+
+const newGroupNameInput =
+    document.getElementById(
+        "newGroupName"
+    );
+
+
+const saveNewGroupButton =
+    document.getElementById(
+        "saveNewGroupButton"
+    );
+
+
+const cancelNewGroupButton =
+    document.getElementById(
+        "cancelNewGroupButton"
+    );
+
+
+// ============================================================
+// HILFSFUNKTION
+// ============================================================
+
+function showChildMessage(
+    message,
+    type = "info"
+) {
+
+    if (!childFormMessage) {
+        return;
+    }
+
+
+    childFormMessage.textContent =
+        message;
+
+
+    if (type === "error") {
+
+        childFormMessage.style.color =
+            "red";
+
+    } else if (type === "success") {
+
+        childFormMessage.style.color =
+            "green";
+
+    } else {
+
+        childFormMessage.style.color =
+            "";
+
+    }
+}
+
+
+// ============================================================
+// BERECHTIGUNG PRÜFEN
+// ============================================================
+
+function canManageChildren() {
+
+    const role =
+        currentProfile?.role;
+
+
+    return (
+        role === "ADMIN" ||
+        role === "ERZIEHER"
+    );
+}
+
+
+// ============================================================
+// GRUPPEN DER AKTUELLEN INSTITUTION LADEN
+// ============================================================
+
+async function loadGroupsForCurrentInstitution() {
+
+    if (!currentUser) {
+
+        console.error(
+            "Kein angemeldeter Benutzer."
+        );
+
+        return false;
+    }
+
+
+    if (!currentProfile) {
+
+        console.error(
+            "Kein Benutzerprofil vorhanden."
+        );
+
+        return false;
+    }
+
+
+    if (!currentProfile.institution_id) {
+
+        console.error(
+            "Benutzer hat keine Institution."
+        );
+
+        if (childGroupSelect) {
+
+            childGroupSelect.innerHTML =
+                `
+                <option value="">
+                    Keine Institution zugeordnet
+                </option>
+                `;
+
+        }
+
+        return false;
+    }
+
+
+    if (!childGroupSelect) {
+
+        console.error(
+            "#childGroup wurde nicht gefunden."
+        );
+
+        return false;
+    }
+
+
+    childGroupSelect.innerHTML =
+        `
+        <option value="">
+            Gruppen werden geladen...
+        </option>
+        `;
+
+
+    const {
+        data: groups,
+        error
+    } = await supabaseClient
+
+        .from("Groups")
+
+        .select(`
+            id,
+            group_name,
+            description,
+            institution_id
+        `)
+
+        .eq(
+            "institution_id",
+            currentProfile.institution_id
+        )
+
+        .order(
+            "group_name",
+            {
+                ascending: true
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            "Gruppen konnten nicht geladen werden:",
+            error
+        );
+
+
+        childGroupSelect.innerHTML =
+            `
+            <option value="">
+                Gruppen konnten nicht geladen werden
+            </option>
+            `;
+
+
+        return false;
+    }
+
+
+    childGroupSelect.innerHTML =
+        `
+        <option value="">
+            Gruppe auswählen...
+        </option>
+        `;
+
+
+    if (
+        !groups ||
+        groups.length === 0
+    ) {
+
+        childGroupSelect.innerHTML =
+            `
+            <option value="">
+                Noch keine Gruppe vorhanden
+            </option>
+            `;
+
+        return true;
+    }
+
+
+    groups.forEach(
+        group => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                String(group.id);
+
+
+            option.textContent =
+                group.group_name;
+
+
+            childGroupSelect.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+    return true;
+}
+
+
+// ============================================================
+// KINDER LADEN
+// ============================================================
+
+async function loadChildren() {
+
+    if (!currentUser) {
+
+        console.error(
+            "Keine Anmeldung vorhanden."
+        );
+
+        return;
+    }
+
+
+    if (!currentProfile) {
+
+        console.error(
+            "Kein Benutzerprofil vorhanden."
+        );
+
+        return;
+    }
+
+
+    if (!childrenList) {
+
+        console.error(
+            "#childrenList wurde nicht gefunden."
+        );
+
+        return;
+    }
+
+
+    childrenList.innerHTML =
+        "<p>Kinder werden geladen...</p>";
+
+
+    // ========================================================
+    // KINDER ABFRAGEN
+    // ========================================================
+
+    const {
+        data: children,
+        error
+    } =
+        await supabaseClient
+
+            .from("children")
+
+            .select(`
+                id,
+                child_code,
+                group_id,
+                created_at,
+                Groups (
+                    id,
+                    group_name
+                )
+            `)
+
+            .order(
+                "child_code",
+                {
+                    ascending: true
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Kinder konnten nicht geladen werden:",
+            error
+        );
+
+
+        childrenList.innerHTML =
+            `
+            <p style="color:red;">
+                Kinder konnten nicht geladen werden.
+                <br>
+                ${escapeHtml(
+                    error.message
+                )}
+            </p>
+            `;
+
+
+        return;
+    }
+
+
+    if (
+        !children ||
+        children.length === 0
+    ) {
+
+        childrenList.innerHTML =
+            `
+            <p>
+                Noch keine Kinder angelegt.
+            </p>
+            `;
+
+
+        return;
+    }
+
+
+    childrenList.innerHTML =
+        "";
+
+
+    // ========================================================
+    // KINDER DARSTELLEN
+    // ========================================================
+
+    children.forEach(
+        child => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "child-item";
+
+
+            const groupName =
+                child.Groups?.group_name ||
+                "Keine Gruppe";
+
+
+            item.innerHTML =
+                `
+                <div>
+
+                    <strong>
+                        ${escapeHtml(
+                            child.child_code ||
+                            "Keine Kinder-ID"
+                        )}
+                    </strong>
+
+                    <br>
+
+                    <span>
+                        Gruppe:
+                        ${escapeHtml(
+                            groupName
+                        )}
+                    </span>
+
+                </div>
+                `;
+
+
+            childrenList.appendChild(
+                item
+            );
+
+        }
+    );
+}
+
+
+// ============================================================
+// KIND ANLEGEN – FORMULAR ÖFFNEN
+// ============================================================
+
+if (showAddChildButton) {
+
+    showAddChildButton.addEventListener(
+        "click",
+        async () => {
+
+            // ================================================
+            // BERECHTIGUNG
+            // ================================================
+
+            if (!canManageChildren()) {
+
+                alert(
+                    "Nur Administratoren und Erzieher dürfen Kinder anlegen."
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // FORMULAR ÖFFNEN
+            // ================================================
+
+            if (addChildFormContainer) {
+
+                addChildFormContainer.style.display =
+                    "block";
+
+            }
+
+
+            showChildMessage(
+                ""
+            );
+
+
+            // ================================================
+            // NEUE GRUPPE AUSBLENDEN
+            // ================================================
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "none";
+
+            }
+
+
+            // ================================================
+            // GRUPPEN LADEN
+            // ================================================
+
+            await loadGroupsForCurrentInstitution();
+
+
+            // ================================================
+            // KINDER-ID FOKUS
+            // ================================================
+
+            const codeInput =
+                document.getElementById(
+                    "childCode"
+                );
+
+
+            if (codeInput) {
+
+                codeInput.focus();
+
+            }
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// KIND ANLEGEN – ABBRECHEN
+// ============================================================
+
+if (cancelAddChildButton) {
+
+    cancelAddChildButton.addEventListener(
+        "click",
+        () => {
+
+            if (addChildFormContainer) {
+
+                addChildFormContainer.style.display =
+                    "none";
+
+            }
+
+
+            if (addChildForm) {
+
+                addChildForm.reset();
+
+            }
+
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "none";
+
+            }
+
+
+            showChildMessage(
+                ""
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// NEUE GRUPPE – FORMULAR ÖFFNEN
+// ============================================================
+
+if (createGroupButton) {
+
+    createGroupButton.addEventListener(
+        "click",
+        () => {
+
+            if (!canManageChildren()) {
+
+                alert(
+                    "Nur Administratoren und Erzieher dürfen Gruppen anlegen."
+                );
+
+                return;
+            }
+
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "block";
+
+            }
+
+
+            if (newGroupNameInput) {
+
+                newGroupNameInput.value =
+                    "";
+
+                newGroupNameInput.focus();
+
+            }
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// NEUE GRUPPE – ABBRECHEN
+// ============================================================
+
+if (cancelNewGroupButton) {
+
+    cancelNewGroupButton.addEventListener(
+        "click",
+        () => {
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "none";
+
+            }
+
+
+            if (newGroupNameInput) {
+
+                newGroupNameInput.value =
+                    "";
+
+            }
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// NEUE GRUPPE SPEICHERN
+// ============================================================
+
+if (saveNewGroupButton) {
+
+    saveNewGroupButton.addEventListener(
+        "click",
+        async () => {
+
+            // ================================================
+            // BERECHTIGUNG
+            // ================================================
+
+            if (!canManageChildren()) {
+
+                alert(
+                    "Nur Administratoren und Erzieher dürfen Gruppen anlegen."
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // INSTITUTION
+            // ================================================
+
+            if (
+                !currentProfile?.institution_id
+            ) {
+
+                showChildMessage(
+                    "Deinem Benutzer ist keine Institution zugeordnet.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // GRUPPENNAME
+            // ================================================
+
+            const groupName =
+                newGroupNameInput
+                    ? newGroupNameInput.value.trim()
+                    : "";
+
+
+            if (!groupName) {
+
+                showChildMessage(
+                    "Bitte einen Gruppennamen eingeben.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // BUTTON DEAKTIVIEREN
+            // ================================================
+
+            saveNewGroupButton.disabled =
+                true;
+
+
+            saveNewGroupButton.textContent =
+                "Wird erstellt...";
+
+
+            // ================================================
+            // GRUPPE ERSTELLEN
+            // ================================================
+
+            const {
+                data: newGroup,
+                error
+            } =
+                await supabaseClient
+
+                    .from("Groups")
+
+                    .insert({
+
+                        group_name:
+                            groupName,
+
+                        institution_id:
+                            currentProfile.institution_id
+
+                    })
+
+                    .select(`
+                        id,
+                        group_name,
+                        description,
+                        institution_id
+                    `)
+
+                    .single();
+
+
+            // ================================================
+            // BUTTON ZURÜCKSETZEN
+            // ================================================
+
+            saveNewGroupButton.disabled =
+                false;
+
+
+            saveNewGroupButton.textContent =
+                "Gruppe erstellen";
+
+
+            // ================================================
+            // FEHLER
+            // ================================================
+
+            if (error) {
+
+                console.error(
+                    "Gruppe konnte nicht erstellt werden:",
+                    error
+                );
+
+
+                showChildMessage(
+                    "Gruppe konnte nicht erstellt werden: " +
+                    error.message,
+                    "error"
+                );
+
+
+                return;
+            }
+
+
+            // ================================================
+            // GRUPPEN NEU LADEN
+            // ================================================
+
+            await loadGroupsForCurrentInstitution();
+
+
+            // ================================================
+            // NEUE GRUPPE AUTOMATISCH AUSWÄHLEN
+            // ================================================
+
+            if (childGroupSelect) {
+
+                childGroupSelect.value =
+                    String(newGroup.id);
+
+            }
+
+
+            // ================================================
+            // NEUE GRUPPE FORMULAR SCHLIESSEN
+            // ================================================
+
+            if (newGroupContainer) {
+
+                newGroupContainer.style.display =
+                    "none";
+
+            }
+
+
+            if (newGroupNameInput) {
+
+                newGroupNameInput.value =
+                    "";
+
+            }
+
+
+            showChildMessage(
+                `Gruppe "${newGroup.group_name}" wurde erstellt.`,
+                "success"
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// KIND ANLEGEN
+// ============================================================
+
+if (addChildForm) {
+
+    addChildForm.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+
+            // ================================================
+            // LOGIN
+            // ================================================
+
+            if (!currentUser) {
+
+                showChildMessage(
+                    "Du bist nicht angemeldet.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // ROLLE
+            // ================================================
+
+            if (!canManageChildren()) {
+
+                showChildMessage(
+                    "Nur Administratoren und Erzieher dürfen Kinder anlegen.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // INSTITUTION
+            // ================================================
+
+            if (
+                !currentProfile?.institution_id
+            ) {
+
+                showChildMessage(
+                    "Deinem Benutzer ist keine Institution zugeordnet.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            // ================================================
+            // KINDER-ID
+            // ================================================
+
+            const codeInput =
+                document.getElementById(
+                    "childCode"
+                );
+
+
+            const childCode =
+                codeInput
+                    ? codeInput.value.trim()
+                    : "";
+
+
+            // ================================================
+            // GRUPPE
+            // ================================================
+
+            const groupId =
+                childGroupSelect
+                    ? childGroupSelect.value
+                    : "";
+
+
+            // ================================================
+            // VALIDIERUNG
+            // ================================================
+
+            if (!childCode) {
+
+                showChildMessage(
+                    "Bitte eine Kinder-ID eingeben.",
+                    "error"
+                );
+
+                if (codeInput) {
+
+                    codeInput.focus();
+
+                }
+
+                return;
+            }
+
+
+            if (!groupId) {
+
+                showChildMessage(
+                    "Bitte eine Gruppe auswählen.",
+                    "error"
+                );
+
+                if (childGroupSelect) {
+
+                    childGroupSelect.focus();
+
+                }
+
+                return;
+            }
+
+
+            // ================================================
+            // STATUS
+            // ================================================
+
+            showChildMessage(
+                "Kind wird gespeichert..."
+            );
+
+
+            // ================================================
+            // BUTTONS DEAKTIVIEREN
+            // ================================================
+
+            const submitButton =
+                addChildForm.querySelector(
+                    'button[type="submit"]'
+                );
+
+
+            if (submitButton) {
+
+                submitButton.disabled =
+                    true;
+
+                submitButton.textContent =
+                    "Kind wird angelegt...";
+
+            }
+
+
+            // ================================================
+            // KINDDATEN
+            // ================================================
+
+            const childData = {
+
+                child_code:
+                    childCode,
+
+                group_id:
+                    Number(groupId)
+
+            };
+
+
+            console.log(
+                "Kind wird angelegt:",
+                childData
+            );
+
+
+            // ================================================
+            // KIND ERSTELLEN
+            // ================================================
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+
+                    .from("children")
+
+                    .insert(
+                        childData
+                    )
+
+                    .select(`
+                        id,
+                        child_code,
+                        group_id,
+                        created_at
+                    `)
+
+                    .single();
+
+
+            // ================================================
+            // BUTTON ZURÜCKSETZEN
+            // ================================================
+
+            if (submitButton) {
+
+                submitButton.disabled =
+                    false;
+
+                submitButton.textContent =
+                    "Kind anlegen";
+
+            }
+
+
+            // ================================================
+            // FEHLER
+            // ================================================
+
+            if (error) {
+
+                console.error(
+                    "Kind konnte nicht angelegt werden:",
+                    error
+                );
+
+
+                // Doppelte Kinder-ID
+                if (
+                    error.code === "23505"
+                ) {
+
+                    showChildMessage(
+                        "Diese Kinder-ID existiert bereits.",
+                        "error"
+                    );
+
+                }
+
+                else {
+
+                    showChildMessage(
+                        "Kind konnte nicht angelegt werden: " +
+                        error.message,
+                        "error"
+                    );
+
+                }
+
+
+                return;
+            }
+
+
+            // ================================================
+            // ERFOLG
+            // ================================================
+
+            console.log(
+                "Kind erfolgreich angelegt:",
+                data
+            );
+
+
+            showChildMessage(
+                `Kind ${childCode} wurde erfolgreich angelegt.`,
+                "success"
+            );
+
+
+            // ================================================
+            // KINDERLISTE AKTUALISIEREN
+            // ================================================
+
+            await loadChildren();
+
+
+            // ================================================
+            // FORMULAR ZURÜCKSETZEN
+            // ================================================
+
+            if (addChildForm) {
+
+                addChildForm.reset();
+
+            }
+
+
+            // ================================================
+            // GRUPPEN ERNEUT LADEN
+            // ================================================
+
+            await loadGroupsForCurrentInstitution();
+
+
+            // ================================================
+            // FORMULAR SCHLIESSEN
+            // ================================================
+
+            setTimeout(
+                () => {
+
+                    if (addChildFormContainer) {
+
+                        addChildFormContainer.style.display =
+                            "none";
+
+                    }
+
+
+                    showChildMessage(
+                        ""
+                    );
+
+                },
+                1200
+            );
+
+        }
+    );
+
+}
 
 
 // ============================================================
@@ -869,41 +2259,291 @@ async function loadChildren() {
 
 
 // ============================================================
-// KIND ANLEGEN – FORMULAR ÖFFNEN
+// KIND ANLEGEN
 // ============================================================
 
-if (showAddChildButton) {
+if (addChildForm) {
 
-    showAddChildButton.addEventListener(
-        "click",
-        () => {
+    addChildForm.addEventListener(
+        "submit",
+        async event => {
 
-            if (addChildFormContainer) {
+            event.preventDefault();
 
-                addChildFormContainer.style.display =
-                    "block";
+
+            // ================================================
+            // LOGIN PRÜFEN
+            // ================================================
+
+            if (!currentUser) {
+
+                if (childFormMessage) {
+
+                    childFormMessage.textContent =
+                        "Du bist nicht angemeldet.";
+
+                }
+
+                return;
             }
 
+
+            // ================================================
+            // ROLLE PRÜFEN
+            // ================================================
+
+            if (
+                currentProfile?.role !== "ADMIN" &&
+                currentProfile?.role !== "ERZIEHER"
+            ) {
+
+                if (childFormMessage) {
+
+                    childFormMessage.textContent =
+                        "Nur Administratoren und Erzieher dürfen Kinder anlegen.";
+
+                }
+
+                return;
+            }
+
+
+            // ================================================
+            // INSTITUTION PRÜFEN
+            // ================================================
+
+            if (!currentProfile?.institution_id) {
+
+                if (childFormMessage) {
+
+                    childFormMessage.textContent =
+                        "Deinem Benutzer ist keine Institution zugeordnet.";
+
+                }
+
+                return;
+            }
+
+
+            // ================================================
+            // KINDER-ID
+            // ================================================
+
+            const codeInput =
+                document.getElementById(
+                    "childCode"
+                );
+
+
+            const childCode =
+                codeInput
+                    ? codeInput.value.trim()
+                    : "";
+
+
+            // ================================================
+            // GRUPPE
+            // ================================================
+
+            const groupSelect =
+                document.getElementById(
+                    "childGroup"
+                );
+
+
+            const groupId =
+                groupSelect
+                    ? groupSelect.value
+                    : "";
+
+
+            // ================================================
+            // VALIDIERUNG
+            // ================================================
+
+            if (!childCode) {
+
+                if (childFormMessage) {
+
+                    childFormMessage.textContent =
+                        "Bitte eine Kinder-ID eingeben.";
+
+                }
+
+                return;
+            }
+
+
+            if (!groupId) {
+
+                if (childFormMessage) {
+
+                    childFormMessage.textContent =
+                        "Bitte eine Gruppe auswählen.";
+
+                }
+
+                return;
+            }
+
+
+            // ================================================
+            // STATUS
+            // ================================================
 
             if (childFormMessage) {
 
                 childFormMessage.textContent =
-                    "";
+                    "Kind wird gespeichert...";
+
             }
 
 
-            const nameInput =
-                document.getElementById(
-                    "childDisplayName"
+            // ================================================
+            // KIND-DATEN
+            // ================================================
+
+            const childData = {
+
+                child_code:
+                    childCode,
+
+                group_id:
+                    groupId
+
+            };
+
+
+            console.log(
+                "Kind wird angelegt:",
+                childData
+            );
+
+
+            // ================================================
+            // SUPABASE INSERT
+            // ================================================
+
+            const {
+                data,
+                error
+            } = await supabaseClient
+
+                .from("children")
+
+                .insert(
+                    childData
+                )
+
+                .select(`
+                    id,
+                    child_code,
+                    group_id,
+                    created_at
+                `)
+
+                .single();
+
+
+            // ================================================
+            // FEHLER
+            // ================================================
+
+            if (error) {
+
+                console.error(
+                    "Kind konnte nicht angelegt werden:",
+                    error
                 );
 
 
-            if (nameInput) {
+                if (childFormMessage) {
 
-                nameInput.focus();
+                    childFormMessage.innerHTML =
+                        `
+                        <span style="color:red;">
+                            Kind konnte nicht angelegt werden:
+                            ${escapeHtml(
+                                error.message
+                            )}
+                        </span>
+                        `;
+
+                }
+
+                return;
             }
+
+
+            // ================================================
+            // ERFOLG
+            // ================================================
+
+            console.log(
+                "Kind erfolgreich angelegt:",
+                data
+            );
+
+
+            if (childFormMessage) {
+
+                childFormMessage.innerHTML =
+                    `
+                    <span style="color:green;">
+                        Kind wurde erfolgreich angelegt.
+                    </span>
+                    `;
+
+            }
+
+
+            // ================================================
+            // KINDER NEU LADEN
+            // ================================================
+
+            await loadChildren();
+
+
+            // ================================================
+            // FORMULAR ZURÜCKSETZEN
+            // ================================================
+
+            if (addChildForm) {
+
+                addChildForm.reset();
+
+            }
+
+
+            // ================================================
+            // FORMULAR SCHLIESSEN
+            // ================================================
+
+            setTimeout(
+                () => {
+
+                    if (addChildFormContainer) {
+
+                        addChildFormContainer.style.display =
+                            "none";
+
+                    }
+
+
+                    if (childFormMessage) {
+
+                        childFormMessage.textContent =
+                            "";
+
+                    }
+
+                },
+                1000
+            );
+
         }
     );
+
 }
 
 
