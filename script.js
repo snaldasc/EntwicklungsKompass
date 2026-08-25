@@ -772,24 +772,22 @@ function openSection(sectionName) {
     let found = false;
 
 
-    sections.forEach(section => {
+sections.forEach(section => {
 
-        const matches =
-            section.dataset.sectionContent ===
-            sectionName;
+    const matches =
+        section.dataset.sectionContent ===
+        sectionName;
 
+    section.classList.toggle(
+        "active",
+        matches
+    );
 
-        section.style.display =
-            matches
-                ? ""
-                : "none";
+    if (matches) {
+        found = true;
+    }
 
-
-        if (matches) {
-            found = true;
-        }
-
-    });
+});
 
 
     if (
