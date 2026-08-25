@@ -1899,13 +1899,13 @@ const DEVELOPMENT_OPTIONS = [
     },
 
     {
-        value: "teilweise",
-        label: "Teilweise"
+        value: "sicher",
+        label: "Sicher"
     },
 
     {
-        value: "sicher",
-        label: "Sicher"
+        value: "teilweise",
+        label: "Teilweise"
     },
 
     {
@@ -1914,6 +1914,7 @@ const DEVELOPMENT_OPTIONS = [
     }
 
 ];
+
 
 
 const DEVELOPMENT_QUESTIONS = [
@@ -2674,10 +2675,40 @@ function getQuestionsForAge(
     );
 
 }
+/* ============================================================
+   ENTWICKLUNGS BEWERTUNG
+   EIN KASTEN / 4 ZUSTÄNDE
+   weiß → grün → halb grün + Wellen → rot → weiß
+   ============================================================ */
+
+const DEVELOPMENT_OPTIONS = [
+
+    {
+        value: "noch_nicht",
+        label: "Noch nicht"
+    },
+
+    {
+        value: "sicher",
+        label: "Sicher"
+    },
+
+    {
+        value: "teilweise",
+        label: "Teilweise"
+    },
+
+    {
+        value: "nicht_beobachtet",
+        label: "Nicht beobachtet"
+    }
+
+];
 
 
 /* ============================================================
    FRAGEN RENDERN
+   EIN BEWERTUNGSKASTEN PRO FRAGE
    ============================================================ */
 
 function renderDevelopmentQuestions(
@@ -2752,53 +2783,61 @@ function renderDevelopmentQuestions(
                 question.area;
 
 
-            let optionsHtml =
-                "";
+            /*
+             * Aktuellen Bewertungszustand bestimmen
+             */
+
+            const currentValue =
+                currentAnswers[
+                    question.id
+                ] || "noch_nicht";
 
 
-            DEVELOPMENT_OPTIONS.forEach(
-                option => {
+            /*
+             * Beschriftung des Kastens
+             */
 
-                    const checked =
-                        currentAnswers[
-                            question.id
-                        ] ===
-                        option.value
-                            ? "checked"
-                            : "";
+            let currentLabel =
+                "Noch nicht";
 
 
-                    optionsHtml +=
-                        `
-                        <label
-                            class="development-option"
-                            style="
-                                display:block;
-                                padding:10px;
-                                margin:6px 0;
-                                border:1px solid #ddd;
-                                border-radius:8px;
-                                cursor:pointer;
-                            "
-                        >
+            if (
+                currentValue ===
+                "sicher"
+            ) {
 
-                            <input
-                                type="radio"
-                                name="development_question_${question.id}"
-                                value="${escapeHtml(option.value)}"
-                                data-question-id="${question.id}"
-                                ${checked}
-                            >
+                currentLabel =
+                    "Sicher";
 
-                            <span>
-                                ${escapeHtml(option.label)}
-                            </span>
+            }
 
-                        </label>
-                        `;
+            else if (
+                currentValue ===
+                "teilweise"
+            ) {
 
-                }
-            );
+                currentLabel =
+                    "Teilweise";
+
+            }
+
+            else if (
+                currentValue ===
+                "nicht_beobachtet"
+            ) {
+
+                currentLabel =
+                    "Nicht beobachtet";
+
+            }
+
+
+            /*
+             * CSS-Klasse für den Zustand
+             */
+
+            const stateClass =
+                `development-state-${currentValue}`;
 
 
             card.innerHTML =
@@ -2827,16 +2866,46 @@ function renderDevelopmentQuestions(
                 <div
                     style="
                         font-size:17px;
-                        margin-bottom:15px;
+                        margin-bottom:18px;
+                        line-height:1.45;
                     "
                 >
                     ${escapeHtml(question.question)}
                 </div>
 
 
-                <div>
-                    ${optionsHtml}
+                <div
+                    class="development-rating-wrapper"
+                    style="
+                        display:flex;
+                        justify-content:center;
+                        align-items:center;
+                        padding:10px 0 5px;
+                    "
+                >
+
+                    <button
+                        type="button"
+                        class="
+                            development-rating-box
+                            ${stateClass}
+                        "
+                        data-question-id="${question.id}"
+                        data-value="${currentValue}"
+                        aria-label="Bewertung: ${escapeHtml(currentLabel)}"
+                        title="${escapeHtml(currentLabel)}"
+                    >
+
+                        <span
+                            class="development-rating-label"
+                        >
+                            ${escapeHtml(currentLabel)}
+                        </span>
+
+                    </button>
+
                 </div>
+
                 `;
 
 
@@ -2848,29 +2917,111 @@ function renderDevelopmentQuestions(
     );
 
 
+    /*
+     * Bewertungs-Kästchen aktivieren
+     */
+
     questionsContainer
         .querySelectorAll(
-            'input[type="radio"]'
+            ".development-rating-box"
         )
         .forEach(
-            input => {
+            box => {
 
-                input.addEventListener(
-                    "change",
-                    event => {
+                box.addEventListener(
+                    "click",
+                    () => {
 
                         const questionId =
                             Number(
-                                event.target
-                                    .dataset
-                                    .questionId
+                                box.dataset.questionId
                             );
 
+
+                        /*
+                         * Aktuellen Zustand auslesen
+                         */
+
+                        const currentValue =
+                            currentAnswers[
+                                questionId
+                            ] ||
+                            "noch_nicht";
+
+
+                        /*
+                         * Reihenfolge:
+                         *
+                         * weiß
+                         * →
+                         * voll grün
+                         * →
+                         * halb grün + Wellen
+                         * →
+                         * rot
+                         * →
+                         * weiß
+                         */
+
+                        let nextValue;
+
+
+                        if (
+                            currentValue ===
+                            "noch_nicht"
+                        ) {
+
+                            nextValue =
+                                "sicher";
+
+                        }
+
+                        else if (
+                            currentValue ===
+                            "sicher"
+                        ) {
+
+                            nextValue =
+                                "teilweise";
+
+                        }
+
+                        else if (
+                            currentValue ===
+                            "teilweise"
+                        ) {
+
+                            nextValue =
+                                "nicht_beobachtet";
+
+                        }
+
+                        else {
+
+                            nextValue =
+                                "noch_nicht";
+
+                        }
+
+
+                        /*
+                         * Antwort speichern
+                         */
 
                         currentAnswers[
                             questionId
                         ] =
-                            event.target.value;
+                            nextValue;
+
+
+                        /*
+                         * Darstellung aktualisieren
+                         */
+
+                        updateDevelopmentRatingBox(
+                            box,
+                            nextValue
+                        );
 
                     }
                 );
@@ -2881,6 +3032,472 @@ function renderDevelopmentQuestions(
 }
 
 
+/* ============================================================
+   BEWERTUNGS-KÄSTCHEN AKTUALISIEREN
+   ============================================================ */
+
+function updateDevelopmentRatingBox(
+    box,
+    value
+) {
+
+    if (!box) {
+
+        return;
+
+    }
+
+
+    /*
+     * Alte Zustände entfernen
+     */
+
+    box.classList.remove(
+        "development-state-noch_nicht",
+        "development-state-sicher",
+        "development-state-teilweise",
+        "development-state-nicht_beobachtet"
+    );
+
+
+    /*
+     * Neuen Zustand setzen
+     */
+
+    box.classList.add(
+        `development-state-${value}`
+    );
+
+
+    box.dataset.value =
+        value;
+
+
+    /*
+     * Beschriftung aktualisieren
+     */
+
+    const label =
+        box.querySelector(
+            ".development-rating-label"
+        );
+
+
+    if (!label) {
+
+        return;
+
+    }
+
+
+    if (
+        value ===
+        "sicher"
+    ) {
+
+        label.textContent =
+            "Sicher";
+
+        box.title =
+            "Sicher";
+
+        box.setAttribute(
+            "aria-label",
+            "Bewertung: Sicher"
+        );
+
+    }
+
+    else if (
+        value ===
+        "teilweise"
+    ) {
+
+        label.textContent =
+            "Teilweise";
+
+        box.title =
+            "Teilweise";
+
+        box.setAttribute(
+            "aria-label",
+            "Bewertung: Teilweise"
+        );
+
+    }
+
+    else if (
+        value ===
+        "nicht_beobachtet"
+    ) {
+
+        label.textContent =
+            "Nicht beobachtet";
+
+        box.title =
+            "Nicht beobachtet";
+
+        box.setAttribute(
+            "aria-label",
+            "Bewertung: Nicht beobachtet"
+        );
+
+    }
+
+    else {
+
+        label.textContent =
+            "Noch nicht";
+
+        box.title =
+            "Noch nicht";
+
+        box.setAttribute(
+            "aria-label",
+            "Bewertung: Noch nicht"
+        );
+
+    }
+
+
+    /*
+     * Animation neu starten,
+     * wenn auf "Teilweise" gewechselt wird.
+     */
+
+    if (
+        value ===
+        "teilweise"
+    ) {
+
+        box.classList.remove(
+            "development-wave-animation"
+        );
+
+
+        /*
+         * Browser zwingt zum erneuten Layout,
+         * damit die Animation erneut startet.
+         */
+
+        void box.offsetWidth;
+
+
+        box.classList.add(
+            "development-wave-animation"
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   CSS FÜR DIE BEWERTUNGS-KÄSTCHEN
+   WIRD AUTOMATISCH EINGEFÜGT
+   ============================================================ */
+
+function ensureDevelopmentRatingStyles() {
+
+    if (
+        document.getElementById(
+            "developmentRatingStyles"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.id =
+        "developmentRatingStyles";
+
+
+    style.textContent =
+        `
+
+        .development-rating-box {
+
+            position:relative;
+
+            width:100%;
+
+            max-width:420px;
+
+            height:85px;
+
+            border-radius:16px;
+
+            border:3px solid #d8d8d8;
+
+            background:#ffffff;
+
+            color:#555;
+
+            cursor:pointer;
+
+            overflow:hidden;
+
+            display:flex;
+
+            align-items:center;
+
+            justify-content:center;
+
+            font-size:17px;
+
+            font-weight:700;
+
+            transition:
+                background 0.25s ease,
+                border-color 0.25s ease,
+                color 0.25s ease,
+                transform 0.2s ease,
+                box-shadow 0.25s ease;
+
+        }
+
+
+        .development-rating-box:hover {
+
+            transform:scale(1.02);
+
+            box-shadow:
+                0 4px 14px rgba(
+                    0,
+                    0,
+                    0,
+                    0.10
+                );
+
+        }
+
+
+        .development-rating-label {
+
+            position:relative;
+
+            z-index:3;
+
+            pointer-events:none;
+
+        }
+
+
+        /*
+         * 1. WEISS
+         */
+
+        .development-state-noch_nicht {
+
+            background:#ffffff;
+
+            border-color:#d8d8d8;
+
+            color:#555;
+
+        }
+
+
+        /*
+         * 2. VOLL GRÜN
+         */
+
+        .development-state-sicher {
+
+            background:#39b54a;
+
+            border-color:#2f9e3f;
+
+            color:#ffffff;
+
+            box-shadow:
+                0 4px 12px rgba(
+                    57,
+                    181,
+                    74,
+                    0.25
+                );
+
+        }
+
+
+        /*
+         * 3. HALB GRÜN
+         */
+
+        .development-state-teilweise {
+
+            background:
+                linear-gradient(
+                    to right,
+                    #39b54a 0%,
+                    #39b54a 50%,
+                    #ffffff 50%,
+                    #ffffff 100%
+                );
+
+            border-color:#39b54a;
+
+            color:#333;
+
+            box-shadow:
+                0 4px 12px rgba(
+                    57,
+                    181,
+                    74,
+                    0.18
+                );
+
+        }
+
+
+        /*
+         * Wellen-Overlay
+         */
+
+        .development-state-teilweise::before {
+
+            content:"";
+
+            position:absolute;
+
+            left:-30%;
+
+            top:0;
+
+            width:80%;
+
+            height:100%;
+
+            background:
+                repeating-linear-gradient(
+                    -45deg,
+                    rgba(
+                        255,
+                        255,
+                        255,
+                        0.22
+                    ) 0px,
+                    rgba(
+                        255,
+                        255,
+                        255,
+                        0.22
+                    ) 8px,
+                    rgba(
+                        255,
+                        255,
+                        255,
+                        0
+                    ) 8px,
+                    rgba(
+                        255,
+                        255,
+                        255,
+                        0
+                    ) 16px
+                );
+
+            pointer-events:none;
+
+            z-index:1;
+
+        }
+
+
+        /*
+         * Wellen-Animation
+         */
+
+        .development-wave-animation::before {
+
+            animation:
+                developmentRatingWave
+                1.4s
+                linear
+                infinite;
+
+        }
+
+
+        @keyframes developmentRatingWave {
+
+            from {
+
+                transform:
+                    translateX(0);
+
+            }
+
+            to {
+
+                transform:
+                    translateX(45%);
+
+            }
+
+        }
+
+
+        /*
+         * 4. ROT
+         */
+
+        .development-state-nicht_beobachtet {
+
+            background:#e53935;
+
+            border-color:#c62828;
+
+            color:#ffffff;
+
+            box-shadow:
+                0 4px 12px rgba(
+                    229,
+                    57,
+                    53,
+                    0.25
+                );
+
+        }
+
+
+        /*
+         * Mobile
+         */
+
+        @media (
+            max-width:600px
+        ) {
+
+            .development-rating-box {
+
+                max-width:100%;
+
+                height:75px;
+
+                font-size:16px;
+
+            }
+
+        }
+
+        `;
+
+
+    document.head.appendChild(
+        style
+    );
+
+}
 /* ============================================================
    ENTWICKLUNG KIND GEÄNDERT
    ============================================================ */
@@ -3057,8 +3674,9 @@ function handleDevelopmentAgeChange(
    ============================================================ */
 
 function setupDevelopmentEvents() {
-
-    const {
+   ensureDevelopmentRatingStyles
+   
+   const {
         childSelect,
         ageSelect,
         saveButton
