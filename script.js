@@ -3652,7 +3652,7 @@ function handleDevelopmentAgeChange(
    ============================================================ */
 
 function setupDevelopmentEvents() {
-   ensureDevelopmentRatingStyles
+   ensureDevelopmentRatingStyles()
    
    const {
         childSelect,
