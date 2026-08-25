@@ -4276,42 +4276,6 @@ async function handleDevelopmentSave() {
 
 
 
-    catch (error) {
-
-        console.error(
-            "Fehler bei der Entwicklungsauswertung:",
-            error
-        );
-
-
-        safeText(
-            questionsMessage,
-            "Die Auswertung konnte nicht erstellt werden."
-        );
-
-
-        if (questionsMessage) {
-
-            questionsMessage.style.color =
-                "red";
-
-        }
-
-    }
-
-    finally {
-
-        if (saveButton) {
-
-            saveButton.disabled =
-                false;
-
-            saveButton.textContent =
-                "Auswertung erstellen";
-
-        }
-
-    }
 
 }
 
