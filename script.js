@@ -126,27 +126,21 @@ function escapeHtml(value) {
 function showLogin() {
 
     if (loginSection) {
-
         loginSection.style.display = "";
-
+        loginSection.classList.remove("hidden");
     }
-
 
     if (registerSection) {
-
         registerSection.style.display = "none";
-
+        registerSection.classList.add("hidden");
     }
 
-
     if (dashboardSection) {
-
         dashboardSection.style.display = "none";
-
+        dashboardSection.classList.add("hidden");
     }
 
 }
-
 
 // ============================================================
 // REGISTRIERUNG ANZEIGEN
@@ -155,28 +149,21 @@ function showLogin() {
 function showRegister() {
 
     if (loginSection) {
-
         loginSection.style.display = "none";
-
+        loginSection.classList.add("hidden");
     }
-
 
     if (registerSection) {
-
         registerSection.style.display = "";
-
+        registerSection.classList.remove("hidden");
     }
 
-
     if (dashboardSection) {
-
         dashboardSection.style.display = "none";
-
+        dashboardSection.classList.add("hidden");
     }
 
 }
-
-
 // ============================================================
 // DASHBOARD ANZEIGEN
 // ============================================================
@@ -184,23 +171,18 @@ function showRegister() {
 function showDashboard() {
 
     if (loginSection) {
-
         loginSection.style.display = "none";
-
+        loginSection.classList.add("hidden");
     }
-
 
     if (registerSection) {
-
         registerSection.style.display = "none";
-
+        registerSection.classList.add("hidden");
     }
 
-
     if (dashboardSection) {
-
         dashboardSection.style.display = "";
-
+        dashboardSection.classList.remove("hidden");
     }
 
 }
