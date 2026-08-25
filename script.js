@@ -3562,6 +3562,97 @@ function showDevelopmentResult(result) {
     }
 
 
+    const areaEntries =
+        Object.values(result.areas);
+
+
+    let areasHtml = "";
+
+
+    areaEntries.forEach(area => {
+
+        let status = "Beobachtungsbedarf";
+
+
+        if (area.percentage >= 80) {
+
+            status = "Sehr sicher";
+
+        }
+
+        else if (area.percentage >= 60) {
+
+            status = "Überwiegend sicher";
+
+        }
+
+        else if (area.percentage >= 40) {
+
+            status = "Teilweise entwickelt";
+
+        }
+
+
+        areasHtml +=
+            `
+            <div class="development-result-area">
+
+                <div class="development-result-area-header">
+
+                    <strong>
+                        ${escapeHtml(area.label)}
+                    </strong>
+
+                    <span>
+                        ${area.percentage} %
+                    </span>
+
+                </div>
+
+
+                <div class="development-result-progress">
+
+                    <div
+                        class="development-result-progress-bar"
+                        style="width:${area.percentage}%"
+                    ></div>
+
+                </div>
+
+
+                <div class="development-result-area-status">
+
+                    ${escapeHtml(status)}
+
+                </div>
+
+
+                <div class="development-result-area-details">
+
+                    <span>
+                        Sicher: ${area.sicher}
+                    </span>
+
+                    <span>
+                        Teilweise: ${area.teilweise}
+                    </span>
+
+                    <span>
+                        Noch nicht: ${area.noch_nicht}
+                    </span>
+
+                    <span>
+                        Nicht beobachtet: ${area.nicht_beobachtet}
+                    </span>
+
+                </div>
+
+            </div>
+            `;
+
+    });
+
+
     resultContainer.innerHTML =
         `
         <div class="development-result-card">
@@ -3571,67 +3662,56 @@ function showDevelopmentResult(result) {
             </h2>
 
 
-            <div class="development-result-row">
+            <div class="development-result-overview">
 
-                <span>
-                    Sicher
-                </span>
+                <div class="development-result-main-score">
 
-                <strong>
-                    ${result.sicher}
-                </strong>
+                    <span>
+                        Gesamtentwicklung
+                    </span>
 
-            </div>
+                    <strong>
+                        ${result.percentage} %
+                    </strong>
 
-
-            <div class="development-result-row">
-
-                <span>
-                    Teilweise
-                </span>
-
-                <strong>
-                    ${result.teilweise}
-                </strong>
-
-            </div>
+                </div>
 
 
-            <div class="development-result-row">
+                <div class="development-result-summary">
 
-                <span>
-                    Noch nicht
-                </span>
+                    <div>
+                        <span>Sicher</span>
+                        <strong>${result.sicher}</strong>
+                    </div>
 
-                <strong>
-                    ${result.noch_nicht}
-                </strong>
+                    <div>
+                        <span>Teilweise</span>
+                        <strong>${result.teilweise}</strong>
+                    </div>
 
-            </div>
+                    <div>
+                        <span>Noch nicht</span>
+                        <strong>${result.noch_nicht}</strong>
+                    </div>
 
+                    <div>
+                        <span>Nicht beobachtet</span>
+                        <strong>${result.nicht_beobachtet}</strong>
+                    </div>
 
-            <div class="development-result-row">
-
-                <span>
-                    Nicht beobachtet
-                </span>
-
-                <strong>
-                    ${result.nicht_beobachtet}
-                </strong>
+                </div>
 
             </div>
 
 
-            <hr>
+            <h3>
+                Entwicklungsbereiche
+            </h3>
 
 
-            <div class="development-result-percentage">
+            <div class="development-result-areas">
 
-                Entwicklungsstand:
-                <strong>
-                    ${result.percentage} %
-                </strong>
+                ${areasHtml}
 
             </div>
 
@@ -3640,6 +3720,259 @@ function showDevelopmentResult(result) {
 
 
     resultContainer.style.display = "";
+
+}
+
+function ensureDevelopmentResultStyles() {
+
+    if (
+        document.getElementById(
+            "developmentResultStyles"
+        )
+    ) {
+        return;
+    }
+
+
+    const style =
+        document.createElement("style");
+
+
+    style.id =
+        "developmentResultStyles";
+
+
+    style.textContent = `
+
+        .development-result-card {
+
+            margin-top:30px;
+
+            padding:25px;
+
+            border-radius:18px;
+
+            background:#ffffff;
+
+            box-shadow:
+                0 5px 20px rgba(0,0,0,.08);
+
+        }
+
+
+        .development-result-card h2 {
+
+            margin-top:0;
+
+        }
+
+
+        .development-result-card h3 {
+
+            margin-top:30px;
+
+        }
+
+
+        .development-result-overview {
+
+            display:grid;
+
+            grid-template-columns:
+                minmax(180px, 1fr)
+                2fr;
+
+            gap:25px;
+
+            align-items:center;
+
+        }
+
+
+        .development-result-main-score {
+
+            text-align:center;
+
+            padding:25px;
+
+            border-radius:16px;
+
+            background:#f5f7f8;
+
+        }
+
+
+        .development-result-main-score span {
+
+            display:block;
+
+            font-size:14px;
+
+            color:#666;
+
+            margin-bottom:8px;
+
+        }
+
+
+        .development-result-main-score strong {
+
+            font-size:42px;
+
+        }
+
+
+        .development-result-summary {
+
+            display:grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap:10px;
+
+        }
+
+
+        .development-result-summary div {
+
+            padding:15px;
+
+            text-align:center;
+
+            border-radius:12px;
+
+            background:#f7f7f7;
+
+        }
+
+
+        .development-result-summary span {
+
+            display:block;
+
+            font-size:13px;
+
+            color:#666;
+
+            margin-bottom:5px;
+
+        }
+
+
+        .development-result-summary strong {
+
+            font-size:22px;
+
+        }
+
+
+        .development-result-area {
+
+            padding:18px 0;
+
+            border-bottom:
+                1px solid #eeeeee;
+
+        }
+
+
+        .development-result-area-header {
+
+            display:flex;
+
+            justify-content:space-between;
+
+            align-items:center;
+
+            margin-bottom:8px;
+
+        }
+
+
+        .development-result-area-header span {
+
+            font-weight:700;
+
+        }
+
+
+        .development-result-progress {
+
+            height:12px;
+
+            border-radius:10px;
+
+            background:#eeeeee;
+
+            overflow:hidden;
+
+        }
+
+
+        .development-result-progress-bar {
+
+            height:100%;
+
+            border-radius:10px;
+
+            background:#39b54a;
+
+            transition:width .5s ease;
+
+        }
+
+
+        .development-result-area-status {
+
+            margin-top:8px;
+
+            font-size:14px;
+
+            color:#555;
+
+        }
+
+
+        .development-result-area-details {
+
+            display:flex;
+
+            flex-wrap:wrap;
+
+            gap:15px;
+
+            margin-top:10px;
+
+            font-size:13px;
+
+            color:#666;
+
+        }
+
+
+        @media (max-width:700px) {
+
+            .development-result-overview {
+
+                grid-template-columns:1fr;
+
+            }
+
+
+            .development-result-summary {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+        }
+
+    `;
+
+
+    document.head.appendChild(style);
 
 }
 
@@ -4220,7 +4553,9 @@ async function initializeApplication() {
          */
 
         ensureDevelopmentSection();
-
+       
+        ensureDevelopmentResultStyles();
+        
         ensureDevelopmentRatingStyles();
 
         setupDevelopmentEvents();
