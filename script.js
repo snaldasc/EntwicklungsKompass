@@ -1,11 +1,10 @@
 /* ============================================================
    ENTWICKLUNGSKOMPASS
    KINDERGARTEN-VERWALTUNG
-   SUPABASE AUTH + PROFILE + KINDER + GRUPPEN
-   + ENTWICKLUNGSKOMPASS
    ============================================================ */
 
 "use strict";
+
 
 /* ============================================================
    SUPABASE
@@ -14,39 +13,24 @@
 const SUPABASE_URL =
     "https://sjekwvalxujnfparxees.supabase.co";
 
-/*
- * WICHTIG:
- * Hier muss dein aktuell gültiger ANON KEY aus Supabase stehen.
- *
- * Falls dein Login mit deiner derzeitigen Version funktioniert,
- * kannst du dort deinen bereits funktionierenden Key einsetzen.
- */
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdW50d2FseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
 
 if (
     !window.supabase ||
     typeof window.supabase.createClient !== "function"
 ) {
-    console.error(
-        "Supabase JS wurde nicht geladen."
-    );
+    console.error("Supabase JS wurde nicht geladen.");
 }
 else {
-
     window.supabaseClient =
         window.supabase.createClient(
             SUPABASE_URL,
             SUPABASE_ANON_KEY
         );
-
 }
 
-
-/* ============================================================
-   GLOBALE VARIABLEN
-   ============================================================ */
 
 let supabaseClient =
     window.supabaseClient || null;
@@ -87,26 +71,21 @@ function escapeHtml(value) {
 
 
 function byId(id) {
-
     return document.getElementById(id);
-
 }
 
 
 function safeText(element, text) {
 
     if (element) {
-
-        element.textContent =
-            text ?? "";
-
+        element.textContent = text ?? "";
     }
 
 }
 
 
 /* ============================================================
-   DOM ELEMENTE
+   DOM
    ============================================================ */
 
 const loginSection =
@@ -126,24 +105,15 @@ const appSection =
 function showLogin() {
 
     if (loginSection) {
-
-        loginSection.style.display =
-            "";
-
+        loginSection.style.display = "";
     }
 
     if (registerSection) {
-
-        registerSection.style.display =
-            "none";
-
+        registerSection.style.display = "none";
     }
 
     if (appSection) {
-
-        appSection.style.display =
-            "none";
-
+        appSection.style.display = "none";
     }
 
 }
@@ -152,27 +122,18 @@ function showLogin() {
 function showDashboard() {
 
     if (loginSection) {
-
-        loginSection.style.display =
-            "none";
-
+        loginSection.style.display = "none";
     }
 
     if (registerSection) {
-
-        registerSection.style.display =
-            "none";
-
+        registerSection.style.display = "none";
     }
 
     if (appSection) {
 
-        appSection.style.display =
-            "";
+        appSection.style.display = "";
 
-        appSection.classList.remove(
-            "hidden"
-        );
+        appSection.classList.remove("hidden");
 
     }
 
@@ -180,15 +141,13 @@ function showDashboard() {
 
 
 /* ============================================================
-   PROFIL LADEN
+   PROFIL
    ============================================================ */
 
 async function loadUserProfile() {
 
     if (!supabaseClient) {
-
         return null;
-
     }
 
     try {
@@ -200,6 +159,7 @@ async function loadUserProfile() {
             error: userError
         } =
             await supabaseClient.auth.getUser();
+
 
         if (userError) {
 
@@ -224,8 +184,7 @@ async function loadUserProfile() {
         }
 
 
-        currentUser =
-            user;
+        currentUser = user;
 
 
         const {
@@ -245,10 +204,7 @@ async function loadUserProfile() {
                     approved_by,
                     approved_at
                 `)
-                .eq(
-                    "id",
-                    user.id
-                )
+                .eq("id", user.id)
                 .maybeSingle();
 
 
@@ -259,27 +215,18 @@ async function loadUserProfile() {
                 error
             );
 
-            /*
-             * Login soll nicht komplett verschwinden,
-             * nur weil kein Profil gefunden wurde.
-             */
-
             currentProfile = {
 
-                id:
-                    user.id,
+                id: user.id,
 
-                institution_id:
-                    null,
+                institution_id: null,
 
                 full_name:
                     user.email || "Benutzer",
 
-                phone:
-                    "",
+                phone: "",
 
-                role:
-                    "ADMIN",
+                role: "ADMIN",
 
                 email:
                     user.email || ""
@@ -303,26 +250,18 @@ async function loadUserProfile() {
 
         else {
 
-            /*
-             * Falls noch kein profiles-Eintrag existiert.
-             */
-
             currentProfile = {
 
-                id:
-                    user.id,
+                id: user.id,
 
-                institution_id:
-                    null,
+                institution_id: null,
 
                 full_name:
                     user.email || "Benutzer",
 
-                phone:
-                    "",
+                phone: "",
 
-                role:
-                    "ADMIN",
+                role: "ADMIN",
 
                 email:
                     user.email || ""
@@ -402,30 +341,25 @@ function updateUserUI() {
         currentUser.email || ""
     );
 
-
     safeText(
         nameElement,
         displayName
     );
-
 
     safeText(
         profileName,
         displayName
     );
 
-
     safeText(
         profileEmail,
         currentUser.email || ""
     );
 
-
     safeText(
         profileRole,
         currentProfile?.role || "—"
     );
-
 
     safeText(
         institutionName,
@@ -438,10 +372,6 @@ function updateUserUI() {
 }
 
 
-/* ============================================================
-   ROLLEN
-   ============================================================ */
-
 function updateRoleUI() {
 
     const role =
@@ -449,23 +379,18 @@ function updateRoleUI() {
 
 
     document
-        .querySelectorAll(
-            "[data-role]"
-        )
-        .forEach(
-            element => {
+        .querySelectorAll("[data-role]")
+        .forEach(element => {
 
-                const requiredRole =
-                    element.dataset.role;
+            const requiredRole =
+                element.dataset.role;
 
+            element.style.display =
+                requiredRole === role
+                    ? ""
+                    : "none";
 
-                element.style.display =
-                    requiredRole === role
-                        ? ""
-                        : "none";
-
-            }
-        );
+        });
 
 }
 
@@ -474,7 +399,6 @@ function canManageChildren() {
 
     const role =
         currentProfile?.role;
-
 
     return (
         role === "ADMIN" ||
@@ -491,9 +415,7 @@ function canManageChildren() {
 async function logout() {
 
     if (!supabaseClient) {
-
         return;
-
     }
 
 
@@ -540,9 +462,7 @@ async function handleLogin(event) {
 
 
     if (!supabaseClient) {
-
         return;
-
     }
 
 
@@ -557,8 +477,7 @@ async function handleLogin(event) {
 
 
     const email =
-        emailInput?.value
-            ?.trim() || "";
+        emailInput?.value?.trim() || "";
 
     const password =
         passwordInput?.value || "";
@@ -602,7 +521,6 @@ async function handleLogin(event) {
             error
         );
 
-
         safeText(
             message,
             error.message
@@ -626,10 +544,6 @@ async function handleLogin(event) {
     );
 
 
-    /*
-     * Dashboard sicher anzeigen.
-     */
-
     showDashboard();
 
 
@@ -648,9 +562,7 @@ async function handleRegister(event) {
 
 
     if (!supabaseClient) {
-
         return;
-
     }
 
 
@@ -659,23 +571,19 @@ async function handleRegister(event) {
             ?.value
             ?.trim() || "";
 
-
     const password =
         byId("registerPassword")
             ?.value || "";
-
 
     const firstName =
         byId("registerFirstName")
             ?.value
             ?.trim() || "";
 
-
     const lastName =
         byId("registerLastName")
             ?.value
             ?.trim() || "";
-
 
     const message =
         byId("registerMessage");
@@ -734,7 +642,6 @@ async function handleRegister(event) {
             error
         );
 
-
         safeText(
             message,
             error.message
@@ -752,10 +659,7 @@ async function handleRegister(event) {
 
 
     if (data?.user) {
-
-        currentUser =
-            data.user;
-
+        currentUser = data.user;
     }
 
 }
@@ -785,9 +689,7 @@ function setupNavigation() {
 
 
                     if (!sectionName) {
-
                         return;
-
                     }
 
 
@@ -844,34 +746,22 @@ function setupNavigation() {
 }
 
 
-function openSection(
-    sectionName
-) {
-
-    /*
-     * Navigation buttons
-     */
+function openSection(sectionName) {
 
     document
         .querySelectorAll(
             "[data-section]"
         )
-        .forEach(
-            button => {
+        .forEach(button => {
 
-                button.classList.toggle(
-                    "active",
-                    button.dataset.section ===
-                    sectionName
-                );
+            button.classList.toggle(
+                "active",
+                button.dataset.section ===
+                sectionName
+            );
 
-            }
-        );
+        });
 
-
-    /*
-     * Vorhandene Sections
-     */
 
     const sections =
         document.querySelectorAll(
@@ -879,37 +769,28 @@ function openSection(
         );
 
 
-    let found =
-        false;
+    let found = false;
 
 
-    sections.forEach(
-        section => {
+    sections.forEach(section => {
 
-            const matches =
-                section.dataset.sectionContent ===
-                sectionName;
-
-
-            section.style.display =
-                matches
-                    ? ""
-                    : "none";
+        const matches =
+            section.dataset.sectionContent ===
+            sectionName;
 
 
-            if (matches) {
+        section.style.display =
+            matches
+                ? ""
+                : "none";
 
-                found = true;
 
-            }
-
+        if (matches) {
+            found = true;
         }
-    );
 
+    });
 
-    /*
-     * Entwicklung muss immer existieren.
-     */
 
     if (
         sectionName ===
@@ -972,8 +853,11 @@ async function loadChildren() {
     }
 
 
-    let query =
-        supabaseClient
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
             .from("children")
             .select(`
                 id,
@@ -991,13 +875,6 @@ async function loadChildren() {
                     ascending: true
                 }
             );
-
-
-    const {
-        data,
-        error
-    } =
-        await query;
 
 
     if (error) {
@@ -1045,22 +922,14 @@ async function loadChildren() {
 }
 
 
-/* ============================================================
-   KINDER LISTE
-   ============================================================ */
-
-function renderChildrenList(
-    children
-) {
+function renderChildrenList(children) {
 
     const childrenList =
         byId("childrenList");
 
 
     if (!childrenList) {
-
         return;
-
     }
 
 
@@ -1081,213 +950,61 @@ function renderChildrenList(
     }
 
 
-    childrenList.innerHTML =
-        "";
+    childrenList.innerHTML = "";
 
 
-    children.forEach(
-        child => {
+    children.forEach(child => {
 
-            const item =
-                document.createElement(
-                    "div"
-                );
+        const item =
+            document.createElement("div");
 
 
-            item.className =
-                "child-item";
+        item.className =
+            "child-item";
 
 
-            const groupName =
-                child.Groups?.group_name ||
-                "Keine Gruppe";
+        const groupName =
+            child.Groups?.group_name ||
+            "Keine Gruppe";
 
 
-            item.innerHTML =
-                `
-                <div>
-                    <strong>
-                        ${escapeHtml(
-                            child.child_code ||
-                            "Keine Kinder-ID"
-                        )}
-                    </strong>
+        item.innerHTML =
+            `
+            <div>
 
-                    <br>
+                <strong>
+                    ${escapeHtml(
+                        child.child_code ||
+                        "Keine Kinder-ID"
+                    )}
+                </strong>
 
-                    <span>
-                        Gruppe:
-                        ${escapeHtml(
-                            groupName
-                        )}
-                    </span>
-                </div>
-                `;
+                <br>
+
+                <span>
+                    Gruppe:
+                    ${escapeHtml(groupName)}
+                </span>
+
+            </div>
+            `;
 
 
-            childrenList.appendChild(
-                item
-            );
+        childrenList.appendChild(item);
 
-        }
-    );
+    });
 
 }
 
 
 /* ============================================================
-   KIND ANLEGEN
-   PASST ZU DEINER AKTUELLEN HTML:
-   openCreateChildButton
-   createChildSection
-   newChildCode
-   newChildGroup
-   createChildButton
-   cancelCreateChildButton
-   ============================================================ */
-
-async function openCreateChildForm() {
-
-    if (!canManageChildren()) {
-
-        showChildMessage(
-            "Nur Administratoren und Erzieher dürfen Kinder anlegen.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    const section =
-        byId(
-            "createChildSection"
-        );
-
-
-    if (section) {
-
-        section.style.display =
-            "block";
-
-    }
-
-
-    await loadGroupsIntoSelect(
-        "newChildGroup"
-    );
-
-}
-
-
-function closeCreateChildForm() {
-
-    const section =
-        byId(
-            "createChildSection"
-        );
-
-
-    if (section) {
-
-        section.style.display =
-            "none";
-
-    }
-
-
-    const code =
-        byId(
-            "newChildCode"
-        );
-
-
-    if (code) {
-
-        code.value =
-            "";
-
-    }
-
-
-    const select =
-        byId(
-            "newChildGroup"
-        );
-
-
-    if (select) {
-
-        select.value =
-            "";
-
-    }
-
-
-    showChildMessage(
-        ""
-    );
-
-}
-
-
-function showChildMessage(
-    message,
-    type = "info"
-) {
-
-    const element =
-        byId(
-            "childMessage"
-        );
-
-
-    if (!element) {
-
-        return;
-
-    }
-
-
-    element.textContent =
-        message;
-
-
-    if (type === "error") {
-
-        element.style.color =
-            "red";
-
-    }
-
-    else if (type === "success") {
-
-        element.style.color =
-            "green";
-
-    }
-
-    else {
-
-        element.style.color =
-            "";
-
-    }
-
-}
-
-
-/* ============================================================
-   GRUPPEN LADEN
+   GRUPPEN
    ============================================================ */
 
 async function loadGroups() {
 
     if (!supabaseClient) {
-
         return [];
-
     }
 
 
@@ -1342,109 +1059,14 @@ async function loadGroups() {
 }
 
 
-/* ============================================================
-   GRUPPEN SELECT
-   ============================================================ */
-
-async function loadGroupsIntoSelect(
-    selectId
-) {
-
-    const select =
-        byId(
-            selectId
-        );
-
-
-    if (!select) {
-
-        return;
-
-    }
-
-
-    select.innerHTML =
-        `
-        <option value="">
-            Gruppen werden geladen...
-        </option>
-        `;
-
-
-    const groups =
-        await loadGroups();
-
-
-    select.innerHTML =
-        `
-        <option value="">
-            Gruppe auswählen...
-        </option>
-        `;
-
-
-    if (
-        !groups ||
-        groups.length === 0
-    ) {
-
-        select.innerHTML =
-            `
-            <option value="">
-                Noch keine Gruppe vorhanden
-            </option>
-            `;
-
-        return;
-
-    }
-
-
-    groups.forEach(
-        group => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                String(group.id);
-
-
-            option.textContent =
-                group.group_name;
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-}
-
-
-/* ============================================================
-   GRUPPEN DARSTELLEN
-   ============================================================ */
-
-function renderGroups(
-    groups
-) {
+function renderGroups(groups) {
 
     const container =
-        byId(
-            "groupsList"
-        );
+        byId("groupsList");
 
 
     if (!container) {
-
         return;
-
     }
 
 
@@ -1461,398 +1083,46 @@ function renderGroups(
     }
 
 
-    container.innerHTML =
-        "";
+    container.innerHTML = "";
 
 
-    groups.forEach(
-        group => {
+    groups.forEach(group => {
 
-            const item =
-                document.createElement(
-                    "div"
-                );
+        const item =
+            document.createElement("div");
 
 
-            item.className =
-                "group-item";
+        item.className =
+            "group-item";
 
 
-            item.innerHTML =
+        item.innerHTML =
+            `
+            <strong>
+                ${escapeHtml(
+                    group.group_name
+                )}
+            </strong>
+            `;
+
+
+        if (group.description) {
+
+            item.innerHTML +=
                 `
-                <strong>
+                <p>
                     ${escapeHtml(
-                        group.group_name
+                        group.description
                     )}
-                </strong>
+                </p>
                 `;
 
-
-            if (group.description) {
-
-                item.innerHTML +=
-                    `
-                    <p>
-                        ${escapeHtml(
-                            group.description
-                        )}
-                    </p>
-                    `;
-
-            }
-
-
-            container.appendChild(
-                item
-            );
-
-        }
-    );
-
-}
-
-
-/* ============================================================
-   KIND SPEICHERN
-   ============================================================ */
-
-async function createChild() {
-
-    if (!canManageChildren()) {
-
-        showChildMessage(
-            "Nur Administratoren und Erzieher dürfen Kinder anlegen.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if (!supabaseClient) {
-
-        showChildMessage(
-            "Supabase ist nicht verfügbar.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    const codeInput =
-        byId(
-            "newChildCode"
-        );
-
-
-    const groupSelect =
-        byId(
-            "newChildGroup"
-        );
-
-
-    const childCode =
-        codeInput?.value
-            ?.trim() || "";
-
-
-    const groupId =
-        groupSelect?.value || "";
-
-
-    if (!childCode) {
-
-        showChildMessage(
-            "Bitte eine Kinder-ID eingeben.",
-            "error"
-        );
-
-        codeInput?.focus();
-
-        return;
-
-    }
-
-
-    if (!groupId) {
-
-        showChildMessage(
-            "Bitte eine Gruppe auswählen.",
-            "error"
-        );
-
-        groupSelect?.focus();
-
-        return;
-
-    }
-
-
-    /*
-     * group_id ist in deiner aktuellen Datenbank offenbar bigint.
-     */
-
-    const numericGroupId =
-        Number(groupId);
-
-
-    if (
-        !Number.isInteger(
-            numericGroupId
-        )
-    ) {
-
-        showChildMessage(
-            "Ungültige Gruppe.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    const button =
-        byId(
-            "createChildButton"
-        );
-
-
-    if (button) {
-
-        button.disabled =
-            true;
-
-        button.textContent =
-            "Wird gespeichert...";
-
-    }
-
-
-    showChildMessage(
-        "Kind wird gespeichert..."
-    );
-
-
-    try {
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("children")
-                .insert({
-
-                    child_code:
-                        childCode,
-
-                    group_id:
-                        numericGroupId
-
-                })
-                .select(`
-                    id,
-                    child_code,
-                    group_id,
-                    created_at
-                `)
-                .single();
-
-
-        if (error) {
-
-            throw error;
-
         }
 
 
-        console.log(
-            "Kind erfolgreich angelegt:",
-            data
-        );
+        container.appendChild(item);
 
-
-        showChildMessage(
-            `Kind ${childCode} wurde erfolgreich angelegt.`,
-            "success"
-        );
-
-
-        await loadChildren();
-
-
-        await loadGroupsIntoSelect(
-            "newChildGroup"
-        );
-
-
-        setTimeout(
-            () => {
-
-                closeCreateChildForm();
-
-            },
-            1000
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Kind konnte nicht angelegt werden:",
-            error
-        );
-
-
-        if (
-            error.code ===
-            "23505"
-        ) {
-
-            showChildMessage(
-                "Diese Kinder-ID existiert bereits.",
-                "error"
-            );
-
-        }
-
-        else {
-
-            showChildMessage(
-                "Kind konnte nicht angelegt werden: " +
-                (
-                    error.message ||
-                    "Unbekannter Fehler"
-                ),
-                "error"
-            );
-
-        }
-
-    }
-
-    finally {
-
-        if (button) {
-
-            button.disabled =
-                false;
-
-            button.textContent =
-                "Kind speichern";
-
-        }
-
-    }
-
-}
-
-
-/* ============================================================
-   GRUPPE ANLEGEN
-   ============================================================ */
-
-async function createGroup() {
-
-    if (!canManageChildren()) {
-
-        alert(
-            "Nur Administratoren und Erzieher dürfen Gruppen anlegen."
-        );
-
-        return;
-
-    }
-
-
-    const name =
-        prompt(
-            "Name der neuen Gruppe:"
-        );
-
-
-    if (!name) {
-
-        return;
-
-    }
-
-
-    const groupName =
-        name.trim();
-
-
-    if (!groupName) {
-
-        return;
-
-    }
-
-
-    if (!currentProfile?.institution_id) {
-
-        alert(
-            "Deinem Benutzer ist keine Institution zugeordnet."
-        );
-
-        return;
-
-    }
-
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("Groups")
-            .insert({
-
-                group_name:
-                    groupName,
-
-                institution_id:
-                    currentProfile.institution_id
-
-            })
-            .select()
-            .single();
-
-
-    if (error) {
-
-        console.error(
-            "Gruppe konnte nicht erstellt werden:",
-            error
-        );
-
-
-        alert(
-            "Gruppe konnte nicht erstellt werden:\n" +
-            error.message
-        );
-
-        return;
-
-    }
-
-
-    console.log(
-        "Gruppe erstellt:",
-        data
-    );
-
-
-    await loadGroups();
-
-    await loadGroupsIntoSelect(
-        "newChildGroup"
-    );
+    });
 
 }
 
@@ -1891,6 +1161,11 @@ const DEVELOPMENT_AREAS = [
 ];
 
 
+/*
+ * WICHTIG:
+ * DEVELOPMENT_OPTIONS wird hier genau EINMAL definiert.
+ */
+
 const DEVELOPMENT_OPTIONS = [
 
     {
@@ -1916,6 +1191,9 @@ const DEVELOPMENT_OPTIONS = [
 ];
 
 
+/* ============================================================
+   FRAGENKATALOG
+   ============================================================ */
 
 const DEVELOPMENT_QUESTIONS = [
 
@@ -2198,7 +1476,7 @@ const DEVELOPMENT_QUESTIONS = [
 
 
 /* ============================================================
-   ENTWICKLUNGSBEREICH SICHERSTELLEN
+   ENTWICKLUNGSBEREICH
    ============================================================ */
 
 function ensureDevelopmentSection() {
@@ -2211,24 +1489,15 @@ function ensureDevelopmentSection() {
 
     if (section) {
 
-        ensureDevelopmentMarkup(
-            section
-        );
+        ensureDevelopmentMarkup(section);
 
         return section;
 
     }
 
 
-    /*
-     * Falls dein HTML keine Entwicklung-Section enthält,
-     * wird sie automatisch erzeugt.
-     */
-
     const main =
-        document.querySelector(
-            "main"
-        );
+        document.querySelector("main");
 
 
     if (!main) {
@@ -2243,9 +1512,7 @@ function ensureDevelopmentSection() {
 
 
     section =
-        document.createElement(
-            "section"
-        );
+        document.createElement("section");
 
 
     section.className =
@@ -2260,14 +1527,10 @@ function ensureDevelopmentSection() {
         "none";
 
 
-    main.appendChild(
-        section
-    );
+    main.appendChild(section);
 
 
-    ensureDevelopmentMarkup(
-        section
-    );
+    ensureDevelopmentMarkup(section);
 
 
     return section;
@@ -2276,17 +1539,10 @@ function ensureDevelopmentSection() {
 
 
 /* ============================================================
-   ENTWICKLUNGS HTML ERZEUGEN
+   ENTWICKLUNGS HTML
    ============================================================ */
 
-function ensureDevelopmentMarkup(
-    section
-) {
-
-    /*
-     * Wenn schon ein vollständiger Entwicklungskompass
-     * vorhanden ist, nichts überschreiben.
-     */
+function ensureDevelopmentMarkup(section) {
 
     if (
         section.querySelector(
@@ -2345,34 +1601,6 @@ function ensureDevelopmentMarkup(
                         Alter auswählen...
                     </option>
 
-                    <option value="1">
-                        1 Jahr
-                    </option>
-
-                    <option value="2">
-                        2 Jahre
-                    </option>
-
-                    <option value="3">
-                        3 Jahre
-                    </option>
-
-                    <option value="4">
-                        4 Jahre
-                    </option>
-
-                    <option value="5">
-                        5 Jahre
-                    </option>
-
-                    <option value="6">
-                        6 Jahre
-                    </option>
-
-                    <option value="7">
-                        7 Jahre
-                    </option>
-
                 </select>
 
             </div>
@@ -2407,10 +1635,6 @@ function ensureDevelopmentMarkup(
         `;
 
 
-    /*
-     * Jetzt Events verbinden.
-     */
-
     setupDevelopmentEvents();
 
 }
@@ -2425,42 +1649,28 @@ function getDevelopmentElements() {
     return {
 
         section:
-            byId(
-                "developmentSection"
-            ) ||
+            byId("developmentSection") ||
             document.querySelector(
                 '[data-section-content="development"]'
             ),
 
         childSelect:
-            byId(
-                "developmentChild"
-            ),
+            byId("developmentChild"),
 
         ageSelect:
-            byId(
-                "developmentAge"
-            ),
+            byId("developmentAge"),
 
         questionsContainer:
-            byId(
-                "questionsContainer"
-            ),
+            byId("questionsContainer"),
 
         questionsMessage:
-            byId(
-                "questionsMessage"
-            ),
+            byId("questionsMessage"),
 
         resultContainer:
-            byId(
-                "developmentResult"
-            ),
+            byId("developmentResult"),
 
         saveButton:
-            byId(
-                "saveDevelopmentButton"
-            )
+            byId("saveDevelopmentButton")
 
     };
 
@@ -2468,7 +1678,7 @@ function getDevelopmentElements() {
 
 
 /* ============================================================
-   KINDER FÜR ENTWICKLUNG LADEN
+   KINDER FÜR ENTWICKLUNG
    ============================================================ */
 
 async function loadChildrenForDevelopment() {
@@ -2533,39 +1743,32 @@ async function loadChildrenForDevelopment() {
     }
 
 
-    currentChildren.forEach(
-        child => {
+    currentChildren.forEach(child => {
 
-            const option =
-                document.createElement(
-                    "option"
-                );
+        const option =
+            document.createElement("option");
 
 
-            /*
-             * children.id ist UUID.
-             * Deshalb niemals Number(child.id) verwenden.
-             */
+        /*
+         * UUID unbedingt als String verwenden.
+         */
 
-            option.value =
-                String(child.id);
-
-
-            const groupName =
-                child.Groups?.group_name ||
-                "Keine Gruppe";
+        option.value =
+            String(child.id);
 
 
-            option.textContent =
-                `${child.child_code || "Kind"} – ${groupName}`;
+        const groupName =
+            child.Groups?.group_name ||
+            "Keine Gruppe";
 
 
-            childSelect.appendChild(
-                option
-            );
+        option.textContent =
+            `${child.child_code || "Kind"} – ${groupName}`;
 
-        }
-    );
+
+        childSelect.appendChild(option);
+
+    });
 
 }
 
@@ -2583,18 +1786,7 @@ function populateDevelopmentAge() {
 
 
     if (!ageSelect) {
-
         return;
-
-    }
-
-
-    if (
-        ageSelect.options.length > 1
-    ) {
-
-        return;
-
     }
 
 
@@ -2613,9 +1805,7 @@ function populateDevelopmentAge() {
     ) {
 
         const option =
-            document.createElement(
-                "option"
-            );
+            document.createElement("option");
 
 
         option.value =
@@ -2628,9 +1818,7 @@ function populateDevelopmentAge() {
                 : `${age} Jahre`;
 
 
-        ageSelect.appendChild(
-            option
-        );
+        ageSelect.appendChild(option);
 
     }
 
@@ -2641,18 +1829,14 @@ function populateDevelopmentAge() {
    FRAGEN NACH ALTER
    ============================================================ */
 
-function getQuestionsForAge(
-    age
-) {
+function getQuestionsForAge(age) {
 
     const numericAge =
         Number(age);
 
 
     if (
-        !Number.isFinite(
-            numericAge
-        )
+        !Number.isFinite(numericAge)
     ) {
 
         return [];
@@ -2664,34 +1848,21 @@ function getQuestionsForAge(
         question => {
 
             return (
-                numericAge >=
-                    question.age_from &&
-
-                numericAge <=
-                    question.age_to
+                numericAge >= question.age_from &&
+                numericAge <= question.age_to
             );
 
         }
     );
 
 }
-/* ============================================================
-   ENTWICKLUNGS BEWERTUNG
-   EIN KASTEN / 4 ZUSTÄNDE
-   weiß → grün → halb grün + Wellen → rot → weiß
-   ============================================================ */
-
-
 
 
 /* ============================================================
    FRAGEN RENDERN
-   EIN BEWERTUNGSKASTEN PRO FRAGE
    ============================================================ */
 
-function renderDevelopmentQuestions(
-    questions
-) {
+function renderDevelopmentQuestions(questions) {
 
     const {
         questionsContainer
@@ -2700,14 +1871,11 @@ function renderDevelopmentQuestions(
 
 
     if (!questionsContainer) {
-
         return;
-
     }
 
 
-    questionsContainer.innerHTML =
-        "";
+    questionsContainer.innerHTML = "";
 
 
     currentQuestions =
@@ -2733,15 +1901,10 @@ function renderDevelopmentQuestions(
 
 
     currentQuestions.forEach(
-        (
-            question,
-            index
-        ) => {
+        (question, index) => {
 
             const card =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
 
             card.className =
@@ -2762,57 +1925,27 @@ function renderDevelopmentQuestions(
 
 
             /*
-             * Aktuellen Bewertungszustand bestimmen
+             * Standard:
+             * NOCH NICHT
              */
 
             const currentValue =
-                currentAnswers[
-                    question.id
-                ] || "noch_nicht";
+                currentAnswers[question.id] ||
+                "noch_nicht";
 
 
-            /*
-             * Beschriftung des Kastens
-             */
+            const currentOption =
+                DEVELOPMENT_OPTIONS.find(
+                    option =>
+                        option.value ===
+                        currentValue
+                );
 
-            let currentLabel =
+
+            const currentLabel =
+                currentOption?.label ||
                 "Noch nicht";
 
-
-            if (
-                currentValue ===
-                "sicher"
-            ) {
-
-                currentLabel =
-                    "Sicher";
-
-            }
-
-            else if (
-                currentValue ===
-                "teilweise"
-            ) {
-
-                currentLabel =
-                    "Teilweise";
-
-            }
-
-            else if (
-                currentValue ===
-                "nicht_beobachtet"
-            ) {
-
-                currentLabel =
-                    "Nicht beobachtet";
-
-            }
-
-
-            /*
-             * CSS-Klasse für den Zustand
-             */
 
             const stateClass =
                 `development-state-${currentValue}`;
@@ -2820,47 +1953,22 @@ function renderDevelopmentQuestions(
 
             card.innerHTML =
                 `
-                <div
-                    style="
-                        font-size:13px;
-                        color:#777;
-                        margin-bottom:6px;
-                    "
-                >
+                <div class="development-question-number">
                     Frage ${index + 1}
                 </div>
 
 
-                <div
-                    style="
-                        font-weight:600;
-                        margin-bottom:8px;
-                    "
-                >
+                <div class="development-question-area">
                     ${escapeHtml(areaLabel)}
                 </div>
 
 
-                <div
-                    style="
-                        font-size:17px;
-                        margin-bottom:18px;
-                        line-height:1.45;
-                    "
-                >
+                <div class="development-question-text">
                     ${escapeHtml(question.question)}
                 </div>
 
 
-                <div
-                    class="development-rating-wrapper"
-                    style="
-                        display:flex;
-                        justify-content:center;
-                        align-items:center;
-                        padding:10px 0 5px;
-                    "
-                >
+                <div class="development-rating-wrapper">
 
                     <button
                         type="button"
@@ -2874,9 +1982,7 @@ function renderDevelopmentQuestions(
                         title="${escapeHtml(currentLabel)}"
                     >
 
-                        <span
-                            class="development-rating-label"
-                        >
+                        <span class="development-rating-label">
                             ${escapeHtml(currentLabel)}
                         </span>
 
@@ -2887,131 +1993,97 @@ function renderDevelopmentQuestions(
                 `;
 
 
-            questionsContainer.appendChild(
-                card
-            );
+            questionsContainer.appendChild(card);
 
         }
     );
 
 
-    /*
-     * Bewertungs-Kästchen aktivieren
-     */
-
     questionsContainer
         .querySelectorAll(
             ".development-rating-box"
         )
-        .forEach(
-            box => {
+        .forEach(box => {
 
-                box.addEventListener(
-                    "click",
-                    () => {
+            box.addEventListener(
+                "click",
+                () => {
 
-                        const questionId =
-                            Number(
-                                box.dataset.questionId
-                            );
-
-
-                        /*
-                         * Aktuellen Zustand auslesen
-                         */
-
-                        const currentValue =
-                            currentAnswers[
-                                questionId
-                            ] ||
-                            "noch_nicht";
-
-
-                        /*
-                         * Reihenfolge:
-                         *
-                         * weiß
-                         * →
-                         * voll grün
-                         * →
-                         * halb grün + Wellen
-                         * →
-                         * rot
-                         * →
-                         * weiß
-                         */
-
-                        let nextValue;
-
-
-                        if (
-                            currentValue ===
-                            "noch_nicht"
-                        ) {
-
-                            nextValue =
-                                "sicher";
-
-                        }
-
-                        else if (
-                            currentValue ===
-                            "sicher"
-                        ) {
-
-                            nextValue =
-                                "teilweise";
-
-                        }
-
-                        else if (
-                            currentValue ===
-                            "teilweise"
-                        ) {
-
-                            nextValue =
-                                "nicht_beobachtet";
-
-                        }
-
-                        else {
-
-                            nextValue =
-                                "noch_nicht";
-
-                        }
-
-
-                        /*
-                         * Antwort speichern
-                         */
-
-                        currentAnswers[
-                            questionId
-                        ] =
-                            nextValue;
-
-
-                        /*
-                         * Darstellung aktualisieren
-                         */
-
-                        updateDevelopmentRatingBox(
-                            box,
-                            nextValue
+                    const questionId =
+                        Number(
+                            box.dataset.questionId
                         );
 
-                    }
-                );
 
-            }
-        );
+                    const currentValue =
+                        currentAnswers[
+                            questionId
+                        ] ||
+                        "noch_nicht";
+
+
+                    let nextValue;
+
+
+                    if (
+                        currentValue ===
+                        "noch_nicht"
+                    ) {
+
+                        nextValue =
+                            "sicher";
+
+                    }
+
+                    else if (
+                        currentValue ===
+                        "sicher"
+                    ) {
+
+                        nextValue =
+                            "teilweise";
+
+                    }
+
+                    else if (
+                        currentValue ===
+                        "teilweise"
+                    ) {
+
+                        nextValue =
+                            "nicht_beobachtet";
+
+                    }
+
+                    else {
+
+                        nextValue =
+                            "noch_nicht";
+
+                    }
+
+
+                    currentAnswers[
+                        questionId
+                    ] =
+                        nextValue;
+
+
+                    updateDevelopmentRatingBox(
+                        box,
+                        nextValue
+                    );
+
+                }
+            );
+
+        });
 
 }
 
 
 /* ============================================================
-   BEWERTUNGS-KÄSTCHEN AKTUALISIEREN
+   BEWERTUNGSKASTEN
    ============================================================ */
 
 function updateDevelopmentRatingBox(
@@ -3020,15 +2092,9 @@ function updateDevelopmentRatingBox(
 ) {
 
     if (!box) {
-
         return;
-
     }
 
-
-    /*
-     * Alte Zustände entfernen
-     */
 
     box.classList.remove(
         "development-state-noch_nicht",
@@ -3037,10 +2103,6 @@ function updateDevelopmentRatingBox(
         "development-state-nicht_beobachtet"
     );
 
-
-    /*
-     * Neuen Zustand setzen
-     */
 
     box.classList.add(
         `development-state-${value}`
@@ -3051,9 +2113,13 @@ function updateDevelopmentRatingBox(
         value;
 
 
-    /*
-     * Beschriftung aktualisieren
-     */
+    const option =
+        DEVELOPMENT_OPTIONS.find(
+            item =>
+                item.value ===
+                value
+        );
+
 
     const label =
         box.querySelector(
@@ -3061,105 +2127,45 @@ function updateDevelopmentRatingBox(
         );
 
 
-    if (!label) {
-
-        return;
-
-    }
-
-
-    if (
-        value ===
-        "sicher"
-    ) {
+    if (label) {
 
         label.textContent =
-            "Sicher";
-
-        box.title =
-            "Sicher";
-
-        box.setAttribute(
-            "aria-label",
-            "Bewertung: Sicher"
-        );
-
-    }
-
-    else if (
-        value ===
-        "teilweise"
-    ) {
-
-        label.textContent =
-            "Teilweise";
-
-        box.title =
-            "Teilweise";
-
-        box.setAttribute(
-            "aria-label",
-            "Bewertung: Teilweise"
-        );
-
-    }
-
-    else if (
-        value ===
-        "nicht_beobachtet"
-    ) {
-
-        label.textContent =
-            "Nicht beobachtet";
-
-        box.title =
-            "Nicht beobachtet";
-
-        box.setAttribute(
-            "aria-label",
-            "Bewertung: Nicht beobachtet"
-        );
-
-    }
-
-    else {
-
-        label.textContent =
+            option?.label ||
             "Noch nicht";
 
-        box.title =
-            "Noch nicht";
-
-        box.setAttribute(
-            "aria-label",
-            "Bewertung: Noch nicht"
-        );
-
     }
+
+
+    box.title =
+        option?.label ||
+        "Noch nicht";
+
+
+    box.setAttribute(
+        "aria-label",
+        "Bewertung: " +
+        (
+            option?.label ||
+            "Noch nicht"
+        )
+    );
 
 
     /*
-     * Animation neu starten,
-     * wenn auf "Teilweise" gewechselt wird.
+     * Animation bei Teilweise neu starten.
      */
+
+    box.classList.remove(
+        "development-wave-animation"
+    );
+
 
     if (
         value ===
         "teilweise"
     ) {
 
-        box.classList.remove(
-            "development-wave-animation"
-        );
-
-
-        /*
-         * Browser zwingt zum erneuten Layout,
-         * damit die Animation erneut startet.
-         */
-
         void box.offsetWidth;
-
 
         box.classList.add(
             "development-wave-animation"
@@ -3171,8 +2177,7 @@ function updateDevelopmentRatingBox(
 
 
 /* ============================================================
-   CSS FÜR DIE BEWERTUNGS-KÄSTCHEN
-   WIRD AUTOMATISCH EINGEFÜGT
+   CSS
    ============================================================ */
 
 function ensureDevelopmentRatingStyles() {
@@ -3189,9 +2194,7 @@ function ensureDevelopmentRatingStyles() {
 
 
     const style =
-        document.createElement(
-            "style"
-        );
+        document.createElement("style");
 
 
     style.id =
@@ -3200,6 +2203,57 @@ function ensureDevelopmentRatingStyles() {
 
     style.textContent =
         `
+
+        .development-question {
+
+            margin-bottom:20px;
+
+        }
+
+
+        .development-question-number {
+
+            font-size:13px;
+
+            color:#777;
+
+            margin-bottom:6px;
+
+        }
+
+
+        .development-question-area {
+
+            font-weight:600;
+
+            margin-bottom:8px;
+
+        }
+
+
+        .development-question-text {
+
+            font-size:17px;
+
+            line-height:1.45;
+
+            margin-bottom:18px;
+
+        }
+
+
+        .development-rating-wrapper {
+
+            display:flex;
+
+            justify-content:center;
+
+            align-items:center;
+
+            padding:10px 0 5px;
+
+        }
+
 
         .development-rating-box {
 
@@ -3234,11 +2288,11 @@ function ensureDevelopmentRatingStyles() {
             font-weight:700;
 
             transition:
-                background 0.25s ease,
-                border-color 0.25s ease,
-                color 0.25s ease,
-                transform 0.2s ease,
-                box-shadow 0.25s ease;
+                background .25s ease,
+                border-color .25s ease,
+                color .25s ease,
+                transform .2s ease,
+                box-shadow .25s ease;
 
         }
 
@@ -3252,7 +2306,7 @@ function ensureDevelopmentRatingStyles() {
                     0,
                     0,
                     0,
-                    0.10
+                    .10
                 );
 
         }
@@ -3270,7 +2324,7 @@ function ensureDevelopmentRatingStyles() {
 
 
         /*
-         * 1. WEISS
+         * WEISS
          */
 
         .development-state-noch_nicht {
@@ -3285,7 +2339,7 @@ function ensureDevelopmentRatingStyles() {
 
 
         /*
-         * 2. VOLL GRÜN
+         * GRÜN
          */
 
         .development-state-sicher {
@@ -3301,14 +2355,14 @@ function ensureDevelopmentRatingStyles() {
                     57,
                     181,
                     74,
-                    0.25
+                    .25
                 );
 
         }
 
 
         /*
-         * 3. HALB GRÜN
+         * HALB GRÜN / HALB WEISS
          */
 
         .development-state-teilweise {
@@ -3331,14 +2385,14 @@ function ensureDevelopmentRatingStyles() {
                     57,
                     181,
                     74,
-                    0.18
+                    .18
                 );
 
         }
 
 
         /*
-         * Wellen-Overlay
+         * WELLEN
          */
 
         .development-state-teilweise::before {
@@ -3362,13 +2416,13 @@ function ensureDevelopmentRatingStyles() {
                         255,
                         255,
                         255,
-                        0.22
+                        .22
                     ) 0px,
                     rgba(
                         255,
                         255,
                         255,
-                        0.22
+                        .22
                     ) 8px,
                     rgba(
                         255,
@@ -3390,10 +2444,6 @@ function ensureDevelopmentRatingStyles() {
 
         }
 
-
-        /*
-         * Wellen-Animation
-         */
 
         .development-wave-animation::before {
 
@@ -3426,7 +2476,7 @@ function ensureDevelopmentRatingStyles() {
 
 
         /*
-         * 4. ROT
+         * ROT
          */
 
         .development-state-nicht_beobachtet {
@@ -3442,15 +2492,11 @@ function ensureDevelopmentRatingStyles() {
                     229,
                     57,
                     53,
-                    0.25
+                    .25
                 );
 
         }
 
-
-        /*
-         * Mobile
-         */
 
         @media (
             max-width:600px
@@ -3471,30 +2517,27 @@ function ensureDevelopmentRatingStyles() {
         `;
 
 
-    document.head.appendChild(
-        style
-    );
+    document.head.appendChild(style);
 
 }
+
+
 /* ============================================================
-   ENTWICKLUNG KIND GEÄNDERT
+   KIND GEÄNDERT
    ============================================================ */
 
-function handleDevelopmentChildChange(
-    event
-) {
+function handleDevelopmentChildChange(event) {
 
     currentChildId =
         event.target.value ||
         null;
 
 
-    currentAnswers =
-        {};
+    currentAnswers = {};
 
+    currentQuestions = [];
 
-    currentQuestions =
-        [];
+    currentAge = null;
 
 
     const {
@@ -3507,10 +2550,7 @@ function handleDevelopmentChildChange(
 
 
     if (ageSelect) {
-
-        ageSelect.value =
-            "";
-
+        ageSelect.value = "";
     }
 
 
@@ -3519,8 +2559,7 @@ function handleDevelopmentChildChange(
         resultContainer.style.display =
             "none";
 
-        resultContainer.innerHTML =
-            "";
+        resultContainer.innerHTML = "";
 
     }
 
@@ -3567,9 +2606,7 @@ function handleDevelopmentChildChange(
    ALTER GEÄNDERT
    ============================================================ */
 
-function handleDevelopmentAgeChange(
-    event
-) {
+function handleDevelopmentAgeChange(event) {
 
     const age =
         Number(
@@ -3584,8 +2621,7 @@ function handleDevelopmentAgeChange(
             : null;
 
 
-    currentAnswers =
-        {};
+    currentAnswers = {};
 
 
     const {
@@ -3621,13 +2657,9 @@ function handleDevelopmentAgeChange(
         );
 
 
-        event.target.value =
-            "";
+        event.target.value = "";
 
-
-        currentAge =
-            null;
-
+        currentAge = null;
 
         return;
 
@@ -3648,13 +2680,20 @@ function handleDevelopmentAgeChange(
 
 
 /* ============================================================
-   ENTWICKLUNGS EVENTS
+   EVENTS ENTWICKLUNG
    ============================================================ */
 
 function setupDevelopmentEvents() {
-   ensureDevelopmentRatingStyles()
-   
-   const {
+
+    /*
+     * WICHTIG:
+     * Hier müssen die Klammern stehen.
+     */
+
+    ensureDevelopmentRatingStyles();
+
+
+    const {
         childSelect,
         ageSelect,
         saveButton
@@ -3716,7 +2755,7 @@ function setupDevelopmentEvents() {
 
 
 /* ============================================================
-   ENTWICKLUNG VALIDIEREN
+   VALIDIEREN
    ============================================================ */
 
 function validateDevelopment() {
@@ -3725,7 +2764,7 @@ function validateDevelopment() {
 
         return {
 
-            valid: false,
+            valid:false,
 
             message:
                 "Bitte zuerst ein Kind auswählen."
@@ -3739,7 +2778,7 @@ function validateDevelopment() {
 
         return {
 
-            valid: false,
+            valid:false,
 
             message:
                 "Bitte zuerst das Alter auswählen."
@@ -3756,7 +2795,7 @@ function validateDevelopment() {
 
         return {
 
-            valid: false,
+            valid:false,
 
             message:
                 "Für dieses Alter sind keine Fragen vorhanden."
@@ -3781,7 +2820,7 @@ function validateDevelopment() {
 
         return {
 
-            valid: false,
+            valid:false,
 
             message:
                 `Bitte beantworte noch ${unanswered.length} Frage(n).`
@@ -3793,9 +2832,9 @@ function validateDevelopment() {
 
     return {
 
-        valid: true,
+        valid:true,
 
-        message: ""
+        message:""
 
     };
 
@@ -3810,63 +2849,51 @@ function calculateDevelopmentResult() {
 
     const result = {
 
-        total:
-            0,
+        total:0,
 
-        noch_nicht:
-            0,
+        noch_nicht:0,
 
-        teilweise:
-            0,
+        teilweise:0,
 
-        sicher:
-            0,
+        sicher:0,
 
-        nicht_beobachtet:
-            0,
+        nicht_beobachtet:0,
 
-        percentage:
-            0
+        percentage:0
 
     };
 
 
-    currentQuestions.forEach(
-        question => {
+    currentQuestions.forEach(question => {
 
-            const answer =
-                currentAnswers[
-                    question.id
-                ];
-
-
-            if (!answer) {
-
-                return;
-
-            }
+        const answer =
+            currentAnswers[
+                question.id
+            ];
 
 
-            result.total++;
+        if (!answer) {
+            return;
+        }
 
 
-            if (
-                Object.prototype
-                    .hasOwnProperty
-                    .call(
-                        result,
-                        answer
-                    )
-            ) {
+        result.total++;
 
-                result[
+
+        if (
+            Object.prototype
+                .hasOwnProperty
+                .call(
+                    result,
                     answer
-                ]++;
+                )
+        ) {
 
-            }
+            result[answer]++;
 
         }
-    );
+
+    });
 
 
     const observable =
@@ -3896,12 +2923,10 @@ function calculateDevelopmentResult() {
 
 
 /* ============================================================
-   ERGEBNIS ANZEIGEN
+   AUSWERTUNG ANZEIGEN
    ============================================================ */
 
-function showDevelopmentResult(
-    result
-) {
+function showDevelopmentResult(result) {
 
     const {
         resultContainer
@@ -3910,85 +2935,94 @@ function showDevelopmentResult(
 
 
     if (!resultContainer) {
-
         return;
-
     }
 
 
     resultContainer.innerHTML =
         `
-        <div
-            class="card"
-            style="
-                margin-top:20px;
-                border:2px solid #ddd;
-            "
-        >
+        <div class="development-result-card">
 
             <h2>
                 Auswertung
             </h2>
 
 
-            <p>
-                Sicher:
+            <div class="development-result-row">
+
+                <span>
+                    Sicher
+                </span>
+
                 <strong>
                     ${result.sicher}
                 </strong>
-            </p>
+
+            </div>
 
 
-            <p>
-                Teilweise:
+            <div class="development-result-row">
+
+                <span>
+                    Teilweise
+                </span>
+
                 <strong>
                     ${result.teilweise}
                 </strong>
-            </p>
+
+            </div>
 
 
-            <p>
-                Noch nicht:
+            <div class="development-result-row">
+
+                <span>
+                    Noch nicht
+                </span>
+
                 <strong>
                     ${result.noch_nicht}
                 </strong>
-            </p>
+
+            </div>
 
 
-            <p>
-                Nicht beobachtet:
+            <div class="development-result-row">
+
+                <span>
+                    Nicht beobachtet
+                </span>
+
                 <strong>
                     ${result.nicht_beobachtet}
                 </strong>
-            </p>
+
+            </div>
 
 
             <hr>
 
 
-            <p
-                style="
-                    font-size:20px;
-                "
-            >
+            <div class="development-result-percentage">
+
                 Entwicklungsstand:
                 <strong>
                     ${result.percentage} %
                 </strong>
-            </p>
+
+            </div>
 
         </div>
         `;
 
 
-    resultContainer.style.display =
-        "";
+    resultContainer.style.display = "";
 
 }
 
 
 /* ============================================================
-   ENTWICKLUNG SPEICHERN / AUSWERTEN
+   AUSWERTUNG ERSTELLEN
    ============================================================ */
 
 async function handleDevelopmentSave() {
@@ -4045,27 +3079,6 @@ async function handleDevelopmentSave() {
         showDevelopmentResult(
             result
         );
-
-
-        /*
-         * WICHTIG:
-         *
-         * Hier wird absichtlich noch KEIN INSERT
-         * in development_assessments gemacht.
-         *
-         * Grund:
-         * Die Tabelle muss exakt zu deinem Supabase-Schema
-         * passen. Dein früherer Fehler zeigte:
-         *
-         * child_id bigint
-         * gegen
-         * children.id uuid
-         *
-         * Der richtige Typ für child_id wäre UUID.
-         *
-         * Dadurch kann die Auswertung jetzt zuverlässig
-         * funktionieren, ohne die Datenbank zu beschädigen.
-         */
 
 
         safeText(
@@ -4156,14 +3169,11 @@ async function openDevelopmentSection() {
 
 
         if (!section) {
-
             return;
-
         }
 
 
-        section.style.display =
-            "";
+        section.style.display = "";
 
 
         setupDevelopmentEvents();
@@ -4214,89 +3224,41 @@ async function openDevelopmentSection() {
             error
         );
 
-
-        const section =
-            document.querySelector(
-                '[data-section-content="development"]'
-            );
-
-
-        if (section) {
-
-            section.innerHTML =
-                `
-                <div class="card">
-
-                    <h2>
-                        Entwicklungskompass
-                    </h2>
-
-                    <p style="color:red;">
-                        Der Entwicklungskompass konnte nicht geladen werden.
-                    </p>
-
-                    <pre
-                        style="
-                            white-space:pre-wrap;
-                            color:#777;
-                        "
-                    >${escapeHtml(
-                        error.message ||
-                        String(error)
-                    )}</pre>
-
-                </div>
-                `;
-
-        }
-
     }
 
 }
 
 
 /* ============================================================
-   DASHBOARD COUNTS
+   DASHBOARD
    ============================================================ */
 
-function updateChildrenCount(
-    count
-) {
+function updateChildrenCount(count) {
 
     const element =
-        byId(
-            "childrenCount"
-        );
+        byId("childrenCount");
 
 
     if (element) {
 
         element.textContent =
-            String(
-                count || 0
-            );
+            String(count || 0);
 
     }
 
 }
 
 
-function updateGroupsCount(
-    count
-) {
+function updateGroupsCount(count) {
 
     const element =
-        byId(
-            "groupsCount"
-        );
+        byId("groupsCount");
 
 
     if (element) {
 
         element.textContent =
-            String(
-                count || 0
-            );
+            String(count || 0);
 
     }
 
@@ -4326,228 +3288,13 @@ async function updateDashboardCounts() {
 
 
 /* ============================================================
-   ALTERNATIVE ALTE KINDER-FORMULAR IDS
-   Unterstützt auch deine ältere HTML-Version.
-   ============================================================ */
-
-function setupLegacyChildForm() {
-
-    const oldButton =
-        byId(
-            "showAddChildButton"
-        );
-
-
-    if (
-        oldButton &&
-        !oldButton.dataset.eventsReady
-    ) {
-
-        oldButton.dataset.eventsReady =
-            "true";
-
-
-        oldButton.addEventListener(
-            "click",
-            openCreateChildForm
-        );
-
-    }
-
-
-    const oldCancel =
-        byId(
-            "cancelAddChildButton"
-        );
-
-
-    if (
-        oldCancel &&
-        !oldCancel.dataset.eventsReady
-    ) {
-
-        oldCancel.dataset.eventsReady =
-            "true";
-
-
-        oldCancel.addEventListener(
-            "click",
-            closeCreateChildForm
-        );
-
-    }
-
-
-    const oldForm =
-        byId(
-            "addChildForm"
-        );
-
-
-    if (
-        oldForm &&
-        !oldForm.dataset.eventsReady
-    ) {
-
-        oldForm.dataset.eventsReady =
-            "true";
-
-
-        oldForm.addEventListener(
-            "submit",
-            event => {
-
-                event.preventDefault();
-
-                createChildFromLegacyForm();
-
-            }
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   ALTES KINDERFORMULAR
-   ============================================================ */
-
-async function createChildFromLegacyForm() {
-
-    const codeInput =
-        byId(
-            "childCode"
-        );
-
-
-    const groupSelect =
-        byId(
-            "childGroup"
-        );
-
-
-    const childCode =
-        codeInput?.value
-            ?.trim() || "";
-
-
-    const groupId =
-        groupSelect?.value || "";
-
-
-    if (!childCode) {
-
-        showChildMessage(
-            "Bitte eine Kinder-ID eingeben.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if (!groupId) {
-
-        showChildMessage(
-            "Bitte eine Gruppe auswählen.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    const numericGroupId =
-        Number(groupId);
-
-
-    if (
-        !Number.isInteger(
-            numericGroupId
-        )
-    ) {
-
-        showChildMessage(
-            "Ungültige Gruppe.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("children")
-            .insert({
-
-                child_code:
-                    childCode,
-
-                group_id:
-                    numericGroupId
-
-            })
-            .select()
-            .single();
-
-
-    if (error) {
-
-        console.error(
-            "Kind konnte nicht angelegt werden:",
-            error
-        );
-
-
-        showChildMessage(
-            error.message,
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    console.log(
-        "Kind erfolgreich angelegt:",
-        data
-    );
-
-
-    showChildMessage(
-        `Kind ${childCode} wurde erfolgreich angelegt.`,
-        "success"
-    );
-
-
-    await loadChildren();
-
-}
-
-
-/* ============================================================
-   EVENTS EINRICHTEN
+   EVENTS
    ============================================================ */
 
 function setupMainEvents() {
 
-    /*
-     * Login
-     */
-
     const loginForm =
-        byId(
-            "loginForm"
-        );
+        byId("loginForm");
 
 
     if (
@@ -4558,7 +3305,6 @@ function setupMainEvents() {
         loginForm.dataset.eventsReady =
             "true";
 
-
         loginForm.addEventListener(
             "submit",
             handleLogin
@@ -4567,14 +3313,8 @@ function setupMainEvents() {
     }
 
 
-    /*
-     * Registrierung
-     */
-
     const registerForm =
-        byId(
-            "registerForm"
-        );
+        byId("registerForm");
 
 
     if (
@@ -4585,7 +3325,6 @@ function setupMainEvents() {
         registerForm.dataset.eventsReady =
             "true";
 
-
         registerForm.addEventListener(
             "submit",
             handleRegister
@@ -4594,14 +3333,8 @@ function setupMainEvents() {
     }
 
 
-    /*
-     * Logout
-     */
-
     const logoutButton =
-        byId(
-            "logoutButton"
-        );
+        byId("logoutButton");
 
 
     if (
@@ -4612,7 +3345,6 @@ function setupMainEvents() {
         logoutButton.dataset.eventsReady =
             "true";
 
-
         logoutButton.addEventListener(
             "click",
             logout
@@ -4621,14 +3353,8 @@ function setupMainEvents() {
     }
 
 
-    /*
-     * Registrierung öffnen
-     */
-
     const showRegisterButton =
-        byId(
-            "showRegisterButton"
-        );
+        byId("showRegisterButton");
 
 
     if (
@@ -4639,23 +3365,18 @@ function setupMainEvents() {
         showRegisterButton.dataset.eventsReady =
             "true";
 
-
         showRegisterButton.addEventListener(
             "click",
             () => {
 
                 if (loginSection) {
-
                     loginSection.style.display =
                         "none";
-
                 }
 
                 if (registerSection) {
-
                     registerSection.style.display =
                         "";
-
                 }
 
             }
@@ -4664,14 +3385,8 @@ function setupMainEvents() {
     }
 
 
-    /*
-     * Login öffnen
-     */
-
     const showLoginButton =
-        byId(
-            "showLoginButton"
-        );
+        byId("showLoginButton");
 
 
     if (
@@ -4682,139 +3397,15 @@ function setupMainEvents() {
         showLoginButton.dataset.eventsReady =
             "true";
 
-
         showLoginButton.addEventListener(
             "click",
-            () => {
-
-                showLogin();
-
-            }
+            showLogin
         );
 
     }
 
-
-    /*
-     * Neues Kind
-     */
-
-    const openCreateChildButton =
-        byId(
-            "openCreateChildButton"
-        );
-
-
-    if (
-        openCreateChildButton &&
-        !openCreateChildButton.dataset.eventsReady
-    ) {
-
-        openCreateChildButton.dataset.eventsReady =
-            "true";
-
-
-        openCreateChildButton.addEventListener(
-            "click",
-            openCreateChildForm
-        );
-
-    }
-
-
-    /*
-     * Kind abbrechen
-     */
-
-    const cancelCreateChildButton =
-        byId(
-            "cancelCreateChildButton"
-        );
-
-
-    if (
-        cancelCreateChildButton &&
-        !cancelCreateChildButton.dataset.eventsReady
-    ) {
-
-        cancelCreateChildButton.dataset.eventsReady =
-            "true";
-
-
-        cancelCreateChildButton.addEventListener(
-            "click",
-            closeCreateChildForm
-        );
-
-    }
-
-
-    /*
-     * Kind speichern
-     */
-
-    const createChildButton =
-        byId(
-            "createChildButton"
-        );
-
-
-    if (
-        createChildButton &&
-        !createChildButton.dataset.eventsReady
-    ) {
-
-        createChildButton.dataset.eventsReady =
-            "true";
-
-
-        createChildButton.addEventListener(
-            "click",
-            createChild
-        );
-
-    }
-
-
-    /*
-     * Neue Gruppe
-     */
-
-    const openCreateGroupButton =
-        byId(
-            "openCreateGroupButton"
-        );
-
-
-    if (
-        openCreateGroupButton &&
-        !openCreateGroupButton.dataset.eventsReady
-    ) {
-
-        openCreateGroupButton.dataset.eventsReady =
-            "true";
-
-
-        openCreateGroupButton.addEventListener(
-            "click",
-            createGroup
-        );
-
-    }
-
-
-    /*
-     * Navigation
-     */
 
     setupNavigation();
-
-
-    /*
-     * Altes Formular
-     */
-
-    setupLegacyChildForm();
 
 }
 
@@ -4826,9 +3417,7 @@ function setupMainEvents() {
 function setupAuthListener() {
 
     if (!supabaseClient) {
-
         return;
-
     }
 
 
@@ -4849,11 +3438,6 @@ function setupAuthListener() {
                 currentUser =
                     session.user;
 
-
-                /*
-                 * Nicht direkt innerhalb des Auth-Callbacks
-                 * verschachtelte Auth-Requests erzwingen.
-                 */
 
                 setTimeout(
                     async () => {
@@ -4989,10 +3573,6 @@ async function initializeApplication() {
 
     if (applicationInitialized) {
 
-        /*
-         * Trotzdem UI sichtbar halten.
-         */
-
         showDashboard();
 
         return;
@@ -5013,34 +3593,26 @@ async function initializeApplication() {
 
 
         /*
-         * Entwicklung vorbereiten,
-         * aber noch nicht zwingend öffnen.
+         * Entwicklungskompass vorbereiten.
          */
 
         ensureDevelopmentSection();
+
+        ensureDevelopmentRatingStyles();
 
         setupDevelopmentEvents();
 
         populateDevelopmentAge();
 
 
-        /*
-         * Kinder und Gruppen laden.
-         */
-
         await loadChildren();
 
         await loadGroups();
 
 
-        /*
-         * Dashboard.
-         */
-
         updateChildrenCount(
             currentChildren.length
         );
-
 
         updateGroupsCount(
             currentGroups.length
@@ -5059,11 +3631,6 @@ async function initializeApplication() {
             "Fehler bei initializeApplication():",
             error
         );
-
-
-        /*
-         * Niemals die komplette Seite weiß machen.
-         */
 
         showDashboard();
 
@@ -5085,11 +3652,6 @@ document.addEventListener(
         );
 
 
-        /*
-         * Login zunächst anzeigen,
-         * bis Session geprüft wurde.
-         */
-
         showLogin();
 
 
@@ -5106,38 +3668,9 @@ document.addEventListener(
 
         setupMainEvents();
 
-
         setupAuthListener();
-
 
         await checkLogin();
 
     }
 );
-document.querySelectorAll('.sidebar button[data-section]').forEach(button => {
-    button.addEventListener('click', function () {
-        console.log('NAVIGATION:', this.dataset.section);
-
-        const target = this.dataset.section;
-
-        document.querySelectorAll('.sidebar button[data-section]').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
-        this.classList.add('active');
-
-        document.querySelectorAll('.section[data-section-content]').forEach(section => {
-            section.classList.remove('active');
-        });
-
-        const targetSection = document.querySelector(
-            `.section[data-section-content="${target}"]`
-        );
-
-        console.log('ZIEL:', targetSection);
-
-        if (targetSection) {
-            targetSection.classList.add('active');
-        }
-    });
-});
