@@ -189,7 +189,6 @@ async function loadUserProfile() {
 
             .select(`
                 id,
-                email,
                 first_name,
                 last_name,
                 role,
