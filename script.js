@@ -1891,30 +1891,6 @@ const DEVELOPMENT_AREAS = [
 ];
 
 
-const DEVELOPMENT_OPTIONS = [
-
-    {
-        value: "noch_nicht",
-        label: "Noch nicht"
-    },
-
-    {
-        value: "sicher",
-        label: "Sicher"
-    },
-
-    {
-        value: "teilweise",
-        label: "Teilweise"
-    },
-
-    {
-        value: "nicht_beobachtet",
-        label: "Nicht beobachtet"
-    }
-
-];
-
 
 
 const DEVELOPMENT_QUESTIONS = [
