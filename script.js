@@ -2094,7 +2094,7 @@ function ensureDevelopmentMarkup(section) {
                 class="btn btn-success"
                 id="saveDevelopmentButton"
             >
-                Auswertung erstellen
+                Auswertung speichern
             </button>
 
         </div>
@@ -2995,15 +2995,15 @@ function ensureDevelopmentRatingStyles() {
 function handleDevelopmentChildChange(event) {
 
     currentChildId =
-        event.target.value ||
-        null;
+    event.target.value ||
+    null;
 
 
-    currentAnswers = {};
+currentAnswers = {};
 
-    currentQuestions = [];
+currentQuestions = [];
 
-    currentAge = null;
+currentAge = null;
 
 
     const {
@@ -3046,7 +3046,34 @@ function handleDevelopmentChildChange(event) {
         return;
 
     }
+/*
+ * Gespeicherte Auswertung dieses Kindes laden
+ */
 
+const savedAssessment =
+    await loadDevelopmentAssessment(
+        currentChildId
+    );
+
+
+if (savedAssessment) {
+
+    safeText(
+        questionsMessage,
+        "Gespeicherte Auswertung wurde geladen."
+    );
+
+
+    if (questionsMessage) {
+
+        questionsMessage.style.color =
+            "green";
+
+    }
+
+    return;
+
+}
 
     safeText(
         questionsMessage,
@@ -3924,6 +3951,180 @@ function ensureDevelopmentResultStyles() {
 /* ============================================================
    AUSWERTUNG ERSTELLEN
    ============================================================ */
+async function saveDevelopmentAssessment(result) {
+
+    if (!supabaseClient) {
+        throw new Error("Supabase Client ist nicht verfügbar.");
+    }
+
+    if (!currentChildId) {
+        throw new Error("Kein Kind ausgewählt.");
+    }
+
+    if (!currentAge) {
+        throw new Error("Kein Alter ausgewählt.");
+    }
+
+    const payload = {
+        child_id: currentChildId,
+        age: currentAge,
+        answers: currentAnswers,
+        result: result,
+        created_by: currentUser?.id || null,
+        updated_at: new Date().toISOString()
+    };
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("development_assessments")
+            .insert(payload)
+            .select()
+            .single();
+
+    if (error) {
+
+        console.error(
+            "Entwicklungsauswertung konnte nicht gespeichert werden:",
+            error
+        );
+
+        throw error;
+    }
+
+    console.log(
+        "Entwicklungsauswertung gespeichert:",
+        data
+    );
+
+    return data;
+}
+
+async function loadDevelopmentAssessment(childId) {
+
+    if (!supabaseClient || !childId) {
+        return null;
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("development_assessments")
+            .select(`
+                id,
+                child_id,
+                age,
+                answers,
+                result,
+                created_at
+            `)
+            .eq(
+                "child_id",
+                childId
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            )
+            .limit(1)
+            .maybeSingle();
+
+
+    if (error) {
+
+        console.error(
+            "Gespeicherte Auswertung konnte nicht geladen werden:",
+            error
+        );
+
+        return null;
+
+    }
+
+
+    if (!data) {
+        return null;
+    }
+
+
+    /*
+     * Gespeicherte Daten übernehmen
+     */
+
+    currentAnswers =
+        data.answers || {};
+
+
+    currentAge =
+        Number(data.age) || null;
+
+
+    /*
+     * Alter auswählen
+     */
+
+    const {
+        ageSelect
+    } =
+        getDevelopmentElements();
+
+
+    if (ageSelect && currentAge) {
+
+        ageSelect.value =
+            String(currentAge);
+
+    }
+
+
+    /*
+     * Fragen für das gespeicherte Alter laden
+     */
+
+    if (currentAge) {
+
+        currentQuestions =
+            getQuestionsForAge(
+                currentAge
+            );
+
+
+        renderDevelopmentQuestions(
+            currentQuestions
+        );
+
+    }
+
+
+    /*
+     * Gespeicherte Auswertung anzeigen
+     */
+
+    if (data.result) {
+
+        showDevelopmentResult(
+            data.result
+        );
+
+    }
+
+
+    console.log(
+        "Gespeicherte Auswertung geladen:",
+        data
+    );
+
+
+    return data;
+
+}
 
 async function handleDevelopmentSave() {
 
@@ -3953,7 +4154,6 @@ async function handleDevelopmentSave() {
 
         }
 
-
         return;
 
     }
@@ -3965,25 +4165,46 @@ async function handleDevelopmentSave() {
             true;
 
         saveButton.textContent =
-            "Wird ausgewertet...";
+            "Wird gespeichert...";
 
     }
 
 
     try {
 
+        /*
+         * 1. Auswertung berechnen
+         */
+
         const result =
             calculateDevelopmentResult();
 
+
+        /*
+         * 2. Auswertung anzeigen
+         */
 
         showDevelopmentResult(
             result
         );
 
 
+        /*
+         * 3. Auswertung in Supabase speichern
+         */
+
+        await saveDevelopmentAssessment(
+            result
+        );
+
+
+        /*
+         * 4. Erfolgsmeldung
+         */
+
         safeText(
             questionsMessage,
-            "Auswertung erfolgreich erstellt."
+            "Auswertung wurde erfolgreich erstellt und gespeichert."
         );
 
 
@@ -4015,6 +4236,45 @@ async function handleDevelopmentSave() {
         );
 
     }
+
+    catch (error) {
+
+        console.error(
+            "Fehler bei der Entwicklungsauswertung:",
+            error
+        );
+
+
+        safeText(
+            questionsMessage,
+            "Die Auswertung konnte nicht gespeichert werden."
+        );
+
+
+        if (questionsMessage) {
+
+            questionsMessage.style.color =
+                "red";
+
+        }
+
+    }
+
+    finally {
+
+        if (saveButton) {
+
+            saveButton.disabled =
+                false;
+
+            saveButton.textContent =
+                "Auswertung speichern";
+
+        }
+
+    }
+
+}
 
     catch (error) {
 
