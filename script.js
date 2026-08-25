@@ -3487,62 +3487,7 @@ function calculateDevelopmentResult() {
 
 }
 
-    currentQuestions.forEach(question => {
-
-        const answer =
-            currentAnswers[
-                question.id
-            ];
-
-
-        if (!answer) {
-            return;
-        }
-
-
-        result.total++;
-
-
-        if (
-            Object.prototype
-                .hasOwnProperty
-                .call(
-                    result,
-                    answer
-                )
-        ) {
-
-            result[answer]++;
-
-        }
-
-    });
-
-
-    const observable =
-        result.total -
-        result.nicht_beobachtet;
-
-
-    if (
-        observable > 0
-    ) {
-
-        result.percentage =
-            Math.round(
-                (
-                    result.sicher /
-                    observable
-                ) *
-                100
-            );
-
-    }
-
-
-
-}
-
+    
 
 /* ============================================================
    AUSWERTUNG ANZEIGEN
