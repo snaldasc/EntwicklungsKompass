@@ -3954,3 +3954,296 @@ else {
     initializeApplication();
 
 }
+
+// ============================================================
+// SEITENNAVIGATION
+// DASHBOARD / KINDER / GRUPPEN / ENTWICKLUNG / ADMIN
+// ============================================================
+
+function initializeNavigation() {
+
+    const navigationButtons =
+        document.querySelectorAll(
+            ".sidebar [data-section]"
+        );
+
+    const contentSections =
+        document.querySelectorAll(
+            "[data-section-content]"
+        );
+
+
+    if (!navigationButtons.length) {
+
+        console.warn(
+            "Keine Navigationsbuttons gefunden."
+        );
+
+        return;
+
+    }
+
+
+    if (!contentSections.length) {
+
+        console.warn(
+            "Keine Inhaltsbereiche gefunden."
+        );
+
+        return;
+
+    }
+
+
+    navigationButtons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const sectionName =
+                        button.dataset.section;
+
+
+                    if (!sectionName) {
+
+                        return;
+
+                    }
+
+
+                    // ========================================
+                    // BUTTONS AKTUALISIEREN
+                    // ========================================
+
+                    navigationButtons.forEach(
+                        navButton => {
+
+                            navButton.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+
+                    button.classList.add(
+                        "active"
+                    );
+
+
+                    // ========================================
+                    // INHALT AKTUALISIEREN
+                    // ========================================
+
+                    contentSections.forEach(
+                        section => {
+
+                            const sectionContent =
+                                section.dataset
+                                    .sectionContent;
+
+
+                            if (
+                                sectionContent ===
+                                sectionName
+                            ) {
+
+                                section.classList.add(
+                                    "active"
+                                );
+
+                                section.style.display =
+                                    "";
+
+                            }
+
+                            else {
+
+                                section.classList.remove(
+                                    "active"
+                                );
+
+                                section.style.display =
+                                    "none";
+
+                            }
+
+                        }
+                    );
+
+
+                    // ========================================
+                    // KINDER
+                    // ========================================
+
+                    if (
+                        sectionName ===
+                        "children"
+                    ) {
+
+                        if (currentUser) {
+
+                            await loadChildren();
+
+                        }
+
+                    }
+
+
+                    // ========================================
+                    // GRUPPEN
+                    // ========================================
+
+                    if (
+                        sectionName ===
+                        "groups"
+                    ) {
+
+                        if (
+                            currentUser &&
+                            typeof loadGroupsForCurrentInstitution ===
+                                "function"
+                        ) {
+
+                            // Gruppen werden bei Bedarf geladen.
+                            // Deine vorhandene Funktion benötigt
+                            // aktuell den Select #childGroup.
+                            console.log(
+                                "Gruppenbereich geöffnet."
+                            );
+
+                        }
+
+                    }
+
+
+                    // ========================================
+                    // ENTWICKLUNG
+                    // ========================================
+
+                    if (
+                        sectionName ===
+                        "development"
+                    ) {
+
+                        if (currentUser) {
+
+                            await loadChildrenForDevelopment();
+
+                            populateAgeSelect();
+
+                        }
+
+                    }
+
+
+                    // ========================================
+                    // ADMIN
+                    // ========================================
+
+                    if (
+                        sectionName ===
+                        "admin"
+                    ) {
+
+                        console.log(
+                            "Administrationsbereich geöffnet."
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    // ================================================
+    // STARTSEITE
+    // ================================================
+
+    const initialButton =
+        document.querySelector(
+            ".sidebar [data-section='dashboard']"
+        );
+
+
+    if (initialButton) {
+
+        navigationButtons.forEach(
+            button => {
+
+                button.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+        initialButton.classList.add(
+            "active"
+        );
+
+    }
+
+
+    contentSections.forEach(
+        section => {
+
+            if (
+                section.dataset
+                    .sectionContent ===
+                "dashboard"
+            ) {
+
+                section.classList.add(
+                    "active"
+                );
+
+                section.style.display =
+                    "";
+
+            }
+
+            else {
+
+                section.classList.remove(
+                    "active"
+                );
+
+                section.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// NAVIGATION INITIALISIEREN
+// ============================================================
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeNavigation
+    );
+
+}
+
+else {
+
+    initializeNavigation();
+
+}
