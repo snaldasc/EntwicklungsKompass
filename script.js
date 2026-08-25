@@ -3315,20 +3315,177 @@ function calculateDevelopmentResult() {
 
     const result = {
 
-        total:0,
+        total: 0,
 
-        noch_nicht:0,
+        noch_nicht: 0,
 
-        teilweise:0,
+        teilweise: 0,
 
-        sicher:0,
+        sicher: 0,
 
-        nicht_beobachtet:0,
+        nicht_beobachtet: 0,
 
-        percentage:0
+        percentage: 0,
+
+        areas: {}
 
     };
 
+
+    /*
+     * Gesamtwerte vorbereiten
+     */
+
+    currentQuestions.forEach(question => {
+
+        if (!result.areas[question.area]) {
+
+            const area =
+                DEVELOPMENT_AREAS.find(
+                    item =>
+                        item.key === question.area
+                );
+
+            result.areas[question.area] = {
+
+                key: question.area,
+
+                label:
+                    area?.label ||
+                    question.area,
+
+                total: 0,
+
+                sicher: 0,
+
+                teilweise: 0,
+
+                noch_nicht: 0,
+
+                nicht_beobachtet: 0,
+
+                percentage: 0
+
+            };
+
+        }
+
+    });
+
+
+    /*
+     * Antworten auswerten
+     */
+
+    currentQuestions.forEach(question => {
+
+        const answer =
+            currentAnswers[question.id];
+
+        if (!answer) {
+            return;
+        }
+
+
+        result.total++;
+
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                result,
+                answer
+            )
+        ) {
+
+            result[answer]++;
+
+        }
+
+
+        const area =
+            result.areas[question.area];
+
+
+        if (!area) {
+            return;
+        }
+
+
+        area.total++;
+
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                area,
+                answer
+            )
+        ) {
+
+            area[answer]++;
+
+        }
+
+    });
+
+
+    /*
+     * Gesamtprozent berechnen
+     *
+     * "Nicht beobachtet" wird ignoriert.
+     */
+
+    const observable =
+        result.total -
+        result.nicht_beobachtet;
+
+
+    if (observable > 0) {
+
+        result.percentage =
+            Math.round(
+                (
+                    result.sicher +
+                    (result.teilweise * 0.5)
+                ) /
+                observable *
+                100
+            );
+
+    }
+
+
+    /*
+     * Prozent je Entwicklungsbereich
+     */
+
+    Object.values(result.areas)
+        .forEach(area => {
+
+            const areaObservable =
+                area.total -
+                area.nicht_beobachtet;
+
+
+            if (areaObservable > 0) {
+
+                area.percentage =
+                    Math.round(
+                        (
+                            area.sicher +
+                            (area.teilweise * 0.5)
+                        ) /
+                        areaObservable *
+                        100
+                    );
+
+            }
+
+        });
+
+
+    return result;
+
+}
 
     currentQuestions.forEach(question => {
 
