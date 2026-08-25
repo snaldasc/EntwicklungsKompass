@@ -2089,13 +2089,112 @@ function ensureDevelopmentMarkup(section) {
             ></div>
 
 
+<div
+    id="developmentReportForm"
+    class="development-report-form"
+    style="display:none;"
+>
+
+    <h3>
+        Entwicklungsgutachten
+    </h3>
+
+    <div class="form-group">
+
+        <label for="reportObservations">
+            Beobachtungen
+        </label>
+
+        <textarea
+            id="reportObservations"
+            placeholder="Besondere Beobachtungen zum Entwicklungsstand..."
+        ></textarea>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="reportStrengths">
+            Stärken des Kindes
+        </label>
+
+        <textarea
+            id="reportStrengths"
+            placeholder="Besondere Stärken und Ressourcen..."
+        ></textarea>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="reportSupportNeeds">
+            Entwicklungs- und Unterstützungsbedarf
+        </label>
+
+        <textarea
+            id="reportSupportNeeds"
+            placeholder="Bereiche, in denen weitere Unterstützung sinnvoll ist..."
+        ></textarea>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="reportRecommendations">
+            Pädagogische Empfehlungen
+        </label>
+
+        <textarea
+            id="reportRecommendations"
+            placeholder="Empfehlungen für die weitere pädagogische Begleitung..."
+        ></textarea>
+
+    </div>
+
+
+    <button
+        type="button"
+        class="btn btn-success"
+        id="saveDevelopmentReportButton"
+    >
+        Gutachten speichern
+    </button>
+
+    <button
+        type="button"
+        class="btn btn-secondary"
+        id="printDevelopmentReportButton"
+    >
+        Gutachten drucken / PDF
+    </button>
+
+</div>
+
+
+
             <button
-                type="button"
-                class="btn btn-success"
-                id="saveDevelopmentButton"
-            >
-                Auswertung speichern
-            </button>
+        type="button"
+        class="btn btn-success"
+        id="saveDevelopmentButton"
+    >
+        Auswertung speichern
+    </button>
+
+    <button
+        type="button"
+        class="btn btn-primary"
+        id="createDevelopmentReportButton"
+    >
+        Entwicklungsgutachten erstellen
+    </button>
+    
+    <div
+    id="developmentReport"
+    style="display:none;"
+></div>
 
         </div>
         `;
@@ -3186,12 +3285,30 @@ function setupDevelopmentEvents() {
     ensureDevelopmentRatingStyles();
 
 
-    const {
-        childSelect,
-        ageSelect,
-        saveButton
-    } =
-        getDevelopmentElements();
+   const {
+    childSelect,
+    ageSelect,
+    saveButton
+} =
+    getDevelopmentElements();
+
+
+const reportButton =
+    byId(
+        "createDevelopmentReportButton"
+    );
+
+
+const saveReportButton =
+    byId(
+        "saveDevelopmentReportButton"
+    );
+
+
+const printReportButton =
+    byId(
+        "printDevelopmentReportButton"
+    );
 
 
     if (
@@ -3224,9 +3341,406 @@ function setupDevelopmentEvents() {
             "change",
             handleDevelopmentAgeChange
         );
+if (
+    reportButton &&
+    !reportButton.dataset.eventsReady
+) {
+
+    reportButton.dataset.eventsReady =
+        "true";
+
+
+    reportButton.addEventListener(
+        "click",
+        handleCreateDevelopmentReport
+    );
+
+}
+
+
+if (
+    saveReportButton &&
+    !saveReportButton.dataset.eventsReady
+) {
+
+    saveReportButton.dataset.eventsReady =
+        "true";
+
+
+    saveReportButton.addEventListener(
+        "click",
+        handleSaveDevelopmentReport
+    );
+
+}
+
+
+if (
+    printReportButton &&
+    !printReportButton.dataset.eventsReady
+) {
+
+    printReportButton.dataset.eventsReady =
+        "true";
+
+
+    printReportButton.addEventListener(
+        "click",
+        printDevelopmentReport
+    );
+
+}
+    }
+function handleCreateDevelopmentReport() {
+
+    const validation =
+        validateDevelopment();
+
+
+    if (!validation.valid) {
+
+        const {
+            questionsMessage
+        } =
+            getDevelopmentElements();
+
+
+        safeText(
+            questionsMessage,
+            validation.message
+        );
+
+
+        if (questionsMessage) {
+
+            questionsMessage.style.color =
+                "red";
+
+        }
+
+
+        return;
 
     }
 
+
+    const result =
+        calculateDevelopmentResult();
+
+
+    const report =
+        generateDevelopmentReport(
+            result
+        );
+
+
+    const form =
+        byId(
+            "developmentReportForm"
+        );
+
+
+    if (form) {
+
+        form.style.display =
+            "";
+
+    }
+
+
+    showDevelopmentReport(
+        report
+    );
+
+}
+
+   function handleCreateDevelopmentReport() {
+
+    const validation =
+        validateDevelopment();
+
+
+    if (!validation.valid) {
+
+        const {
+            questionsMessage
+        } =
+            getDevelopmentElements();
+
+
+        safeText(
+            questionsMessage,
+            validation.message
+        );
+
+
+        if (questionsMessage) {
+
+            questionsMessage.style.color =
+                "red";
+
+        }
+
+
+        return;
+
+    }
+
+
+    const result =
+        calculateDevelopmentResult();
+
+
+    const report =
+        generateDevelopmentReport(
+            result
+        );
+
+
+    const form =
+        byId(
+            "developmentReportForm"
+        );
+
+
+    if (form) {
+
+        form.style.display =
+            "";
+
+    }
+
+
+    showDevelopmentReport(
+        report
+    );
+
+}
+
+   function printDevelopmentReport() {
+
+    const report =
+        byId(
+            "developmentReportDocument"
+        );
+
+
+    if (!report) {
+
+        alert(
+            "Bitte zuerst ein Gutachten erstellen."
+        );
+
+        return;
+
+    }
+
+
+    const printWindow =
+        window.open(
+            "",
+            "_blank"
+        );
+
+
+    if (!printWindow) {
+
+        alert(
+            "Das Druckfenster konnte nicht geöffnet werden."
+        );
+
+        return;
+
+    }
+
+
+    printWindow.document.write(
+        `
+        <!DOCTYPE html>
+
+        <html lang="de">
+
+        <head>
+
+            <meta charset="UTF-8">
+
+            <title>
+                Entwicklungsgutachten
+            </title>
+
+            <style>
+
+                body {
+
+                    font-family:
+                        Arial,
+                        Helvetica,
+                        sans-serif;
+
+                    color:#222;
+
+                    line-height:1.5;
+
+                    margin:40px;
+
+                }
+
+
+                h1 {
+
+                    font-size:28px;
+
+                    margin-bottom:5px;
+
+                }
+
+
+                h2 {
+
+                    margin-top:30px;
+
+                    border-bottom:
+                        1px solid #ddd;
+
+                    padding-bottom:6px;
+
+                }
+
+
+                .development-report-header {
+
+                    text-align:center;
+
+                    margin-bottom:40px;
+
+                }
+
+
+                .report-main-score {
+
+                    text-align:center;
+
+                    padding:25px;
+
+                    background:#f3f4f6;
+
+                    border-radius:12px;
+
+                    margin:20px 0;
+
+                }
+
+
+                .report-main-score span {
+
+                    display:block;
+
+                }
+
+
+                .report-main-score strong {
+
+                    display:block;
+
+                    font-size:42px;
+
+                }
+
+
+                .report-area {
+
+                    margin-bottom:20px;
+
+                }
+
+
+                .report-area-header {
+
+                    display:flex;
+
+                    justify-content:
+                        space-between;
+
+                    font-weight:bold;
+
+                }
+
+
+                .report-progress {
+
+                    height:12px;
+
+                    background:#e5e7eb;
+
+                    border-radius:10px;
+
+                    overflow:hidden;
+
+                }
+
+
+                .report-progress-bar {
+
+                    height:100%;
+
+                    background:#39b54a;
+
+                }
+
+
+                .development-report-footer {
+
+                    margin-top:70px;
+
+                    display:grid;
+
+                    gap:30px;
+
+                }
+
+
+                @media print {
+
+                    body {
+
+                        margin:20mm;
+
+                    }
+
+                }
+
+            </style>
+
+        </head>
+
+
+        <body>
+
+            ${report.outerHTML}
+
+        </body>
+
+        </html>
+        `
+    );
+
+
+    printWindow.document.close();
+
+
+    printWindow.focus();
+
+
+    setTimeout(
+        () => {
+
+            printWindow.print();
+
+        },
+        500
+    );
+
+}
 
     if (
         saveButton &&
@@ -4120,6 +4634,525 @@ async function loadDevelopmentAssessment(childId) {
         "Gespeicherte Auswertung geladen:",
         data
     );
+
+
+    return data;
+
+}
+
+function getCurrentDevelopmentChild() {
+
+    return currentChildren.find(
+        child =>
+            String(child.id) ===
+            String(currentChildId)
+    ) || null;
+
+}
+
+
+function generateDevelopmentReport(result) {
+
+    const child =
+        getCurrentDevelopmentChild();
+
+
+    const childCode =
+        child?.child_code ||
+        "Unbekanntes Kind";
+
+
+    const today =
+        new Date().toLocaleDateString(
+            "de-DE"
+        );
+
+
+    const strongAreas =
+        Object.values(result.areas)
+            .filter(
+                area =>
+                    area.percentage >= 60
+            );
+
+
+    const supportAreas =
+        Object.values(result.areas)
+            .filter(
+                area =>
+                    area.percentage < 60
+            );
+
+
+    let strengthsText =
+        strongAreas.length > 0
+            ? strongAreas
+                .map(
+                    area =>
+                        `${area.label} (${area.percentage} %)`
+                )
+                .join(", ")
+            : "Es konnten derzeit keine deutlich ausgeprägten Stärken anhand der Auswertung hervorgehoben werden.";
+
+
+    let supportText =
+        supportAreas.length > 0
+            ? supportAreas
+                .map(
+                    area =>
+                        `${area.label} (${area.percentage} %)`
+                )
+                .join(", ")
+            : "Es zeigen sich derzeit keine ausgeprägten Unterstützungsbedarfe.";
+
+
+    const observations =
+        byId(
+            "reportObservations"
+        )?.value?.trim() || "";
+
+
+    const strengths =
+        byId(
+            "reportStrengths"
+        )?.value?.trim() ||
+        strengthsText;
+
+
+    const supportNeeds =
+        byId(
+            "reportSupportNeeds"
+        )?.value?.trim() ||
+        supportText;
+
+
+    const recommendations =
+        byId(
+            "reportRecommendations"
+        )?.value?.trim() ||
+        "Die weitere Entwicklung sollte im pädagogischen Alltag regelmäßig beobachtet und dokumentiert werden. Entwicklungsfortschritte sollten gemeinsam mit dem Kind und den Bezugspersonen reflektiert werden.";
+
+
+    return {
+
+        childCode,
+
+        age:
+            currentAge,
+
+        date:
+            today,
+
+        observations,
+
+        strengths,
+
+        supportNeeds,
+
+        recommendations,
+
+        result
+
+    };
+
+}
+
+function showDevelopmentReport(report) {
+
+    const container =
+        byId(
+            "developmentReport"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const areaEntries =
+        Object.values(
+            report.result.areas
+        );
+
+
+    let areasHtml = "";
+
+
+    areaEntries.forEach(
+        area => {
+
+            let status =
+                "Beobachtungsbedarf";
+
+
+            if (
+                area.percentage >= 80
+            ) {
+
+                status =
+                    "Sehr sicher";
+
+            }
+
+            else if (
+                area.percentage >= 60
+            ) {
+
+                status =
+                    "Überwiegend sicher";
+
+            }
+
+            else if (
+                area.percentage >= 40
+            ) {
+
+                status =
+                    "Teilweise entwickelt";
+
+            }
+
+
+            areasHtml +=
+                `
+                <div class="report-area">
+
+                    <div class="report-area-header">
+
+                        <strong>
+                            ${escapeHtml(
+                                area.label
+                            )}
+                        </strong>
+
+                        <span>
+                            ${area.percentage} %
+                        </span>
+
+                    </div>
+
+
+                    <div class="report-progress">
+
+                        <div
+                            class="report-progress-bar"
+                            style="
+                                width:${area.percentage}%
+                            "
+                        ></div>
+
+                    </div>
+
+
+                    <p>
+                        ${escapeHtml(status)}
+                    </p>
+
+                </div>
+                `;
+
+        }
+    );
+
+
+    container.innerHTML =
+        `
+        <article
+            class="development-report-document"
+            id="developmentReportDocument"
+        >
+
+            <header
+                class="development-report-header"
+            >
+
+                <h1>
+                    Entwicklungsgutachten
+                </h1>
+
+                <p>
+                    Entwicklungskompass
+                </p>
+
+            </header>
+
+
+            <section
+                class="development-report-child"
+            >
+
+                <h2>
+                    Angaben zum Kind
+                </h2>
+
+                <p>
+                    <strong>Kind:</strong>
+                    ${escapeHtml(
+                        report.childCode
+                    )}
+                </p>
+
+                <p>
+                    <strong>Alter:</strong>
+                    ${report.age} Jahre
+                </p>
+
+                <p>
+                    <strong>Erstellt am:</strong>
+                    ${escapeHtml(
+                        report.date
+                    )}
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>
+                    Zusammenfassung
+                </h2>
+
+                <div
+                    class="report-main-score"
+                >
+
+                    <span>
+                        Gesamter Entwicklungsstand
+                    </span>
+
+                    <strong>
+                        ${report.result.percentage} %
+                    </strong>
+
+                </div>
+
+            </section>
+
+
+            <section>
+
+                <h2>
+                    Entwicklungsbereiche
+                </h2>
+
+                ${areasHtml}
+
+            </section>
+
+
+            <section>
+
+                <h2>
+                    Beobachtungen
+                </h2>
+
+                <p class="report-text">
+                    ${escapeHtml(
+                        report.observations ||
+                        "Keine zusätzlichen Beobachtungen dokumentiert."
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>
+                    Stärken und Ressourcen
+                </h2>
+
+                <p class="report-text">
+                    ${escapeHtml(
+                        report.strengths
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>
+                    Entwicklungs- und Unterstützungsbedarf
+                </h2>
+
+                <p class="report-text">
+                    ${escapeHtml(
+                        report.supportNeeds
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
+                </p>
+
+            </section>
+
+
+            <section>
+
+                <h2>
+                    Pädagogische Empfehlungen
+                </h2>
+
+                <p class="report-text">
+                    ${escapeHtml(
+                        report.recommendations
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
+                </p>
+
+            </section>
+
+
+            <footer
+                class="development-report-footer"
+            >
+
+                <div>
+                    Ort / Datum:
+                    __________________________
+                </div>
+
+
+                <div>
+                    Pädagogische Fachkraft:
+                    __________________________
+                </div>
+
+
+                <div>
+                    Unterschrift:
+                    __________________________
+                </div>
+
+            </footer>
+
+        </article>
+        `;
+
+
+    container.style.display =
+        "";
+
+}
+
+async function saveDevelopmentReport(report) {
+
+    if (!supabaseClient) {
+
+        throw new Error(
+            "Supabase Client ist nicht verfügbar."
+        );
+
+    }
+
+
+    if (!currentChildId) {
+
+        throw new Error(
+            "Kein Kind ausgewählt."
+        );
+
+    }
+
+
+    const {
+        data: assessment
+    } =
+        await supabaseClient
+            .from(
+                "development_assessments"
+            )
+            .select(
+                "id"
+            )
+            .eq(
+                "child_id",
+                currentChildId
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            )
+            .limit(1)
+            .maybeSingle();
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from(
+                "development_reports"
+            )
+            .insert({
+
+                child_id:
+                    currentChildId,
+
+                assessment_id:
+                    assessment?.id ||
+                    null,
+
+                age:
+                    currentAge,
+
+                report_title:
+                    "Entwicklungsgutachten",
+
+                observations:
+                    report.observations,
+
+                strengths:
+                    report.strengths,
+
+                support_needs:
+                    report.supportNeeds,
+
+                recommendations:
+                    report.recommendations,
+
+                report_text:
+                    JSON.stringify(
+                        report
+                    ),
+
+                result:
+                    report.result,
+
+                created_by:
+                    currentUser?.id ||
+                    null
+
+            })
+            .select()
+            .single();
+
+
+    if (error) {
+
+        console.error(
+            "Gutachten konnte nicht gespeichert werden:",
+            error
+        );
+
+        throw error;
+
+    }
 
 
     return data;
