@@ -169,71 +169,101 @@ async function checkLogin() {
 // ============================================================
 // BENUTZERPROFIL LADEN
 // ============================================================
-
 async function loadUserProfile() {
+    try {
+        // Aktuell eingeloggten Benutzer aus Supabase Auth holen
+        const {
+            data: { user },
+            error: userError
+        } = await supabase.auth.getUser();
 
-    if (!currentUser) {
+        if (userError) {
+            console.error("Auth-Benutzer konnte nicht geladen werden:", userError);
+            return null;
+        }
 
-        return;
+        if (!user) {
+            console.error("Kein eingeloggter Benutzer vorhanden.");
+            return null;
+        }
 
-    }
-
-
-    const {
-        data: profile,
-        error
-    } =
-        await supabaseClient
-
+        // Profil aus der profiles-Tabelle laden
+        // WICHTIG: Hier nur Spalten verwenden,
+        // die tatsächlich in deiner Tabelle existieren.
+        const { data, error } = await supabase
             .from("profiles")
-
             .select(`
                 id,
-                first_name,
-                last_name,
-                role,
                 institution_id,
-                approved,
-                created_at
+                full_name,
+                phone,
+                role,
+                created_at,
+                approval_status,
+                approved_by,
+                approved_at
             `)
+            .eq("id", user.id)
+            .single();
 
-            .eq(
-                "id",
-                currentUser.id
-            )
+        if (error) {
+            console.error("Profil konnte nicht geladen werden:", error);
+            return null;
+        }
 
-            .maybeSingle();
+        // E-Mail kommt aus Supabase Auth, NICHT aus profiles
+        const profile = {
+            ...data,
+            email: user.email || ""
+        };
 
+        console.log("Profil geladen:", profile);
 
-    if (error) {
+        // Profilinformationen im Header
+        const institutionName =
+            document.getElementById("institutionName");
 
+        if (institutionName) {
+            institutionName.textContent =
+                profile.full_name || "Kindergarten";
+        }
+
+        // Profil-Modal
+        const profileName =
+            document.getElementById("profileName");
+
+        const profileEmail =
+            document.getElementById("profileEmail");
+
+        const profileRole =
+            document.getElementById("profileRole");
+
+        if (profileName) {
+            profileName.textContent =
+                profile.full_name || "—";
+        }
+
+        if (profileEmail) {
+            profileEmail.textContent =
+                profile.email || "—";
+        }
+
+        if (profileRole) {
+            profileRole.textContent =
+                profile.role || "—";
+        }
+
+        return profile;
+
+    } catch (error) {
         console.error(
-            "Profil konnte nicht geladen werden:",
+            "Fehler beim Laden des Profils:",
             error
         );
 
-        return;
+        return null;
     }
-
-
-    if (!profile) {
-
-        console.error(
-            "Kein Profil für Benutzer gefunden."
-        );
-
-        return;
-    }
-
-
-    currentProfile =
-        profile;
-
-
-    updateUIForCurrentUser();
-
 }
-
 
 // ============================================================
 // LOGIN ANZEIGEN
@@ -342,16 +372,8 @@ function updateUIForCurrentUser() {
     if (userName) {
 
         const first =
-            currentProfile.first_name ||
+            currentProfile.full_name ||
             "";
-
-        const last =
-            currentProfile.last_name ||
-            "";
-
-
-        const fullName =
-            `${first} ${last}`.trim();
 
 
         userName.textContent =
@@ -761,11 +783,7 @@ if (registerForm) {
 
                         data: {
 
-                            first_name:
-                                firstName,
-
-                            last_name:
-                                lastName
+                            full_name
 
                         }
 
