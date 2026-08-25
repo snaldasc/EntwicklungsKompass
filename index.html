@@ -399,43 +399,41 @@
 
    <form id="addChildForm">
 
-    <div>
-        <label for="childCode">
-            Kinder-ID
-        </label>
+    <label for="childCode">
+        Kinder-ID
+    </label>
 
-        <input
-            type="text"
-            id="childCode"
-            name="childCode"
-            placeholder="z. B. K-001"
-            required
-        >
-    </div>
+    <input
+        type="text"
+        id="childCode"
+        name="childCode"
+        placeholder="z. B. K-001"
+        autocomplete="off"
+        required
+    >
 
 
-    <div>
-        <label for="childGroup">
-            Gruppe
-        </label>
+    <label for="childGroup">
+        Gruppe
+    </label>
 
-        <select
-            id="childGroup"
-            name="childGroup"
-            required
-        >
-            <option value="">
-                Gruppe auswählen...
-            </option>
-        </select>
+    <select
+        id="childGroup"
+        name="childGroup"
+        required
+    >
+        <option value="">
+            Gruppe auswählen...
+        </option>
+    </select>
 
-        <button
-            type="button"
-            id="createGroupButton"
-        >
-            + Neue Gruppe
-        </button>
-    </div>
+
+    <button
+        type="button"
+        id="createGroupButton"
+    >
+        + Neue Gruppe
+    </button>
 
 
     <div
@@ -450,7 +448,9 @@
         <input
             type="text"
             id="newGroupName"
+            name="newGroupName"
             placeholder="z. B. Sonnenkäfer"
+            autocomplete="off"
         >
 
         <button
@@ -473,9 +473,12 @@
     <div id="childFormMessage"></div>
 
 
-    <button type="submit">
+    <button
+        type="submit"
+    >
         Kind anlegen
     </button>
+
 
     <button
         type="button"
@@ -485,8 +488,6 @@
     </button>
 
 </form>
-
-
 
     <!-- KINDERLISTE -->
 
