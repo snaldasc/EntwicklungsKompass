@@ -212,6 +212,98 @@ async function loadUserProfile(userId) {
         }
     }
 
+// ============================================================
+// GRUPPEN DER AKTUELLEN INSTITUTION LADEN
+// ============================================================
+
+async function loadGroupsForCurrentInstitution() {
+
+    if (!currentProfile?.institution_id) {
+
+        console.error(
+            "Keine Institution für aktuellen Benutzer gefunden."
+        );
+
+        return;
+    }
+
+    const groupSelect =
+        document.getElementById("childGroup");
+
+    if (!groupSelect) {
+        return;
+    }
+
+    groupSelect.innerHTML =
+        `<option value="">
+            Gruppen werden geladen...
+        </option>`;
+
+
+    const {
+        data: groups,
+        error
+    } = await supabaseClient
+
+        .from("Groups")
+
+        .select(`
+            id,
+            group_name,
+            description
+        `)
+
+        .eq(
+            "institution_id",
+            currentProfile.institution_id
+        )
+
+        .order(
+            "group_name",
+            {
+                ascending: true
+            }
+        );
+
+
+    if (error) {
+
+        console.error(
+            "Gruppen konnten nicht geladen werden:",
+            error
+        );
+
+        groupSelect.innerHTML =
+            `<option value="">
+                Gruppen konnten nicht geladen werden
+            </option>`;
+
+        return;
+    }
+
+
+    groupSelect.innerHTML =
+        `<option value="">
+            Gruppe auswählen...
+        </option>`;
+
+
+    groups.forEach(group => {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            group.id;
+
+        option.textContent =
+            group.group_name;
+
+        groupSelect.appendChild(option);
+
+    });
+}
+    
 
     // ========================================================
     // DEBUG
