@@ -17,8 +17,13 @@ const SUPABASE_URL =
     "https://sjekwvalxujnfparxees.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
+    "sb_publishable_BfusSMc15dqe3SlyxrXiFQ_Spe6Zr3r";
 
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
 
 if (!window.supabase) {
 
@@ -33,13 +38,6 @@ if (!window.supabase) {
 }
 
 
-const supabaseClient =
-    window.supabase
-        ? window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY
-        )
-        : null;
 
 
 // ============================================================
