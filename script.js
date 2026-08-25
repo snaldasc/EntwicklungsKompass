@@ -1195,281 +1195,749 @@ const DEVELOPMENT_OPTIONS = [
 
 const DEVELOPMENT_QUESTIONS = [
 
+    // =========================================================
+    // 1–2,5 JAHRE
+    // =========================================================
+
     {
         id: 1,
-        area: "motorik",
+        area: "sprache",
         age_from: 1,
-        age_to: 2,
-        question:
-            "Kann das Kind sicher gehen und seine Bewegungen zunehmend kontrollieren?"
+        age_to: 2.5,
+        question: "1. Das Kind versteht Nomen (Hauptwörter wie Auto, Puppe)."
     },
-
     {
         id: 2,
         area: "sprache",
         age_from: 1,
-        age_to: 2,
-        question:
-            "Kann das Kind einfache Wörter oder kurze Äußerungen verwenden?"
+        age_to: 2.5,
+        question: "2. Es versteht Verben (Tätigkeitswörter wie essen, trinken, gehen, turnen)."
     },
-
     {
         id: 3,
-        area: "sozial",
+        area: "sprache",
         age_from: 1,
-        age_to: 2,
-        question:
-            "Kann das Kind mit anderen Kindern in einfachen Situationen Kontakt aufnehmen?"
+        age_to: 2.5,
+        question: "3. Es versteht Präpositionen (Lagebezeichnungen wie auf, unter, neben)."
     },
-
     {
         id: 4,
-        area: "kognition",
+        area: "sprache",
         age_from: 1,
-        age_to: 2,
-        question:
-            "Kann das Kind einfache Zusammenhänge erkennen und bekannte Gegenstände zuordnen?"
+        age_to: 2.5,
+        question: "4. Es versteht Adjektive (Eigenschaftswörter wie groß/klein, traurig/fröhlich)."
     },
-
     {
         id: 5,
-        area: "selbststaendigkeit",
-        age_from: 1,
-        age_to: 2,
-        question:
-            "Kann das Kind bei einfachen Alltagshandlungen aktiv mithelfen?"
-    },
-
-
-    {
-        id: 6,
-        area: "motorik",
-        age_from: 2,
-        age_to: 3,
-        question:
-            "Kann das Kind laufen, springen und einfache Bewegungsabläufe ausführen?"
-    },
-
-    {
-        id: 7,
         area: "sprache",
-        age_from: 2,
-        age_to: 3,
-        question:
-            "Kann das Kind einfache Sätze bilden und Wünsche verständlich ausdrücken?"
+        age_from: 1,
+        age_to: 2.5,
+        question: "5. Es versteht Aufforderungen in konkreten Situationen und setzt diese um."
     },
-
-    {
-        id: 8,
-        area: "sozial",
-        age_from: 2,
-        age_to: 3,
-        question:
-            "Kann das Kind einfache Regeln im gemeinsamen Spiel beachten?"
-    },
-
-    {
-        id: 9,
-        area: "kognition",
-        age_from: 2,
-        age_to: 3,
-        question:
-            "Kann das Kind einfache Aufgaben nach einer kurzen Anleitung durchführen?"
-    },
-
-    {
-        id: 10,
-        area: "selbststaendigkeit",
-        age_from: 2,
-        age_to: 3,
-        question:
-            "Kann das Kind einfache Alltagshandlungen zunehmend selbstständig durchführen?"
-    },
-
 
     {
         id: 11,
-        area: "motorik",
-        age_from: 3,
-        age_to: 4,
-        question:
-            "Kann das Kind Bewegungen gezielt koordinieren und einfache motorische Aufgaben ausführen?"
+        area: "sprache",
+        age_from: 1,
+        age_to: 2.5,
+        question: "11. Das Kind spricht einzelne Wörter."
     },
-
     {
         id: 12,
         area: "sprache",
-        age_from: 3,
-        age_to: 4,
-        question:
-            "Kann das Kind sich in einfachen Gesprächen verständlich ausdrücken?"
+        age_from: 1,
+        age_to: 2.5,
+        question: "12. Es kann bis zu 50 Wörter sprechen."
+    },
+
+    {
+        id: 21,
+        area: "sprache",
+        age_from: 1,
+        age_to: 2.5,
+        question: "21. Das Kind spricht die Vokale a, e, i, o, u."
+    },
+    {
+        id: 22,
+        area: "sprache",
+        age_from: 1,
+        age_to: 2.5,
+        question: "22. Es produziert die Laute m, p, d, b, n."
+    },
+
+    {
+        id: 36,
+        area: "sprache",
+        age_from: 1,
+        age_to: 2.5,
+        question: "36. Das Kind spricht Einwortsätze."
+    },
+    {
+        id: 37,
+        area: "sprache",
+        age_from: 1,
+        age_to: 2.5,
+        question: "37. Es spricht Zweiwortsätze."
+    },
+
+    {
+        id: 53,
+        area: "sprache",
+        age_from: 1,
+        age_to: 2.5,
+        question: "53. Das Kind variiert die Lautstärke je nach Stimmung und Situation."
+    },
+
+    {
+        id: 57,
+        area: "sozial",
+        age_from: 1,
+        age_to: 2.5,
+        question: "57. Das Kind sucht und hält Blickkontakt."
+    },
+    {
+        id: 58,
+        area: "sozial",
+        age_from: 1,
+        age_to: 2.5,
+        question: "58. Es hält Dialoge, die sich auf das unmittelbare Umfeld beziehen."
+    },
+    {
+        id: 59,
+        area: "sozial",
+        age_from: 1,
+        age_to: 2.5,
+        question: "59. Es ist dem Sprecher zugewandt."
+    },
+    {
+        id: 60,
+        area: "sozial",
+        age_from: 1,
+        age_to: 2.5,
+        question: "60. Es kann Wünsche äußern."
+    },
+    {
+        id: 61,
+        area: "sozial",
+        age_from: 1,
+        age_to: 2.5,
+        question: "61. Es beginnt ein Gespräch von sich aus."
+    },
+
+    {
+        id: 73,
+        area: "literacy",
+        age_from: 1,
+        age_to: 2.5,
+        question: "73. Das Kind ist an Büchern interessiert."
+    },
+    {
+        id: 74,
+        area: "literacy",
+        age_from: 1,
+        age_to: 2.5,
+        question: "74. Es zeigt und benennt Dinge oder Tiere in Bilderbüchern oder ahmt sie nach."
+    },
+
+    {
+        id: 83,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "83. Das Kind reagiert auf seinen Namen."
+    },
+    {
+        id: 84,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "84. Es zeigt emotionale Reaktionen auf ein freundliches Gesicht."
+    },
+    {
+        id: 85,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "85. Es hat eine gute Mundmotorik."
+    },
+    {
+        id: 86,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "86. Es reagiert auf Flüstern."
+    },
+    {
+        id: 87,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "87. Es erkennt verschiedene Geräusche und ordnet diese zu."
+    },
+    {
+        id: 88,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "88. Es wendet sich einer Schallquelle zu (dreht den Kopf zum Geräusch)."
+    },
+    {
+        id: 89,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "89. Es kann eine Reihe von Wörtern nachsprechen."
+    },
+    {
+        id: 90,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "90. Es kann Dinge in der Nähe erkennen."
+    },
+    {
+        id: 91,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "91. Es kann Dinge in der Ferne erkennen."
+    },
+    {
+        id: 92,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "92. Es fühlt sich bei seinen Handlungen wohl."
+    },
+    {
+        id: 93,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "93. Es ist an seiner Umwelt interessiert."
+    },
+    {
+        id: 94,
+        area: "grundlagen",
+        age_from: 1,
+        age_to: 2.5,
+        question: "94. Es reagiert deutlich auf Interaktionsangebote."
+    },
+
+
+    // =========================================================
+    // 2,5–4,5 JAHRE
+    // =========================================================
+
+    {
+        id: 6,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "6. Es versteht einteilige situationsgebundene Aufforderungen und setzt diese um."
+    },
+    {
+        id: 7,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "7. Es versteht mehrteilige Aufforderungen, die unabhängig von der jetzigen Situation sind, und setzt diese um."
+    },
+    {
+        id: 8,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "8. Es versteht Zeitangaben wie heute, gestern, morgen."
     },
 
     {
         id: 13,
-        area: "sozial",
-        age_from: 3,
-        age_to: 4,
-        question:
-            "Kann das Kind eigene Gefühle zunehmend benennen und die Gefühle anderer wahrnehmen?"
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "13. Es verwendet Verben (Tätigkeitswörter, z.B. essen, laufen, schlafen)."
     },
-
     {
         id: 14,
-        area: "kognition",
-        age_from: 3,
-        age_to: 4,
-        question:
-            "Kann das Kind einfache Probleme selbstständig lösen und Zusammenhänge erkennen?"
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "14. Es kennt und verwendet Adjektive (Eigenschaftswörter, z.B. dick, dünn, alt, jung)."
     },
-
     {
         id: 15,
-        area: "selbststaendigkeit",
-        age_from: 3,
-        age_to: 4,
-        question:
-            "Kann das Kind einfache Aufgaben im Alltag selbstständig übernehmen?"
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "15. Es verwendet Präpositionen (Lagebezeichnungen, z.B. vor, auf, neben, in)."
+    },
+    {
+        id: 16,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "16. Es benennt Farben."
+    },
+
+    {
+        id: 23,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "23. Es bildet Laute w, f, l, t, ng (wie Junge), k, ch2 (wie hoch), s, z, h."
+    },
+    {
+        id: 24,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "24. Es spricht die Laute j, r, g, pf."
+    },
+    {
+        id: 25,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "25. Es produziert Konsonantenverbindungen, z.B. kl, fl, bl, gl, br, fr, gr."
+    },
+
+    {
+        id: 38,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "38. Es verwendet Dreiwortsätze (das Verb steht am Satzende)."
+    },
+    {
+        id: 39,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "39. Es bildet Drei- und Mehrwortsätze, wobei das Verb an der zweiten Position steht."
+    },
+    {
+        id: 40,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "40. Es stellt W-Fragen."
+    },
+    {
+        id: 41,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "41. Es verändert das Verb (Tätigkeitswort) entsprechend der Person (ich gehe, du gehst, wir gehen)."
+    },
+    {
+        id: 42,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "42. Es verwendet Präpositionen (Verhältniswörter wie in, auf, unter) innerhalb eines Satzes richtig."
+    },
+    {
+        id: 43,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "43. Es verwendet Plural (Mehrzahl)."
+    },
+    {
+        id: 44,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "44. Es verwendet Artikel (Begleiter/Geschlechtswort: der, die, das, ein, eine)."
+    },
+
+    {
+        id: 54,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "54. Es verändert seine Tonhöhe je nach Aussage des Satzes (Frage, Aussage etc.)."
+    },
+    {
+        id: 55,
+        area: "sprache",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "55. Es kann einzelne Wörter betonen/akzentuieren, um diesen eine besondere Bedeutung zu verleihen."
+    },
+
+    {
+        id: 62,
+        area: "sozial",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "62. Es hält den Sprecher-Hörer-Wechsel ein."
+    },
+    {
+        id: 63,
+        area: "sozial",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "63. Es verdeutlicht sein Sprechen mit Mimik und Gestik."
+    },
+    {
+        id: 64,
+        area: "sozial",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "64. Es verwendet „ich“."
+    },
+    {
+        id: 65,
+        area: "sozial",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "65. Es spricht situationsangemessen."
+    },
+    {
+        id: 66,
+        area: "sozial",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "66. Es berücksichtigt den Zuhörer und passt seine Reaktion bzw. seine Kommunikation an sein Gegenüber an."
+    },
+
+    {
+        id: 75,
+        area: "literacy",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "75. Es nimmt aktiv an einer Bilderbuchbetrachtung teil."
+    },
+    {
+        id: 76,
+        area: "literacy",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "76. Es erkennt Zusammenhänge aus Bildergeschichten und Bilderbüchern wieder."
+    },
+    {
+        id: 77,
+        area: "literacy",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "77. Es konzentriert sich über einen längeren Zeitraum auf Geschichten und Erzählungen."
+    },
+
+    {
+        id: 95,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "95. Es nimmt Gefühle anderer wahr und verhält sich empathisch."
+    },
+    {
+        id: 96,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "96. Es kann mit Konzentration und Ausdauer bei der Sache bleiben."
+    },
+    {
+        id: 97,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "97. Es kann Wesentliches von Unwesentlichem unterscheiden."
+    },
+    {
+        id: 98,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "98. Es setzt seinen Körper entsprechend seinem Alter ein."
+    },
+    {
+        id: 99,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "99. Es zeigt eine gute Koordination bei komplexen Bewegungsabläufen."
+    },
+    {
+        id: 100,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "100. Es ist in Alltagshandlungen geschickt (z. B. zieht sich selbstständig an und aus)."
+    },
+    {
+        id: 101,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "101. Es zeigt soziales Verhalten in der Gruppe."
+    },
+    {
+        id: 102,
+        area: "grundlagen",
+        age_from: 2.5,
+        age_to: 4.5,
+        question: "102. Es besitzt ein positives Selbstwertgefühl."
     },
 
 
+    // =========================================================
+    // 4,5–6 JAHRE
+    // =========================================================
+
     {
-        id: 16,
-        area: "motorik",
-        age_from: 4,
-        age_to: 5,
-        question:
-            "Kann das Kind Bewegungsabläufe zunehmend sicher und koordiniert durchführen?"
+        id: 9,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "9. Es versteht Beziehungen und Auswirkungen (z.B. Es wird hell, wenn die Sonne aufgeht)."
+    },
+    {
+        id: 10,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "10. Es versteht W-Fragen (das Kind antwortet richtig auf die ihm gestellten Fragen)."
     },
 
     {
         id: 17,
         area: "sprache",
-        age_from: 4,
-        age_to: 5,
-        question:
-            "Kann das Kind Erlebnisse und Gedanken zunehmend zusammenhängend erzählen?"
+        age_from: 4.5,
+        age_to: 6,
+        question: "17. Es benennt Dinge genau und detailliert (z.B. Wimpern)."
     },
-
     {
         id: 18,
-        area: "sozial",
-        age_from: 4,
-        age_to: 5,
-        question:
-            "Kann das Kind Konflikte zunehmend verbal lösen und Rücksicht auf andere nehmen?"
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "18. Es benennt Formen (Kreis, Dreieck, Viereck)."
     },
-
     {
         id: 19,
-        area: "kognition",
-        age_from: 4,
-        age_to: 5,
-        question:
-            "Kann das Kind Aufgaben planen und Lösungswege zunehmend selbstständig finden?"
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "19. Es kann Oberbegriffe benennen und richtig zuordnen (Apfel = Obst)."
     },
-
     {
         id: 20,
-        area: "selbststaendigkeit",
-        age_from: 4,
-        age_to: 5,
-        question:
-            "Kann das Kind alltägliche Aufgaben weitgehend selbstständig organisieren?"
-    },
-
-
-    {
-        id: 21,
-        area: "motorik",
-        age_from: 5,
-        age_to: 6,
-        question:
-            "Kann das Kind komplexere Bewegungsabläufe sicher und koordiniert durchführen?"
-    },
-
-    {
-        id: 22,
         area: "sprache",
-        age_from: 5,
+        age_from: 4.5,
         age_to: 6,
-        question:
-            "Kann das Kind längere Erlebnisse verständlich und in sinnvoller Reihenfolge erzählen?"
+        question: "20. Es kann sich differenziert ausdrücken (z.B. Abläufe genau erklären oder beschreiben)."
     },
-
-    {
-        id: 23,
-        area: "sozial",
-        age_from: 5,
-        age_to: 6,
-        question:
-            "Kann das Kind Regeln verstehen, einhalten und bei Konflikten angemessene Lösungen finden?"
-    },
-
-    {
-        id: 24,
-        area: "kognition",
-        age_from: 5,
-        age_to: 6,
-        question:
-            "Kann das Kind Aufgaben selbstständig planen und Lösungsstrategien entwickeln?"
-    },
-
-    {
-        id: 25,
-        area: "selbststaendigkeit",
-        age_from: 5,
-        age_to: 6,
-        question:
-            "Kann das Kind alltägliche Aufgaben weitgehend selbstständig durchführen?"
-    },
-
 
     {
         id: 26,
-        area: "motorik",
-        age_from: 6,
-        age_to: 7,
-        question:
-            "Kann das Kind koordinierte Bewegungsabläufe sicher und zielgerichtet ausführen?"
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "26. Es produziert Laute ch1 (wie in ich) und sch."
     },
-
     {
         id: 27,
         area: "sprache",
-        age_from: 6,
-        age_to: 7,
-        question:
-            "Kann das Kind Gedanken, Erlebnisse und Zusammenhänge ausführlich und verständlich ausdrücken?"
+        age_from: 4.5,
+        age_to: 6,
+        question: "27. Es produziert auch schwierige Konsonantenverbindungen z.B. dr-, tr, kr, kn, sch-Verbindungen (z. B. Schmetterling, Straße, Schnecke etc.)."
     },
-
     {
         id: 28,
-        area: "sozial",
-        age_from: 6,
-        age_to: 7,
-        question:
-            "Kann das Kind Konflikte zunehmend selbstständig lösen und die Perspektive anderer berücksichtigen?"
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "28. Es spricht in Eins-zu-eins-Situationen deutlich, sodass es gut verstanden wird."
     },
-
     {
         id: 29,
-        area: "kognition",
-        age_from: 6,
-        age_to: 7,
-        question:
-            "Kann das Kind komplexere Aufgaben planen, bearbeiten und Lösungen überprüfen?"
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "29. Es spricht im Gruppengeschehen deutlich."
+    },
+    {
+        id: 30,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "30. Es erkennt Rhythmen und kann diese mitklatschen."
+    },
+    {
+        id: 31,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "31. Es kann Wörter in Silben zerlegen/klatschen."
+    },
+    {
+        id: 32,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "32. Es erkennt Reimwörter."
+    },
+    {
+        id: 33,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "33. Es kann Reimwörter ergänzen."
+    },
+    {
+        id: 34,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "34. Es unterscheidet ähnlich klingende Wörter."
+    },
+    {
+        id: 35,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "35. Es erkennt Anlaute."
     },
 
     {
-        id: 30,
-        area: "selbststaendigkeit",
-        age_from: 6,
-        age_to: 7,
-        question:
-            "Kann das Kind Verantwortung für alltägliche Aufgaben übernehmen?"
-    }
+        id: 45,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "45. Es verwendet Adjektive (Eigenschaftswörter) im Satz richtig."
+    },
+    {
+        id: 46,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "46. Es antwortet korrekt auf W-Fragen (Satzbau und Wortbildung sind korrekt)."
+    },
+    {
+        id: 47,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "47. Es bildet Nebensätze, wobei das Verb im Nebensatz am Satzende steht."
+    },
+    {
+        id: 48,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "48. Es gibt Situationen oder Ereignisse in richtiger zeitlicher Abfolge wieder."
+    },
+    {
+        id: 49,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "49. Es bildet die vollendete Vergangenheit (Perfekt) richtig („Ich habe den Hund gestreichelt.“)."
+    },
+    {
+        id: 50,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "50. Es bildet die Vergangenheitsform Präteritum (Imperfekt) richtig („Der Junge sagte zum Mädchen ...“)."
+    },
+    {
+        id: 51,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "51. Es verwendet den Kasus Akkusativ korrekt (Wen- oder Was-Fall: „Das Mädchen isst den Apfel.“)."
+    },
 
+    {
+        id: 56,
+        area: "sprache",
+        age_from: 4.5,
+        age_to: 6,
+        question: "56. Es ist in der Lage, einen sinnvollen Rhythmus einzuhalten."
+    },
+
+    {
+        id: 67,
+        area: "sozial",
+        age_from: 4.5,
+        age_to: 6,
+        question: "67. Es bezieht nicht situatives Wissen mit ein."
+    },
+    {
+        id: 68,
+        area: "sozial",
+        age_from: 4.5,
+        age_to: 6,
+        question: "68. Es fragt nach."
+    },
+    {
+        id: 69,
+        area: "sozial",
+        age_from: 4.5,
+        age_to: 6,
+        question: "69. Es antwortet sinngemäß auf Fragen."
+    },
+    {
+        id: 70,
+        area: "sozial",
+        age_from: 4.5,
+        age_to: 6,
+        question: "70. Es hört aufmerksam zu."
+    },
+    {
+        id: 71,
+        area: "sozial",
+        age_from: 4.5,
+        age_to: 6,
+        question: "71. Es kann eine kurze Geschichte sinnvoll nacherzählen."
+    },
+    {
+        id: 72,
+        area: "sozial",
+        age_from: 4.5,
+        age_to: 6,
+        question: "72. Es beschreibt etwas Besonderes."
+    },
+
+    {
+        id: 78,
+        area: "literacy",
+        age_from: 4.5,
+        age_to: 6,
+        question: "78. Es kann Geschichten in logischer Reihenfolge wiedergeben."
+    },
+    {
+        id: 79,
+        area: "literacy",
+        age_from: 4.5,
+        age_to: 6,
+        question: "79. Es versucht zu „schreiben“."
+    },
+    {
+        id: 80,
+        area: "literacy",
+        age_from: 4.5,
+        age_to: 6,
+        question: "80. Es interessiert sich für Schrift und versucht, Buchstaben zu schreiben."
+    },
+    {
+        id: 81,
+        area: "literacy",
+        age_from: 4.5,
+        age_to: 6,
+        question: "81. Es erkennt Bilder, Symbole und Piktogramme wieder, die häufig im Kindergarten verwendet werden."
+    },
+    {
+        id: 82,
+        area: "literacy",
+        age_from: 4.5,
+        age_to: 6,
+        question: "82. Es erkennt einzelne Buchstaben wieder."
+    }
 ];
 
 
