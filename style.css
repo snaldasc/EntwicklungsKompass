@@ -211,3 +211,36 @@ button:hover {
     border-left: 4px solid #e74c3c;
     border-radius: 0 8px 8px 0;
 }
+
+/* ============================================================
+   APP-SECTIONS
+   ============================================================ */
+
+.section {
+    display: block;
+    width: 100%;
+    min-height: 100px;
+}
+
+.section.hidden {
+    display: none !important;
+}
+
+/* Entwicklungskompass */
+#developmentSection {
+    width: 100%;
+    background: transparent;
+}
+
+#developmentSection .card {
+    width: 100%;
+}
+
+#questionsContainer {
+    width: 100%;
+}
+
+/* Entwicklungsergebnis */
+#developmentResult {
+    width: 100%;
+}
