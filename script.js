@@ -56,7 +56,7 @@ const registerSection =
 
 const dashboardSection =
     document.getElementById(
-        "dashboardSection"
+        "appSection"
     );
 
 
