@@ -376,6 +376,9 @@
      KINDERVERWALTUNG
      ========================================================= -->
 
+
+        
+
 <div id="childrenSection" class="children-section">
 
     <h2>Kinder</h2>
@@ -394,54 +397,95 @@
 
     <!-- KIND ANLEGEN -->
 
+   <form id="addChildForm">
+
+    <div>
+        <label for="childCode">
+            Kinder-ID
+        </label>
+
+        <input
+            type="text"
+            id="childCode"
+            name="childCode"
+            placeholder="z. B. K-001"
+            required
+        >
+    </div>
+
+
+    <div>
+        <label for="childGroup">
+            Gruppe
+        </label>
+
+        <select
+            id="childGroup"
+            name="childGroup"
+            required
+        >
+            <option value="">
+                Gruppe auswählen...
+            </option>
+        </select>
+
+        <button
+            type="button"
+            id="createGroupButton"
+        >
+            + Neue Gruppe
+        </button>
+    </div>
+
+
     <div
-        id="addChildFormContainer"
+        id="newGroupContainer"
         style="display:none;"
     >
 
-        <h3>Neues Kind anlegen</h3>
+        <label for="newGroupName">
+            Neuer Gruppenname
+        </label>
 
-        <form id="addChildForm">
+        <input
+            type="text"
+            id="newGroupName"
+            placeholder="z. B. Sonnenkäfer"
+        >
 
-            <label for="childDisplayName">
-                Name des Kindes:
-            </label>
+        <button
+            type="button"
+            id="saveNewGroupButton"
+        >
+            Gruppe erstellen
+        </button>
 
-            <input
-                type="text"
-                id="childDisplayName"
-                placeholder="z.B. Max Mustermann"
-                required
-            >
-
-
-            <label for="childCode">
-                Kind-Code:
-            </label>
-
-            <input
-                type="text"
-                id="childCode"
-                placeholder="z.B. KIND-001"
-            >
-
-
-            <button type="submit">
-                Kind speichern
-            </button>
-
-            <button
-                type="button"
-                id="cancelAddChildButton"
-            >
-                Abbrechen
-            </button>
-
-            <p id="childFormMessage"></p>
-
-        </form>
+        <button
+            type="button"
+            id="cancelNewGroupButton"
+        >
+            Abbrechen
+        </button>
 
     </div>
+
+
+    <div id="childFormMessage"></div>
+
+
+    <button type="submit">
+        Kind anlegen
+    </button>
+
+    <button
+        type="button"
+        id="cancelAddChildButton"
+    >
+        Abbrechen
+    </button>
+
+</form>
+
 
 
     <!-- KINDERLISTE -->
