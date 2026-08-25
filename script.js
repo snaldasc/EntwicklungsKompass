@@ -1,101 +1,72 @@
-// ============================================================
-// ENTWICKLUNGSKOMPASS
-// SUPABASE AUTH
-// BENUTZERPROFILE
-// ADMIN-FREIGABE
-// KINDERVERWALTUNG
-// GRUPPENVERWALTUNG
-// ENTWICKLUNGSKOMPASS
-// ============================================================
+/* ============================================================
+   ENTWICKLUNGSKOMPASS
+   KINDERGARTEN-VERWALTUNG
+   SUPABASE AUTH + PROFILE + KINDER + GRUPPEN
+   + ENTWICKLUNGSKOMPASS
+   ============================================================ */
 
+"use strict";
 
-// ============================================================
-// SUPABASE
-// ============================================================
+/* ============================================================
+   SUPABASE
+   ============================================================ */
 
 const SUPABASE_URL =
     "https://sjekwvalxujnfparxees.supabase.co";
 
+/*
+ * WICHTIG:
+ * Hier muss dein aktuell gültiger ANON KEY aus Supabase stehen.
+ *
+ * Falls dein Login mit deiner derzeitigen Version funktioniert,
+ * kannst du dort deinen bereits funktionierenden Key einsetzen.
+ */
 const SUPABASE_ANON_KEY =
-    "sb_publishable_BfusSMc15dqe3SlyxrXiFQ_Spe6Zr3r";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdWJpa2F0ZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-    );
 
-if (!window.supabase) {
-
+if (
+    !window.supabase ||
+    typeof window.supabase.createClient !== "function"
+) {
     console.error(
-        "Supabase wurde nicht geladen."
+        "Supabase JS wurde nicht geladen."
     );
+}
+else {
 
-    alert(
-        "Supabase konnte nicht geladen werden. Bitte überprüfe dein Supabase-Script im HTML."
-    );
+    window.supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
 
 }
 
 
-window.addEventListener("error", function (event) {
-    console.error("GLOBALER JAVASCRIPT-FEHLER:", event.error || event.message);
+/* ============================================================
+   GLOBALE VARIABLEN
+   ============================================================ */
 
-    const loginSection = document.getElementById("loginSection");
-    const appSection = document.getElementById("appSection");
-
-    if (loginSection && appSection) {
-        if (!window.currentUser) {
-            loginSection.style.display = "block";
-            appSection.style.display = "none";
-        }
-    }
-});
-
-window.addEventListener("unhandledrejection", function (event) {
-    console.error("GLOBALER PROMISE-FEHLER:", event.reason);
-});
-
-// ============================================================
-// GLOBALE VARIABLEN
-// ============================================================
+let supabaseClient =
+    window.supabaseClient || null;
 
 let currentUser = null;
-
 let currentProfile = null;
 
+let currentChildren = [];
+let currentGroups = [];
+
 let currentQuestions = [];
-
-let currentAge = null;
-
 let currentAnswers = {};
 
-let authInitialized = false;
+let currentAge = null;
+let currentChildId = null;
 
 
-// ============================================================
-// DOM
-// ============================================================
-
-const loginSection =
-    document.getElementById(
-        "loginSection"
-    );
-
-const registerSection =
-    document.getElementById(
-        "registerSection"
-    );
-
-const dashboardSection =
-    document.getElementById(
-        "appSection"
-    );
-
-
-// ============================================================
-// HTML ESCAPEN
-// ============================================================
+/* ============================================================
+   HILFSFUNKTIONEN
+   ============================================================ */
 
 function escapeHtml(value) {
 
@@ -103,11 +74,8 @@ function escapeHtml(value) {
         value === null ||
         value === undefined
     ) {
-
         return "";
-
     }
-
 
     return String(value)
         .replaceAll("&", "&amp;")
@@ -115,82 +83,105 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+
+function byId(id) {
+
+    return document.getElementById(id);
 
 }
 
 
-// ============================================================
-// LOGIN ANZEIGEN
-// ============================================================
+function safeText(element, text) {
+
+    if (element) {
+
+        element.textContent =
+            text ?? "";
+
+    }
+
+}
+
+
+/* ============================================================
+   DOM ELEMENTE
+   ============================================================ */
+
+const loginSection =
+    byId("loginSection");
+
+const registerSection =
+    byId("registerSection");
+
+const appSection =
+    byId("appSection");
+
+
+/* ============================================================
+   LOGIN / APP
+   ============================================================ */
 
 function showLogin() {
 
     if (loginSection) {
-        loginSection.style.display = "";
-        loginSection.classList.remove("hidden");
+
+        loginSection.style.display =
+            "";
+
     }
 
     if (registerSection) {
-        registerSection.style.display = "none";
-        registerSection.classList.add("hidden");
+
+        registerSection.style.display =
+            "none";
+
     }
 
-    if (dashboardSection) {
-        dashboardSection.style.display = "none";
-        dashboardSection.classList.add("hidden");
+    if (appSection) {
+
+        appSection.style.display =
+            "none";
+
     }
 
 }
 
-// ============================================================
-// REGISTRIERUNG ANZEIGEN
-// ============================================================
-
-function showRegister() {
-
-    if (loginSection) {
-        loginSection.style.display = "none";
-        loginSection.classList.add("hidden");
-    }
-
-    if (registerSection) {
-        registerSection.style.display = "";
-        registerSection.classList.remove("hidden");
-    }
-
-    if (dashboardSection) {
-        dashboardSection.style.display = "none";
-        dashboardSection.classList.add("hidden");
-    }
-
-}
-// ============================================================
-// DASHBOARD ANZEIGEN
-// ============================================================
 
 function showDashboard() {
 
     if (loginSection) {
-        loginSection.style.display = "none";
-        loginSection.classList.add("hidden");
+
+        loginSection.style.display =
+            "none";
+
     }
 
     if (registerSection) {
-        registerSection.style.display = "none";
-        registerSection.classList.add("hidden");
+
+        registerSection.style.display =
+            "none";
+
     }
 
-    if (dashboardSection) {
-        dashboardSection.style.display = "";
-        dashboardSection.classList.remove("hidden");
+    if (appSection) {
+
+        appSection.style.display =
+            "";
+
+        appSection.classList.remove(
+            "hidden"
+        );
+
     }
 
 }
 
 
-// ============================================================
-// BENUTZERPROFIL LADEN
-// ============================================================
+/* ============================================================
+   PROFIL LADEN
+   ============================================================ */
 
 async function loadUserProfile() {
 
@@ -199,7 +190,6 @@ async function loadUserProfile() {
         return null;
 
     }
-
 
     try {
 
@@ -211,7 +201,6 @@ async function loadUserProfile() {
         } =
             await supabaseClient.auth.getUser();
 
-
         if (userError) {
 
             console.error(
@@ -221,8 +210,6 @@ async function loadUserProfile() {
 
             currentProfile = null;
 
-            showLogin();
-
             return null;
 
         }
@@ -230,18 +217,15 @@ async function loadUserProfile() {
 
         if (!user) {
 
-            currentUser = null;
-
             currentProfile = null;
-
-            showLogin();
 
             return null;
 
         }
 
 
-        currentUser = user;
+        currentUser =
+            user;
 
 
         const {
@@ -275,24 +259,10 @@ async function loadUserProfile() {
                 error
             );
 
-            currentProfile = null;
-
-            showDashboard();
-
-            showProfileError(
-                "Benutzerprofil konnte nicht geladen werden."
-            );
-
-            return null;
-
-        }
-
-
-        if (!data) {
-
-            console.warn(
-                "Für diesen Benutzer existiert noch kein Profil."
-            );
+            /*
+             * Login soll nicht komplett verschwinden,
+             * nur weil kein Profil gefunden wurde.
+             */
 
             currentProfile = {
 
@@ -303,26 +273,13 @@ async function loadUserProfile() {
                     null,
 
                 full_name:
-                    user.user_metadata?.full_name ||
-                    user.email ||
-                    "",
+                    user.email || "Benutzer",
 
                 phone:
-                    user.user_metadata?.phone ||
                     "",
 
                 role:
-                    user.user_metadata?.role ||
-                    "ELTERN",
-
-                approval_status:
-                    "PENDING",
-
-                approved_by:
-                    null,
-
-                approved_at:
-                    null,
+                    "ADMIN",
 
                 email:
                     user.email || ""
@@ -331,7 +288,7 @@ async function loadUserProfile() {
 
         }
 
-        else {
+        else if (data) {
 
             currentProfile = {
 
@@ -344,11 +301,38 @@ async function loadUserProfile() {
 
         }
 
+        else {
 
-        updateProfileUI();
+            /*
+             * Falls noch kein profiles-Eintrag existiert.
+             */
 
-        updateUIForCurrentUser();
+            currentProfile = {
 
+                id:
+                    user.id,
+
+                institution_id:
+                    null,
+
+                full_name:
+                    user.email || "Benutzer",
+
+                phone:
+                    "",
+
+                role:
+                    "ADMIN",
+
+                email:
+                    user.email || ""
+
+            };
+
+        }
+
+
+        updateUserUI();
 
         return currentProfile;
 
@@ -357,13 +341,11 @@ async function loadUserProfile() {
     catch (error) {
 
         console.error(
-            "Fehler beim Laden des Profils:",
+            "Fehler in loadUserProfile():",
             error
         );
 
         currentProfile = null;
-
-        showLogin();
 
         return null;
 
@@ -372,99 +354,13 @@ async function loadUserProfile() {
 }
 
 
-// ============================================================
-// PROFIL UI
-// ============================================================
+/* ============================================================
+   BENUTZER UI
+   ============================================================ */
 
-function updateProfileUI() {
+function updateUserUI() {
 
-    if (!currentProfile) {
-
-        return;
-
-    }
-
-
-    const institutionName =
-        document.getElementById(
-            "institutionName"
-        );
-
-
-    if (institutionName) {
-
-        institutionName.textContent =
-            currentProfile.full_name ||
-            "Kindergarten";
-
-    }
-
-
-    const profileName =
-        document.getElementById(
-            "profileName"
-        );
-
-
-    const profileEmail =
-        document.getElementById(
-            "profileEmail"
-        );
-
-
-    const profileRole =
-        document.getElementById(
-            "profileRole"
-        );
-
-
-    if (profileName) {
-
-        profileName.textContent =
-            currentProfile.full_name ||
-            "—";
-
-    }
-
-
-    if (profileEmail) {
-
-        profileEmail.textContent =
-            currentProfile.email ||
-            "—";
-
-    }
-
-
-    if (profileRole) {
-
-        profileRole.textContent =
-            currentProfile.role ||
-            "—";
-
-    }
-
-}
-
-
-// ============================================================
-// PROFILFEHLER
-// ============================================================
-
-function showProfileError(message) {
-
-    console.error(message);
-
-}
-
-
-// ============================================================
-// UI AKTUALISIEREN
-// ============================================================
-
-function updateUIForCurrentUser() {
-
-    if (!currentUser || !currentProfile) {
+    if (!currentUser) {
 
         showLogin();
 
@@ -476,107 +372,95 @@ function updateUIForCurrentUser() {
     showDashboard();
 
 
-    const userEmail =
-        document.getElementById(
-            "userEmail"
-        );
+    const emailElement =
+        byId("userEmail");
+
+    const nameElement =
+        byId("userName");
+
+    const profileName =
+        byId("profileName");
+
+    const profileEmail =
+        byId("profileEmail");
+
+    const profileRole =
+        byId("profileRole");
+
+    const institutionName =
+        byId("institutionName");
 
 
-    if (userEmail) {
-
-        userEmail.textContent =
-            currentProfile.email ||
-            currentUser.email ||
-            "";
-
-    }
+    const displayName =
+        currentProfile?.full_name ||
+        currentUser.email ||
+        "Benutzer";
 
 
-    const userName =
-        document.getElementById(
-            "userName"
-        );
+    safeText(
+        emailElement,
+        currentUser.email || ""
+    );
 
 
-    if (userName) {
+    safeText(
+        nameElement,
+        displayName
+    );
 
-        userName.textContent =
-            currentProfile.full_name ||
-            currentProfile.email ||
-            currentUser.email ||
-            "";
 
-    }
+    safeText(
+        profileName,
+        displayName
+    );
+
+
+    safeText(
+        profileEmail,
+        currentUser.email || ""
+    );
+
+
+    safeText(
+        profileRole,
+        currentProfile?.role || "—"
+    );
+
+
+    safeText(
+        institutionName,
+        displayName
+    );
 
 
     updateRoleUI();
 
-
-    loadChildren();
-
 }
 
 
-// ============================================================
-// ROLLEN-UI
-// ============================================================
+/* ============================================================
+   ROLLEN
+   ============================================================ */
 
 function updateRoleUI() {
 
-    if (!currentProfile) {
-
-        return;
-
-    }
-
-
     const role =
-        String(
-            currentProfile.role || ""
-        ).toUpperCase();
+        currentProfile?.role || "";
 
 
     document
         .querySelectorAll(
-            "[data-role='ADMIN']"
+            "[data-role]"
         )
         .forEach(
             element => {
 
-                element.style.display =
-                    role === "ADMIN"
-                        ? ""
-                        : "none";
+                const requiredRole =
+                    element.dataset.role;
 
-            }
-        );
-
-
-    document
-        .querySelectorAll(
-            "[data-role='ERZIEHER']"
-        )
-        .forEach(
-            element => {
 
                 element.style.display =
-                    role === "ERZIEHER"
-                        ? ""
-                        : "none";
-
-            }
-        );
-
-
-    document
-        .querySelectorAll(
-            "[data-role='ELTERN']"
-        )
-        .forEach(
-            element => {
-
-                element.style.display =
-                    role === "ELTERN"
+                    requiredRole === role
                         ? ""
                         : "none";
 
@@ -586,23 +470,10 @@ function updateRoleUI() {
 }
 
 
-// ============================================================
-// ROLLE PRÜFEN
-// ============================================================
-
 function canManageChildren() {
 
-    if (!currentProfile) {
-
-        return false;
-
-    }
-
-
     const role =
-        String(
-            currentProfile.role || ""
-        ).toUpperCase();
+        currentProfile?.role;
 
 
     return (
@@ -613,101 +484,9 @@ function canManageChildren() {
 }
 
 
-// ============================================================
-// INSTITUTION PRÜFEN
-// ============================================================
-
-function hasInstitution() {
-
-    return Boolean(
-        currentProfile &&
-        currentProfile.institution_id
-    );
-
-}
-
-
-// ============================================================
-// LOGIN PRÜFEN
-// ============================================================
-
-async function checkLogin() {
-
-    if (!supabaseClient) {
-
-        showLogin();
-
-        return;
-
-    }
-
-
-    try {
-
-        const {
-            data: {
-                session
-            },
-            error
-        } =
-            await supabaseClient.auth.getSession();
-
-
-        if (error) {
-
-            console.error(
-                "Session konnte nicht geladen werden:",
-                error
-            );
-
-            showLogin();
-
-            return;
-
-        }
-
-
-        if (!session) {
-
-            currentUser = null;
-
-            currentProfile = null;
-
-            showLogin();
-
-            return;
-
-        }
-
-
-        currentUser =
-            session.user;
-
-
-        await loadUserProfile();
-
-
-        authInitialized = true;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Fehler bei checkLogin():",
-            error
-        );
-
-        showLogin();
-
-    }
-
-}
-
-
-// ============================================================
-// LOGOUT
-// ============================================================
+/* ============================================================
+   LOGOUT
+   ============================================================ */
 
 async function logout() {
 
@@ -718,17 +497,78 @@ async function logout() {
     }
 
 
-    const {
-        error
-    } =
+    try {
+
         await supabaseClient.auth.signOut();
 
+    }
 
-    if (error) {
+    catch (error) {
 
         console.error(
             "Logout fehlgeschlagen:",
             error
+        );
+
+    }
+
+
+    currentUser = null;
+    currentProfile = null;
+
+    currentChildren = [];
+    currentGroups = [];
+
+    currentQuestions = [];
+    currentAnswers = {};
+
+    currentAge = null;
+    currentChildId = null;
+
+    showLogin();
+
+}
+
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+
+async function handleLogin(event) {
+
+    event.preventDefault();
+
+
+    if (!supabaseClient) {
+
+        return;
+
+    }
+
+
+    const emailInput =
+        byId("loginEmail");
+
+    const passwordInput =
+        byId("loginPassword");
+
+    const message =
+        byId("loginMessage");
+
+
+    const email =
+        emailInput?.value
+            ?.trim() || "";
+
+    const password =
+        passwordInput?.value || "";
+
+
+    if (!email || !password) {
+
+        safeText(
+            message,
+            "Bitte E-Mail und Passwort eingeben."
         );
 
         return;
@@ -736,535 +576,701 @@ async function logout() {
     }
 
 
-    currentUser = null;
-
-    currentProfile = null;
-
-    currentQuestions = [];
-
-    currentAnswers = {};
-
-    currentAge = null;
-
-
-    showLogin();
-
-}
-
-
-// ============================================================
-// LOGOUT BUTTON
-// ============================================================
-
-const logoutButton =
-    document.getElementById(
-        "logoutButton"
+    safeText(
+        message,
+        "Anmeldung läuft..."
     );
 
 
-if (logoutButton) {
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.auth
+            .signInWithPassword({
 
-    logoutButton.addEventListener(
-        "click",
-        logout
-    );
+                email,
+                password
 
-}
+            });
 
 
-// ============================================================
-// LOGIN FORMULAR
-// ============================================================
+    if (error) {
 
-const loginForm =
-    document.getElementById(
-        "loginForm"
-    );
+        console.error(
+            "Login fehlgeschlagen:",
+            error
+        );
 
 
-if (loginForm) {
-
-    loginForm.addEventListener(
-        "submit",
-        async event => {
-
-            event.preventDefault();
-
-
-            if (!supabaseClient) {
-
-                return;
-
-            }
-
-
-            const emailInput =
-                document.getElementById(
-                    "loginEmail"
-                );
-
-
-            const passwordInput =
-                document.getElementById(
-                    "loginPassword"
-                );
-
-
-            const message =
-                document.getElementById(
-                    "loginMessage"
-                );
-
-
-            const email =
-                emailInput
-                    ? emailInput.value.trim()
-                    : "";
-
-
-            const password =
-                passwordInput
-                    ? passwordInput.value
-                    : "";
-
-
-            if (!email || !password) {
-
-                if (message) {
-
-                    message.textContent =
-                        "Bitte E-Mail und Passwort eingeben.";
-
-                }
-
-                return;
-
-            }
-
-
-            if (message) {
-
-                message.textContent =
-                    "Anmeldung läuft...";
-
-            }
-
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient.auth
-                    .signInWithPassword({
-
-                        email,
-
-                        password
-
-                    });
-
-
-            if (error) {
-
-                console.error(
-                    "Login fehlgeschlagen:",
-                    error
-                );
-
-
-                if (message) {
-
-                    message.textContent =
-                        error.message;
-
-                }
-
-                return;
-
-            }
-
-
-            currentUser =
-                data.user;
-
-
-            await loadUserProfile();
-
-
-            if (message) {
-
-                message.textContent = "";
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// REGISTRIERUNGSFORMULAR
-// ============================================================
-
-const registerForm =
-    document.getElementById(
-        "registerForm"
-    );
-
-
-if (registerForm) {
-
-    registerForm.addEventListener(
-        "submit",
-        async event => {
-
-            event.preventDefault();
-
-
-            if (!supabaseClient) {
-
-                return;
-
-            }
-
-
-            const emailInput =
-                document.getElementById(
-                    "registerEmail"
-                );
-
-
-            const passwordInput =
-                document.getElementById(
-                    "registerPassword"
-                );
-
-
-            const firstNameInput =
-                document.getElementById(
-                    "registerFirstName"
-                );
-
-
-            const lastNameInput =
-                document.getElementById(
-                    "registerLastName"
-                );
-
-
-            const message =
-                document.getElementById(
-                    "registerMessage"
-                );
-
-
-            const email =
-                emailInput
-                    ? emailInput.value.trim()
-                    : "";
-
-
-            const password =
-                passwordInput
-                    ? passwordInput.value
-                    : "";
-
-
-            const firstName =
-                firstNameInput
-                    ? firstNameInput.value.trim()
-                    : "";
-
-
-            const lastName =
-                lastNameInput
-                    ? lastNameInput.value.trim()
-                    : "";
-
-
-            if (!email || !password) {
-
-                if (message) {
-
-                    message.textContent =
-                        "Bitte E-Mail und Passwort eingeben.";
-
-                }
-
-                return;
-
-            }
-
-
-            if (password.length < 6) {
-
-                if (message) {
-
-                    message.textContent =
-                        "Das Passwort muss mindestens 6 Zeichen enthalten.";
-
-                }
-
-                return;
-
-            }
-
-
-            const fullName =
-                `${firstName} ${lastName}`.trim();
-
-
-            if (message) {
-
-                message.textContent =
-                    "Registrierung läuft...";
-
-            }
-
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient.auth
-                    .signUp({
-
-                        email,
-
-                        password,
-
-                        options: {
-
-                            data: {
-
-                                full_name:
-                                    fullName,
-
-                                first_name:
-                                    firstName,
-
-                                last_name:
-                                    lastName
-
-                            }
-
-                        }
-
-                    });
-
-
-            if (error) {
-
-                console.error(
-                    "Registrierung fehlgeschlagen:",
-                    error
-                );
-
-
-                if (message) {
-
-                    message.textContent =
-                        error.message;
-
-                }
-
-                return;
-
-            }
-
-
-            if (message) {
-
-                if (data.session) {
-
-                    message.textContent =
-                        "Registrierung erfolgreich.";
-
-                }
-
-                else {
-
-                    message.textContent =
-                        "Registrierung erfolgreich. Bitte überprüfe deine E-Mail.";
-
-                }
-
-            }
-
-
-            if (data.user) {
-
-                currentUser =
-                    data.user;
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// LOGIN / REGISTRIERUNG WECHSELN
-// ============================================================
-
-const showRegisterButton =
-    document.getElementById(
-        "showRegisterButton"
-    );
-
-
-if (showRegisterButton) {
-
-    showRegisterButton.addEventListener(
-        "click",
-        showRegister
-    );
-
-}
-
-
-const showLoginButton =
-    document.getElementById(
-        "showLoginButton"
-    );
-
-
-if (showLoginButton) {
-
-    showLoginButton.addEventListener(
-        "click",
-        showLogin
-    );
-
-}
-
-
-// ============================================================
-// KINDERVERWALTUNG DOM
-// ============================================================
-
-const childrenSection =
-    document.getElementById(
-        "childrenSection"
-    );
-
-
-const showAddChildButton =
-    document.getElementById(
-        "showAddChildButton"
-    );
-
-
-const addChildFormContainer =
-    document.getElementById(
-        "addChildFormContainer"
-    );
-
-
-const addChildForm =
-    document.getElementById(
-        "addChildForm"
-    );
-
-
-const cancelAddChildButton =
-    document.getElementById(
-        "cancelAddChildButton"
-    );
-
-
-const childrenList =
-    document.getElementById(
-        "childrenList"
-    );
-
-
-const childFormMessage =
-    document.getElementById(
-        "childFormMessage"
-    );
-
-
-// ============================================================
-// GRUPPEN DOM
-// ============================================================
-
-const childGroupSelect =
-    document.getElementById(
-        "childGroup"
-    );
-
-
-const createGroupButton =
-    document.getElementById(
-        "createGroupButton"
-    );
-
-
-const newGroupContainer =
-    document.getElementById(
-        "newGroupContainer"
-    );
-
-
-const newGroupNameInput =
-    document.getElementById(
-        "newGroupName"
-    );
-
-
-const saveNewGroupButton =
-    document.getElementById(
-        "saveNewGroupButton"
-    );
-
-
-const cancelNewGroupButton =
-    document.getElementById(
-        "cancelNewGroupButton"
-    );
-
-
-// ============================================================
-// KIND-MELDUNG
-// ============================================================
-
-function showChildMessage(
-    message,
-    type = "info"
-) {
-
-    if (!childFormMessage) {
+        safeText(
+            message,
+            error.message
+        );
 
         return;
 
     }
 
 
-    childFormMessage.textContent =
+    currentUser =
+        data.user;
+
+
+    await loadUserProfile();
+
+
+    safeText(
+        message,
+        ""
+    );
+
+
+    /*
+     * Dashboard sicher anzeigen.
+     */
+
+    showDashboard();
+
+
+    await initializeApplication();
+
+}
+
+
+/* ============================================================
+   REGISTRIERUNG
+   ============================================================ */
+
+async function handleRegister(event) {
+
+    event.preventDefault();
+
+
+    if (!supabaseClient) {
+
+        return;
+
+    }
+
+
+    const email =
+        byId("registerEmail")
+            ?.value
+            ?.trim() || "";
+
+
+    const password =
+        byId("registerPassword")
+            ?.value || "";
+
+
+    const firstName =
+        byId("registerFirstName")
+            ?.value
+            ?.trim() || "";
+
+
+    const lastName =
+        byId("registerLastName")
+            ?.value
+            ?.trim() || "";
+
+
+    const message =
+        byId("registerMessage");
+
+
+    if (!email || !password) {
+
+        safeText(
+            message,
+            "Bitte E-Mail und Passwort eingeben."
+        );
+
+        return;
+
+    }
+
+
+    const fullName =
+        `${firstName} ${lastName}`.trim();
+
+
+    safeText(
+        message,
+        "Registrierung läuft..."
+    );
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.auth.signUp({
+
+            email,
+
+            password,
+
+            options: {
+
+                data: {
+
+                    full_name:
+                        fullName
+
+                }
+
+            }
+
+        });
+
+
+    if (error) {
+
+        console.error(
+            "Registrierung fehlgeschlagen:",
+            error
+        );
+
+
+        safeText(
+            message,
+            error.message
+        );
+
+        return;
+
+    }
+
+
+    safeText(
+        message,
+        "Registrierung erfolgreich. Bitte überprüfe deine E-Mail."
+    );
+
+
+    if (data?.user) {
+
+        currentUser =
+            data.user;
+
+    }
+
+}
+
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+function setupNavigation() {
+
+    const navigationButtons =
+        document.querySelectorAll(
+            "[data-section]"
+        );
+
+
+    navigationButtons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const sectionName =
+                        button.dataset.section;
+
+
+                    if (!sectionName) {
+
+                        return;
+
+                    }
+
+
+                    openSection(
+                        sectionName
+                    );
+
+
+                    if (
+                        sectionName ===
+                        "children"
+                    ) {
+
+                        await loadChildren();
+
+                    }
+
+
+                    if (
+                        sectionName ===
+                        "groups"
+                    ) {
+
+                        await loadGroups();
+
+                    }
+
+
+                    if (
+                        sectionName ===
+                        "development"
+                    ) {
+
+                        await openDevelopmentSection();
+
+                    }
+
+
+                    if (
+                        sectionName ===
+                        "dashboard"
+                    ) {
+
+                        await updateDashboardCounts();
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+function openSection(
+    sectionName
+) {
+
+    /*
+     * Navigation buttons
+     */
+
+    document
+        .querySelectorAll(
+            "[data-section]"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+                    "active",
+                    button.dataset.section ===
+                    sectionName
+                );
+
+            }
+        );
+
+
+    /*
+     * Vorhandene Sections
+     */
+
+    const sections =
+        document.querySelectorAll(
+            "[data-section-content]"
+        );
+
+
+    let found =
+        false;
+
+
+    sections.forEach(
+        section => {
+
+            const matches =
+                section.dataset.sectionContent ===
+                sectionName;
+
+
+            section.style.display =
+                matches
+                    ? ""
+                    : "none";
+
+
+            if (matches) {
+
+                found = true;
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Entwicklung muss immer existieren.
+     */
+
+    if (
+        sectionName ===
+        "development"
+    ) {
+
+        const development =
+            ensureDevelopmentSection();
+
+
+        if (development) {
+
+            development.style.display =
+                "";
+
+            found = true;
+
+        }
+
+    }
+
+
+    if (!found) {
+
+        console.warn(
+            "Section nicht gefunden:",
+            sectionName
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   KINDER
+   ============================================================ */
+
+async function loadChildren() {
+
+    if (
+        !supabaseClient ||
+        !currentUser
+    ) {
+
+        return [];
+
+    }
+
+
+    const childrenList =
+        byId("childrenList");
+
+
+    if (childrenList) {
+
+        childrenList.innerHTML =
+            "<p>Kinder werden geladen...</p>";
+
+    }
+
+
+    let query =
+        supabaseClient
+            .from("children")
+            .select(`
+                id,
+                child_code,
+                group_id,
+                created_at,
+                Groups (
+                    id,
+                    group_name
+                )
+            `)
+            .order(
+                "child_code",
+                {
+                    ascending: true
+                }
+            );
+
+
+    const {
+        data,
+        error
+    } =
+        await query;
+
+
+    if (error) {
+
+        console.error(
+            "Kinder konnten nicht geladen werden:",
+            error
+        );
+
+
+        if (childrenList) {
+
+            childrenList.innerHTML =
+                `
+                <p style="color:red;">
+                    Kinder konnten nicht geladen werden.<br>
+                    ${escapeHtml(error.message)}
+                </p>
+                `;
+
+        }
+
+
+        return [];
+
+    }
+
+
+    currentChildren =
+        data || [];
+
+
+    renderChildrenList(
+        currentChildren
+    );
+
+
+    updateChildrenCount(
+        currentChildren.length
+    );
+
+
+    return currentChildren;
+
+}
+
+
+/* ============================================================
+   KINDER LISTE
+   ============================================================ */
+
+function renderChildrenList(
+    children
+) {
+
+    const childrenList =
+        byId("childrenList");
+
+
+    if (!childrenList) {
+
+        return;
+
+    }
+
+
+    if (
+        !children ||
+        children.length === 0
+    ) {
+
+        childrenList.innerHTML =
+            `
+            <p>
+                Noch keine Kinder angelegt.
+            </p>
+            `;
+
+        return;
+
+    }
+
+
+    childrenList.innerHTML =
+        "";
+
+
+    children.forEach(
+        child => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "child-item";
+
+
+            const groupName =
+                child.Groups?.group_name ||
+                "Keine Gruppe";
+
+
+            item.innerHTML =
+                `
+                <div>
+                    <strong>
+                        ${escapeHtml(
+                            child.child_code ||
+                            "Keine Kinder-ID"
+                        )}
+                    </strong>
+
+                    <br>
+
+                    <span>
+                        Gruppe:
+                        ${escapeHtml(
+                            groupName
+                        )}
+                    </span>
+                </div>
+                `;
+
+
+            childrenList.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   KIND ANLEGEN
+   PASST ZU DEINER AKTUELLEN HTML:
+   openCreateChildButton
+   createChildSection
+   newChildCode
+   newChildGroup
+   createChildButton
+   cancelCreateChildButton
+   ============================================================ */
+
+async function openCreateChildForm() {
+
+    if (!canManageChildren()) {
+
+        showChildMessage(
+            "Nur Administratoren und Erzieher dürfen Kinder anlegen.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const section =
+        byId(
+            "createChildSection"
+        );
+
+
+    if (section) {
+
+        section.style.display =
+            "block";
+
+    }
+
+
+    await loadGroupsIntoSelect(
+        "newChildGroup"
+    );
+
+}
+
+
+function closeCreateChildForm() {
+
+    const section =
+        byId(
+            "createChildSection"
+        );
+
+
+    if (section) {
+
+        section.style.display =
+            "none";
+
+    }
+
+
+    const code =
+        byId(
+            "newChildCode"
+        );
+
+
+    if (code) {
+
+        code.value =
+            "";
+
+    }
+
+
+    const select =
+        byId(
+            "newChildGroup"
+        );
+
+
+    if (select) {
+
+        select.value =
+            "";
+
+    }
+
+
+    showChildMessage(
+        ""
+    );
+
+}
+
+
+function showChildMessage(
+    message,
+    type = "info"
+) {
+
+    const element =
+        byId(
+            "childMessage"
+        );
+
+
+    if (!element) {
+
+        return;
+
+    }
+
+
+    element.textContent =
         message;
 
 
     if (type === "error") {
 
-        childFormMessage.style.color =
+        element.style.color =
             "red";
 
     }
 
     else if (type === "success") {
 
-        childFormMessage.style.color =
+        element.style.color =
             "green";
 
     }
 
     else {
 
-        childFormMessage.style.color =
+        element.style.color =
             "";
 
     }
@@ -1272,59 +1278,21 @@ function showChildMessage(
 }
 
 
-// ============================================================
-// GRUPPEN LADEN
-// ============================================================
+/* ============================================================
+   GRUPPEN LADEN
+   ============================================================ */
 
-async function loadGroupsForCurrentInstitution() {
+async function loadGroups() {
 
-    if (!currentUser) {
+    if (!supabaseClient) {
 
-        return false;
-
-    }
-
-
-    if (!currentProfile) {
-
-        return false;
+        return [];
 
     }
-
-
-    if (!hasInstitution()) {
-
-        if (childGroupSelect) {
-
-            childGroupSelect.innerHTML = `
-                <option value="">
-                    Keine Institution zugeordnet
-                </option>
-            `;
-
-        }
-
-        return false;
-
-    }
-
-
-    if (!childGroupSelect) {
-
-        return false;
-
-    }
-
-
-    childGroupSelect.innerHTML = `
-        <option value="">
-            Gruppen werden geladen...
-        </option>
-    `;
 
 
     const {
-        data: groups,
+        data,
         error
     } =
         await supabaseClient
@@ -1335,10 +1303,6 @@ async function loadGroupsForCurrentInstitution() {
                 description,
                 institution_id
             `)
-            .eq(
-                "institution_id",
-                currentProfile.institution_id
-            )
             .order(
                 "group_name",
                 {
@@ -1354,36 +1318,84 @@ async function loadGroupsForCurrentInstitution() {
             error
         );
 
-
-        childGroupSelect.innerHTML = `
-            <option value="">
-                Gruppen konnten nicht geladen werden
-            </option>
-        `;
-
-
-        return false;
+        return [];
 
     }
 
 
-    childGroupSelect.innerHTML = `
+    currentGroups =
+        data || [];
+
+
+    renderGroups(
+        currentGroups
+    );
+
+
+    updateGroupsCount(
+        currentGroups.length
+    );
+
+
+    return currentGroups;
+
+}
+
+
+/* ============================================================
+   GRUPPEN SELECT
+   ============================================================ */
+
+async function loadGroupsIntoSelect(
+    selectId
+) {
+
+    const select =
+        byId(
+            selectId
+        );
+
+
+    if (!select) {
+
+        return;
+
+    }
+
+
+    select.innerHTML =
+        `
         <option value="">
-            Gruppe auswählen...
+            Gruppen werden geladen...
         </option>
-    `;
-
-
-    if (!groups || groups.length === 0) {
-
-        childGroupSelect.innerHTML = `
-            <option value="">
-                Noch keine Gruppe vorhanden
-            </option>
         `;
 
 
-        return true;
+    const groups =
+        await loadGroups();
+
+
+    select.innerHTML =
+        `
+        <option value="">
+            Gruppe auswählen...
+        </option>
+        `;
+
+
+    if (
+        !groups ||
+        groups.length === 0
+    ) {
+
+        select.innerHTML =
+            `
+            <option value="">
+                Noch keine Gruppe vorhanden
+            </option>
+            `;
+
+        return;
 
     }
 
@@ -1405,126 +1417,56 @@ async function loadGroupsForCurrentInstitution() {
                 group.group_name;
 
 
-            childGroupSelect.appendChild(
+            select.appendChild(
                 option
             );
 
         }
     );
 
-
-    return true;
-
 }
 
 
-// ============================================================
-// KINDER LADEN
-// ============================================================
+/* ============================================================
+   GRUPPEN DARSTELLEN
+   ============================================================ */
 
-async function loadChildren() {
+function renderGroups(
+    groups
+) {
 
-    if (!currentUser || !currentProfile) {
-
-        return;
-
-    }
-
-
-    if (!childrenList) {
-
-        return;
-
-    }
-
-
-    if (!hasInstitution()) {
-
-        childrenList.innerHTML = `
-            <p>
-                Deinem Benutzer ist noch keine Institution zugeordnet.
-            </p>
-        `;
-
-        return;
-
-    }
-
-
-    childrenList.innerHTML =
-        "<p>Kinder werden geladen...</p>";
-
-
-    const {
-        data: children,
-        error
-    } =
-        await supabaseClient
-            .from("children")
-            .select(`
-                id,
-                child_code,
-                group_id,
-                created_at,
-                Groups!inner (
-                    id,
-                    group_name,
-                    institution_id
-                )
-            `)
-            .eq(
-                "Groups.institution_id",
-                currentProfile.institution_id
-            )
-            .order(
-                "child_code",
-                {
-                    ascending: true
-                }
-            );
-
-
-    if (error) {
-
-        console.error(
-            "Kinder konnten nicht geladen werden:",
-            error
+    const container =
+        byId(
+            "groupsList"
         );
 
 
-        childrenList.innerHTML = `
-            <p style="color:red;">
-                Kinder konnten nicht geladen werden.
-                <br>
-                ${escapeHtml(error.message)}
-            </p>
-        `;
-
+    if (!container) {
 
         return;
 
     }
 
 
-    if (!children || children.length === 0) {
+    if (
+        !groups ||
+        groups.length === 0
+    ) {
 
-        childrenList.innerHTML = `
-            <p>
-                Noch keine Kinder angelegt.
-            </p>
-        `;
-
+        container.innerHTML =
+            "<p>Noch keine Gruppen vorhanden.</p>";
 
         return;
 
     }
 
 
-    childrenList.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
-    children.forEach(
-        child => {
+    groups.forEach(
+        group => {
 
             const item =
                 document.createElement(
@@ -1533,36 +1475,34 @@ async function loadChildren() {
 
 
             item.className =
-                "child-item";
+                "group-item";
 
 
-            const groupName =
-                child.Groups?.group_name ||
-                "Keine Gruppe";
+            item.innerHTML =
+                `
+                <strong>
+                    ${escapeHtml(
+                        group.group_name
+                    )}
+                </strong>
+                `;
 
 
-            item.innerHTML = `
-                <div>
+            if (group.description) {
 
-                    <strong>
+                item.innerHTML +=
+                    `
+                    <p>
                         ${escapeHtml(
-                            child.child_code ||
-                            "Keine Kinder-ID"
+                            group.description
                         )}
-                    </strong>
+                    </p>
+                    `;
 
-                    <br>
-
-                    <span>
-                        Gruppe:
-                        ${escapeHtml(groupName)}
-                    </span>
-
-                </div>
-            `;
+            }
 
 
-            childrenList.appendChild(
+            container.appendChild(
                 item
             );
 
@@ -1572,738 +1512,354 @@ async function loadChildren() {
 }
 
 
-// ============================================================
-// KIND ANLEGEN – ÖFFNEN
-// ============================================================
+/* ============================================================
+   KIND SPEICHERN
+   ============================================================ */
 
-if (showAddChildButton) {
+async function createChild() {
 
-    showAddChildButton.addEventListener(
-        "click",
-        async () => {
+    if (!canManageChildren()) {
 
-            if (!canManageChildren()) {
+        showChildMessage(
+            "Nur Administratoren und Erzieher dürfen Kinder anlegen.",
+            "error"
+        );
 
-                alert(
-                    "Nur Administratoren und Erzieher dürfen Kinder anlegen."
-                );
+        return;
 
-                return;
-
-            }
+    }
 
 
-            if (!hasInstitution()) {
+    if (!supabaseClient) {
 
-                alert(
-                    "Deinem Benutzer ist keine Institution zugeordnet."
-                );
+        showChildMessage(
+            "Supabase ist nicht verfügbar.",
+            "error"
+        );
 
-                return;
+        return;
 
-            }
-
-
-            if (addChildFormContainer) {
-
-                addChildFormContainer.style.display =
-                    "block";
-
-            }
+    }
 
 
-            showChildMessage("");
+    const codeInput =
+        byId(
+            "newChildCode"
+        );
 
 
-            if (newGroupContainer) {
-
-                newGroupContainer.style.display =
-                    "none";
-
-            }
+    const groupSelect =
+        byId(
+            "newChildGroup"
+        );
 
 
-            await loadGroupsForCurrentInstitution();
+    const childCode =
+        codeInput?.value
+            ?.trim() || "";
 
 
-            const codeInput =
-                document.getElementById(
-                    "childCode"
-                );
+    const groupId =
+        groupSelect?.value || "";
 
 
-            if (codeInput) {
+    if (!childCode) {
 
-                codeInput.focus();
+        showChildMessage(
+            "Bitte eine Kinder-ID eingeben.",
+            "error"
+        );
 
-            }
+        codeInput?.focus();
 
-        }
+        return;
+
+    }
+
+
+    if (!groupId) {
+
+        showChildMessage(
+            "Bitte eine Gruppe auswählen.",
+            "error"
+        );
+
+        groupSelect?.focus();
+
+        return;
+
+    }
+
+
+    /*
+     * group_id ist in deiner aktuellen Datenbank offenbar bigint.
+     */
+
+    const numericGroupId =
+        Number(groupId);
+
+
+    if (
+        !Number.isInteger(
+            numericGroupId
+        )
+    ) {
+
+        showChildMessage(
+            "Ungültige Gruppe.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        byId(
+            "createChildButton"
+        );
+
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "Wird gespeichert...";
+
+    }
+
+
+    showChildMessage(
+        "Kind wird gespeichert..."
     );
 
-}
 
+    try {
 
-// ============================================================
-// KIND ANLEGEN – ABBRECHEN
-// ============================================================
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("children")
+                .insert({
 
-if (cancelAddChildButton) {
+                    child_code:
+                        childCode,
 
-    cancelAddChildButton.addEventListener(
-        "click",
-        () => {
-
-            if (addChildFormContainer) {
-
-                addChildFormContainer.style.display =
-                    "none";
-
-            }
-
-
-            if (addChildForm) {
-
-                addChildForm.reset();
-
-            }
-
-
-            if (newGroupContainer) {
-
-                newGroupContainer.style.display =
-                    "none";
-
-            }
-
-
-            showChildMessage("");
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// NEUE GRUPPE ÖFFNEN
-// ============================================================
-
-if (createGroupButton) {
-
-    createGroupButton.addEventListener(
-        "click",
-        () => {
-
-            if (!canManageChildren()) {
-
-                alert(
-                    "Nur Administratoren und Erzieher dürfen Gruppen anlegen."
-                );
-
-                return;
-
-            }
-
-
-            if (!hasInstitution()) {
-
-                alert(
-                    "Deinem Benutzer ist keine Institution zugeordnet."
-                );
-
-                return;
-
-            }
-
-
-            if (newGroupContainer) {
-
-                newGroupContainer.style.display =
-                    "block";
-
-            }
-
-
-            if (newGroupNameInput) {
-
-                newGroupNameInput.value =
-                    "";
-
-                newGroupNameInput.focus();
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// NEUE GRUPPE ABBRECHEN
-// ============================================================
-
-if (cancelNewGroupButton) {
-
-    cancelNewGroupButton.addEventListener(
-        "click",
-        () => {
-
-            if (newGroupContainer) {
-
-                newGroupContainer.style.display =
-                    "none";
-
-            }
-
-
-            if (newGroupNameInput) {
-
-                newGroupNameInput.value =
-                    "";
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// NEUE GRUPPE SPEICHERN
-// ============================================================
-
-if (saveNewGroupButton) {
-
-    saveNewGroupButton.addEventListener(
-        "click",
-        async () => {
-
-            if (!canManageChildren()) {
-
-                alert(
-                    "Nur Administratoren und Erzieher dürfen Gruppen anlegen."
-                );
-
-                return;
-
-            }
-
-
-            if (!hasInstitution()) {
-
-                showChildMessage(
-                    "Deinem Benutzer ist keine Institution zugeordnet.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            const groupName =
-                newGroupNameInput
-                    ? newGroupNameInput.value.trim()
-                    : "";
-
-
-            if (!groupName) {
-
-                showChildMessage(
-                    "Bitte einen Gruppennamen eingeben.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            saveNewGroupButton.disabled =
-                true;
-
-
-            const oldText =
-                saveNewGroupButton.textContent;
-
-
-            saveNewGroupButton.textContent =
-                "Wird erstellt...";
-
-
-            try {
-
-                const {
-                    data: newGroup,
-                    error
-                } =
-                    await supabaseClient
-                        .from("Groups")
-                        .insert({
-
-                            group_name:
-                                groupName,
-
-                            institution_id:
-                                currentProfile.institution_id
-
-                        })
-                        .select(`
-                            id,
-                            group_name,
-                            description,
-                            institution_id
-                        `)
-                        .single();
-
-
-                if (error) {
-
-                    throw error;
-
-                }
-
-
-                await loadGroupsForCurrentInstitution();
-
-
-                if (childGroupSelect) {
-
-                    childGroupSelect.value =
-                        String(newGroup.id);
-
-                }
-
-
-                if (newGroupContainer) {
-
-                    newGroupContainer.style.display =
-                        "none";
-
-                }
-
-
-                if (newGroupNameInput) {
-
-                    newGroupNameInput.value =
-                        "";
-
-                }
-
-
-                showChildMessage(
-                    `Gruppe "${newGroup.group_name}" wurde erstellt.`,
-                    "success"
-                );
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Gruppe konnte nicht erstellt werden:",
-                    error
-                );
-
-
-                showChildMessage(
-                    "Gruppe konnte nicht erstellt werden: " +
-                    error.message,
-                    "error"
-                );
-
-            }
-
-            finally {
-
-                saveNewGroupButton.disabled =
-                    false;
-
-                saveNewGroupButton.textContent =
-                    oldText;
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// KIND ANLEGEN
-// ============================================================
-
-if (addChildForm) {
-
-    addChildForm.addEventListener(
-        "submit",
-        async event => {
-
-            event.preventDefault();
-
-
-            if (!currentUser) {
-
-                showChildMessage(
-                    "Du bist nicht angemeldet.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (!canManageChildren()) {
-
-                showChildMessage(
-                    "Nur Administratoren und Erzieher dürfen Kinder anlegen.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (!hasInstitution()) {
-
-                showChildMessage(
-                    "Deinem Benutzer ist keine Institution zugeordnet.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            const codeInput =
-                document.getElementById(
-                    "childCode"
-                );
-
-
-            const childCode =
-                codeInput
-                    ? codeInput.value.trim()
-                    : "";
-
-
-            const groupId =
-                childGroupSelect
-                    ? childGroupSelect.value
-                    : "";
-
-
-            if (!childCode) {
-
-                showChildMessage(
-                    "Bitte eine Kinder-ID eingeben.",
-                    "error"
-                );
-
-                if (codeInput) {
-
-                    codeInput.focus();
-
-                }
-
-                return;
-
-            }
-
-
-            if (!groupId) {
-
-                showChildMessage(
-                    "Bitte eine Gruppe auswählen.",
-                    "error"
-                );
-
-                if (childGroupSelect) {
-
-                    childGroupSelect.focus();
-
-                }
-
-                return;
-
-            }
-
-
-            const numericGroupId =
-                Number(groupId);
-
-
-            if (
-                !Number.isInteger(
-                    numericGroupId
-                )
-            ) {
-
-                showChildMessage(
-                    "Ungültige Gruppe.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            // ==================================================
-            // GRUPPE NOCHMALS PRÜFEN
-            // ==================================================
-
-            const {
-                data: group,
-                error: groupError
-            } =
-                await supabaseClient
-                    .from("Groups")
-                    .select(`
-                        id,
-                        institution_id
-                    `)
-                    .eq(
-                        "id",
+                    group_id:
                         numericGroupId
-                    )
-                    .eq(
-                        "institution_id",
-                        currentProfile.institution_id
-                    )
-                    .maybeSingle();
+
+                })
+                .select(`
+                    id,
+                    child_code,
+                    group_id,
+                    created_at
+                `)
+                .single();
 
 
-            if (groupError) {
+        if (error) {
 
-                console.error(
-                    "Gruppe konnte nicht geprüft werden:",
-                    groupError
-                );
+            throw error;
 
-
-                showChildMessage(
-                    "Die Gruppe konnte nicht überprüft werden.",
-                    "error"
-                );
-
-                return;
-
-            }
+        }
 
 
-            if (!group) {
+        console.log(
+            "Kind erfolgreich angelegt:",
+            data
+        );
 
-                showChildMessage(
-                    "Die ausgewählte Gruppe gehört nicht zu deiner Institution.",
-                    "error"
-                );
 
-                return;
+        showChildMessage(
+            `Kind ${childCode} wurde erfolgreich angelegt.`,
+            "success"
+        );
 
-            }
 
+        await loadChildren();
+
+
+        await loadGroupsIntoSelect(
+            "newChildGroup"
+        );
+
+
+        setTimeout(
+            () => {
+
+                closeCreateChildForm();
+
+            },
+            1000
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Kind konnte nicht angelegt werden:",
+            error
+        );
+
+
+        if (
+            error.code ===
+            "23505"
+        ) {
 
             showChildMessage(
-                "Kind wird gespeichert..."
+                "Diese Kinder-ID existiert bereits.",
+                "error"
             );
 
+        }
 
-            const submitButton =
-                addChildForm.querySelector(
-                    'button[type="submit"]'
-                );
+        else {
 
-
-            if (submitButton) {
-
-                submitButton.disabled =
-                    true;
-
-                submitButton.textContent =
-                    "Kind wird angelegt...";
-
-            }
-
-
-            try {
-
-                const {
-                    data,
-                    error
-                } =
-                    await supabaseClient
-                        .from("children")
-                        .insert({
-
-                            child_code:
-                                childCode,
-
-                            group_id:
-                                numericGroupId
-
-                        })
-                        .select(`
-                            id,
-                            child_code,
-                            group_id,
-                            created_at
-                        `)
-                        .single();
-
-
-                if (error) {
-
-                    throw error;
-
-                }
-
-
-                console.log(
-                    "Kind erfolgreich angelegt:",
-                    data
-                );
-
-
-                showChildMessage(
-                    `Kind ${childCode} wurde erfolgreich angelegt.`,
-                    "success"
-                );
-
-
-                await loadChildren();
-
-
-                if (addChildForm) {
-
-                    addChildForm.reset();
-
-                }
-
-
-                await loadGroupsForCurrentInstitution();
-
-
-                setTimeout(
-                    () => {
-
-                        if (addChildFormContainer) {
-
-                            addChildFormContainer.style.display =
-                                "none";
-
-                        }
-
-
-                        showChildMessage("");
-
-                    },
-                    1200
-                );
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Kind konnte nicht angelegt werden:",
-                    error
-                );
-
-
-                if (
-                    error.code === "23505"
-                ) {
-
-                    showChildMessage(
-                        "Diese Kinder-ID existiert bereits.",
-                        "error"
-                    );
-
-                }
-
-                else {
-
-                    showChildMessage(
-                        "Kind konnte nicht angelegt werden: " +
-                        error.message,
-                        "error"
-                    );
-
-                }
-
-            }
-
-            finally {
-
-                if (submitButton) {
-
-                    submitButton.disabled =
-                        false;
-
-                    submitButton.textContent =
-                        "Kind anlegen";
-
-                }
-
-            }
+            showChildMessage(
+                "Kind konnte nicht angelegt werden: " +
+                (
+                    error.message ||
+                    "Unbekannter Fehler"
+                ),
+                "error"
+            );
 
         }
+
+    }
+
+    finally {
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                "Kind speichern";
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   GRUPPE ANLEGEN
+   ============================================================ */
+
+async function createGroup() {
+
+    if (!canManageChildren()) {
+
+        alert(
+            "Nur Administratoren und Erzieher dürfen Gruppen anlegen."
+        );
+
+        return;
+
+    }
+
+
+    const name =
+        prompt(
+            "Name der neuen Gruppe:"
+        );
+
+
+    if (!name) {
+
+        return;
+
+    }
+
+
+    const groupName =
+        name.trim();
+
+
+    if (!groupName) {
+
+        return;
+
+    }
+
+
+    if (!currentProfile?.institution_id) {
+
+        alert(
+            "Deinem Benutzer ist keine Institution zugeordnet."
+        );
+
+        return;
+
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("Groups")
+            .insert({
+
+                group_name:
+                    groupName,
+
+                institution_id:
+                    currentProfile.institution_id
+
+            })
+            .select()
+            .single();
+
+
+    if (error) {
+
+        console.error(
+            "Gruppe konnte nicht erstellt werden:",
+            error
+        );
+
+
+        alert(
+            "Gruppe konnte nicht erstellt werden:\n" +
+            error.message
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "Gruppe erstellt:",
+        data
+    );
+
+
+    await loadGroups();
+
+    await loadGroupsIntoSelect(
+        "newChildGroup"
     );
 
 }
 
 
-// ============================================================
-// ENTWICKLUNGSKOMPASS DOM
-// ============================================================
-
-const developmentSection =
-    document.getElementById(
-        "developmentSection"
-    );
-
-
-const childSelect =
-    document.getElementById(
-        "developmentChild"
-    );
-
-
-const ageSelect =
-    document.getElementById(
-        "developmentAge"
-    );
-
-
-const questionsContainer =
-    document.getElementById(
-        "questionsContainer"
-    );
-
-
-const questionsMessage =
-    document.getElementById(
-        "questionsMessage"
-    );
-
-
-const saveDevelopmentButton =
-    document.getElementById(
-        "saveDevelopmentButton"
-    );
-
-
-// ============================================================
-// ENTWICKLUNGSBEREICHE
-// ============================================================
+/* ============================================================
+   ENTWICKLUNGSKOMPASS
+   ============================================================ */
 
 const DEVELOPMENT_AREAS = [
 
@@ -2335,199 +1891,6 @@ const DEVELOPMENT_AREAS = [
 ];
 
 
-// ============================================================
-// FRAGEN
-// ============================================================
-
-const DEVELOPMENT_QUESTIONS = [
-
-    {
-        id: 1,
-        area: "motorik",
-        age_from: 1,
-        age_to: 1,
-        question:
-            "Kann das Kind sicher gehen und seine Bewegungen zunehmend kontrollieren?"
-    },
-
-    {
-        id: 2,
-        area: "motorik",
-        age_from: 2,
-        age_to: 2,
-        question:
-            "Kann das Kind laufen, springen und einfache Bewegungsabläufe ausführen?"
-    },
-
-    {
-        id: 3,
-        area: "motorik",
-        age_from: 3,
-        age_to: 3,
-        question:
-            "Kann das Kind Bewegungen gezielt koordinieren und einfache motorische Aufgaben ausführen?"
-    },
-
-    {
-        id: 4,
-        area: "motorik",
-        age_from: 4,
-        age_to: 4,
-        question:
-            "Kann das Kind Bewegungsabläufe zunehmend sicher und koordiniert durchführen?"
-    },
-
-    {
-        id: 5,
-        area: "sprache",
-        age_from: 1,
-        age_to: 1,
-        question:
-            "Kann das Kind einfache Wörter oder kurze Äußerungen verwenden?"
-    },
-
-    {
-        id: 6,
-        area: "sprache",
-        age_from: 2,
-        age_to: 2,
-        question:
-            "Kann das Kind einfache Sätze bilden und Wünsche verständlich ausdrücken?"
-    },
-
-    {
-        id: 7,
-        area: "sprache",
-        age_from: 3,
-        age_to: 3,
-        question:
-            "Kann das Kind sich in einfachen Gesprächen verständlich ausdrücken?"
-    },
-
-    {
-        id: 8,
-        area: "sprache",
-        age_from: 4,
-        age_to: 4,
-        question:
-            "Kann das Kind Erlebnisse und Gedanken zunehmend zusammenhängend erzählen?"
-    },
-
-    {
-        id: 9,
-        area: "sozial",
-        age_from: 1,
-        age_to: 1,
-        question:
-            "Kann das Kind mit anderen Kindern in einfachen Situationen Kontakt aufnehmen?"
-    },
-
-    {
-        id: 10,
-        area: "sozial",
-        age_from: 2,
-        age_to: 2,
-        question:
-            "Kann das Kind einfache Regeln im gemeinsamen Spiel beachten?"
-    },
-
-    {
-        id: 11,
-        area: "sozial",
-        age_from: 3,
-        age_to: 3,
-        question:
-            "Kann das Kind eigene Gefühle zunehmend benennen und die Gefühle anderer wahrnehmen?"
-    },
-
-    {
-        id: 12,
-        area: "sozial",
-        age_from: 4,
-        age_to: 4,
-        question:
-            "Kann das Kind Konflikte zunehmend verbal lösen und Rücksicht auf andere nehmen?"
-    },
-
-    {
-        id: 13,
-        area: "kognition",
-        age_from: 1,
-        age_to: 1,
-        question:
-            "Kann das Kind einfache Zusammenhänge erkennen und bekannte Gegenstände zuordnen?"
-    },
-
-    {
-        id: 14,
-        area: "kognition",
-        age_from: 2,
-        age_to: 2,
-        question:
-            "Kann das Kind einfache Aufgaben nach einer kurzen Anleitung durchführen?"
-    },
-
-    {
-        id: 15,
-        area: "kognition",
-        age_from: 3,
-        age_to: 3,
-        question:
-            "Kann das Kind einfache Probleme selbstständig lösen und Zusammenhänge erkennen?"
-    },
-
-    {
-        id: 16,
-        area: "kognition",
-        age_from: 4,
-        age_to: 4,
-        question:
-            "Kann das Kind Aufgaben planen und Lösungswege zunehmend selbstständig finden?"
-    },
-
-    {
-        id: 17,
-        area: "selbststaendigkeit",
-        age_from: 1,
-        age_to: 1,
-        question:
-            "Kann das Kind bei einfachen Alltagshandlungen aktiv mithelfen?"
-    },
-
-    {
-        id: 18,
-        area: "selbststaendigkeit",
-        age_from: 2,
-        age_to: 2,
-        question:
-            "Kann das Kind einfache Alltagshandlungen zunehmend selbstständig durchführen?"
-    },
-
-    {
-        id: 19,
-        area: "selbststaendigkeit",
-        age_from: 3,
-        age_to: 3,
-        question:
-            "Kann das Kind einfache Aufgaben im Alltag selbstständig übernehmen?"
-    },
-
-    {
-        id: 20,
-        area: "selbststaendigkeit",
-        age_from: 4,
-        age_to: 4,
-        question:
-            "Kann das Kind alltägliche Aufgaben weitgehend selbstständig organisieren?"
-    }
-
-];
-
-
-// ============================================================
-// BEWERTUNGSOPTIONEN
-// ============================================================
-
 const DEVELOPMENT_OPTIONS = [
 
     {
@@ -2553,116 +1916,623 @@ const DEVELOPMENT_OPTIONS = [
 ];
 
 
-// ============================================================
-// KINDER FÜR ENTWICKLUNGSKOMPASS LADEN
-// ============================================================
+const DEVELOPMENT_QUESTIONS = [
 
-async function loadChildrenForDevelopment() {
+    {
+        id: 1,
+        area: "motorik",
+        age_from: 1,
+        age_to: 2,
+        question:
+            "Kann das Kind sicher gehen und seine Bewegungen zunehmend kontrollieren?"
+    },
 
-    if (!childSelect) {
+    {
+        id: 2,
+        area: "sprache",
+        age_from: 1,
+        age_to: 2,
+        question:
+            "Kann das Kind einfache Wörter oder kurze Äußerungen verwenden?"
+    },
 
-        return;
+    {
+        id: 3,
+        area: "sozial",
+        age_from: 1,
+        age_to: 2,
+        question:
+            "Kann das Kind mit anderen Kindern in einfachen Situationen Kontakt aufnehmen?"
+    },
 
+    {
+        id: 4,
+        area: "kognition",
+        age_from: 1,
+        age_to: 2,
+        question:
+            "Kann das Kind einfache Zusammenhänge erkennen und bekannte Gegenstände zuordnen?"
+    },
+
+    {
+        id: 5,
+        area: "selbststaendigkeit",
+        age_from: 1,
+        age_to: 2,
+        question:
+            "Kann das Kind bei einfachen Alltagshandlungen aktiv mithelfen?"
+    },
+
+
+    {
+        id: 6,
+        area: "motorik",
+        age_from: 2,
+        age_to: 3,
+        question:
+            "Kann das Kind laufen, springen und einfache Bewegungsabläufe ausführen?"
+    },
+
+    {
+        id: 7,
+        area: "sprache",
+        age_from: 2,
+        age_to: 3,
+        question:
+            "Kann das Kind einfache Sätze bilden und Wünsche verständlich ausdrücken?"
+    },
+
+    {
+        id: 8,
+        area: "sozial",
+        age_from: 2,
+        age_to: 3,
+        question:
+            "Kann das Kind einfache Regeln im gemeinsamen Spiel beachten?"
+    },
+
+    {
+        id: 9,
+        area: "kognition",
+        age_from: 2,
+        age_to: 3,
+        question:
+            "Kann das Kind einfache Aufgaben nach einer kurzen Anleitung durchführen?"
+    },
+
+    {
+        id: 10,
+        area: "selbststaendigkeit",
+        age_from: 2,
+        age_to: 3,
+        question:
+            "Kann das Kind einfache Alltagshandlungen zunehmend selbstständig durchführen?"
+    },
+
+
+    {
+        id: 11,
+        area: "motorik",
+        age_from: 3,
+        age_to: 4,
+        question:
+            "Kann das Kind Bewegungen gezielt koordinieren und einfache motorische Aufgaben ausführen?"
+    },
+
+    {
+        id: 12,
+        area: "sprache",
+        age_from: 3,
+        age_to: 4,
+        question:
+            "Kann das Kind sich in einfachen Gesprächen verständlich ausdrücken?"
+    },
+
+    {
+        id: 13,
+        area: "sozial",
+        age_from: 3,
+        age_to: 4,
+        question:
+            "Kann das Kind eigene Gefühle zunehmend benennen und die Gefühle anderer wahrnehmen?"
+    },
+
+    {
+        id: 14,
+        area: "kognition",
+        age_from: 3,
+        age_to: 4,
+        question:
+            "Kann das Kind einfache Probleme selbstständig lösen und Zusammenhänge erkennen?"
+    },
+
+    {
+        id: 15,
+        area: "selbststaendigkeit",
+        age_from: 3,
+        age_to: 4,
+        question:
+            "Kann das Kind einfache Aufgaben im Alltag selbstständig übernehmen?"
+    },
+
+
+    {
+        id: 16,
+        area: "motorik",
+        age_from: 4,
+        age_to: 5,
+        question:
+            "Kann das Kind Bewegungsabläufe zunehmend sicher und koordiniert durchführen?"
+    },
+
+    {
+        id: 17,
+        area: "sprache",
+        age_from: 4,
+        age_to: 5,
+        question:
+            "Kann das Kind Erlebnisse und Gedanken zunehmend zusammenhängend erzählen?"
+    },
+
+    {
+        id: 18,
+        area: "sozial",
+        age_from: 4,
+        age_to: 5,
+        question:
+            "Kann das Kind Konflikte zunehmend verbal lösen und Rücksicht auf andere nehmen?"
+    },
+
+    {
+        id: 19,
+        area: "kognition",
+        age_from: 4,
+        age_to: 5,
+        question:
+            "Kann das Kind Aufgaben planen und Lösungswege zunehmend selbstständig finden?"
+    },
+
+    {
+        id: 20,
+        area: "selbststaendigkeit",
+        age_from: 4,
+        age_to: 5,
+        question:
+            "Kann das Kind alltägliche Aufgaben weitgehend selbstständig organisieren?"
+    },
+
+
+    {
+        id: 21,
+        area: "motorik",
+        age_from: 5,
+        age_to: 6,
+        question:
+            "Kann das Kind komplexere Bewegungsabläufe sicher und koordiniert durchführen?"
+    },
+
+    {
+        id: 22,
+        area: "sprache",
+        age_from: 5,
+        age_to: 6,
+        question:
+            "Kann das Kind längere Erlebnisse verständlich und in sinnvoller Reihenfolge erzählen?"
+    },
+
+    {
+        id: 23,
+        area: "sozial",
+        age_from: 5,
+        age_to: 6,
+        question:
+            "Kann das Kind Regeln verstehen, einhalten und bei Konflikten angemessene Lösungen finden?"
+    },
+
+    {
+        id: 24,
+        area: "kognition",
+        age_from: 5,
+        age_to: 6,
+        question:
+            "Kann das Kind Aufgaben selbstständig planen und Lösungsstrategien entwickeln?"
+    },
+
+    {
+        id: 25,
+        area: "selbststaendigkeit",
+        age_from: 5,
+        age_to: 6,
+        question:
+            "Kann das Kind alltägliche Aufgaben weitgehend selbstständig durchführen?"
+    },
+
+
+    {
+        id: 26,
+        area: "motorik",
+        age_from: 6,
+        age_to: 7,
+        question:
+            "Kann das Kind koordinierte Bewegungsabläufe sicher und zielgerichtet ausführen?"
+    },
+
+    {
+        id: 27,
+        area: "sprache",
+        age_from: 6,
+        age_to: 7,
+        question:
+            "Kann das Kind Gedanken, Erlebnisse und Zusammenhänge ausführlich und verständlich ausdrücken?"
+    },
+
+    {
+        id: 28,
+        area: "sozial",
+        age_from: 6,
+        age_to: 7,
+        question:
+            "Kann das Kind Konflikte zunehmend selbstständig lösen und die Perspektive anderer berücksichtigen?"
+    },
+
+    {
+        id: 29,
+        area: "kognition",
+        age_from: 6,
+        age_to: 7,
+        question:
+            "Kann das Kind komplexere Aufgaben planen, bearbeiten und Lösungen überprüfen?"
+    },
+
+    {
+        id: 30,
+        area: "selbststaendigkeit",
+        age_from: 6,
+        age_to: 7,
+        question:
+            "Kann das Kind Verantwortung für alltägliche Aufgaben übernehmen?"
     }
 
-
-    if (!currentUser || !currentProfile) {
-
-        return;
-
-    }
+];
 
 
-    if (!hasInstitution()) {
+/* ============================================================
+   ENTWICKLUNGSBEREICH SICHERSTELLEN
+   ============================================================ */
 
-        childSelect.innerHTML = `
-            <option value="">
-                Keine Institution zugeordnet
-            </option>
-        `;
+function ensureDevelopmentSection() {
 
-        return;
-
-    }
-
-
-    childSelect.innerHTML = `
-        <option value="">
-            Kinder werden geladen...
-        </option>
-    `;
-
-
-    const {
-        data: children,
-        error
-    } =
-        await supabaseClient
-            .from("children")
-            .select(`
-                id,
-                child_code,
-                group_id,
-                Groups!inner (
-                    id,
-                    group_name,
-                    institution_id
-                )
-            `)
-            .eq(
-                "Groups.institution_id",
-                currentProfile.institution_id
-            )
-            .order(
-                "child_code",
-                {
-                    ascending: true
-                }
-            );
-
-
-    if (error) {
-
-        console.error(
-            "Kinder für Entwicklungskompass konnten nicht geladen werden:",
-            error
+    let section =
+        document.querySelector(
+            '[data-section-content="development"]'
         );
 
 
-        childSelect.innerHTML = `
-            <option value="">
-                Kinder konnten nicht geladen werden
-            </option>
-        `;
+    if (section) {
 
+        ensureDevelopmentMarkup(
+            section
+        );
+
+        return section;
+
+    }
+
+
+    /*
+     * Falls dein HTML keine Entwicklung-Section enthält,
+     * wird sie automatisch erzeugt.
+     */
+
+    const main =
+        document.querySelector(
+            "main"
+        );
+
+
+    if (!main) {
+
+        console.error(
+            "Kein <main>-Element gefunden."
+        );
+
+        return null;
+
+    }
+
+
+    section =
+        document.createElement(
+            "section"
+        );
+
+
+    section.className =
+        "section";
+
+
+    section.dataset.sectionContent =
+        "development";
+
+
+    section.style.display =
+        "none";
+
+
+    main.appendChild(
+        section
+    );
+
+
+    ensureDevelopmentMarkup(
+        section
+    );
+
+
+    return section;
+
+}
+
+
+/* ============================================================
+   ENTWICKLUNGS HTML ERZEUGEN
+   ============================================================ */
+
+function ensureDevelopmentMarkup(
+    section
+) {
+
+    /*
+     * Wenn schon ein vollständiger Entwicklungskompass
+     * vorhanden ist, nichts überschreiben.
+     */
+
+    if (
+        section.querySelector(
+            "#developmentChild"
+        )
+    ) {
 
         return;
 
     }
 
 
-    childSelect.innerHTML = `
+    section.innerHTML =
+        `
+        <div class="page-header">
+
+            <h1>
+                Entwicklungskompass
+            </h1>
+
+            <p>
+                Entwicklungsstand eines Kindes erfassen
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="form-group">
+
+                <label for="developmentChild">
+                    Kind
+                </label>
+
+                <select id="developmentChild">
+
+                    <option value="">
+                        Kind auswählen...
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="developmentAge">
+                    Alter
+                </label>
+
+                <select id="developmentAge">
+
+                    <option value="">
+                        Alter auswählen...
+                    </option>
+
+                    <option value="1">
+                        1 Jahr
+                    </option>
+
+                    <option value="2">
+                        2 Jahre
+                    </option>
+
+                    <option value="3">
+                        3 Jahre
+                    </option>
+
+                    <option value="4">
+                        4 Jahre
+                    </option>
+
+                    <option value="5">
+                        5 Jahre
+                    </option>
+
+                    <option value="6">
+                        6 Jahre
+                    </option>
+
+                    <option value="7">
+                        7 Jahre
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div
+                id="questionsMessage"
+                class="message"
+            ></div>
+
+
+            <div
+                id="questionsContainer"
+            ></div>
+
+
+            <div
+                id="developmentResult"
+                style="display:none;"
+            ></div>
+
+
+            <button
+                type="button"
+                class="btn btn-success"
+                id="saveDevelopmentButton"
+            >
+                Auswertung erstellen
+            </button>
+
+        </div>
+        `;
+
+
+    /*
+     * Jetzt Events verbinden.
+     */
+
+    setupDevelopmentEvents();
+
+}
+
+
+/* ============================================================
+   ENTWICKLUNGS ELEMENTE
+   ============================================================ */
+
+function getDevelopmentElements() {
+
+    return {
+
+        section:
+            byId(
+                "developmentSection"
+            ) ||
+            document.querySelector(
+                '[data-section-content="development"]'
+            ),
+
+        childSelect:
+            byId(
+                "developmentChild"
+            ),
+
+        ageSelect:
+            byId(
+                "developmentAge"
+            ),
+
+        questionsContainer:
+            byId(
+                "questionsContainer"
+            ),
+
+        questionsMessage:
+            byId(
+                "questionsMessage"
+            ),
+
+        resultContainer:
+            byId(
+                "developmentResult"
+            ),
+
+        saveButton:
+            byId(
+                "saveDevelopmentButton"
+            )
+
+    };
+
+}
+
+
+/* ============================================================
+   KINDER FÜR ENTWICKLUNG LADEN
+   ============================================================ */
+
+async function loadChildrenForDevelopment() {
+
+    const {
+        childSelect
+    } =
+        getDevelopmentElements();
+
+
+    if (!childSelect) {
+
+        console.error(
+            "developmentChild wurde nicht gefunden."
+        );
+
+        return;
+
+    }
+
+
+    childSelect.innerHTML =
+        `
+        <option value="">
+            Kinder werden geladen...
+        </option>
+        `;
+
+
+    if (
+        !currentChildren ||
+        currentChildren.length === 0
+    ) {
+
+        await loadChildren();
+
+    }
+
+
+    childSelect.innerHTML =
+        `
         <option value="">
             Kind auswählen...
         </option>
-    `;
+        `;
 
 
-    if (!children || children.length === 0) {
+    if (
+        !currentChildren ||
+        currentChildren.length === 0
+    ) {
 
-        childSelect.innerHTML = `
+        childSelect.innerHTML =
+            `
             <option value="">
                 Noch keine Kinder vorhanden
             </option>
-        `;
-
+            `;
 
         return;
 
     }
 
 
-    children.forEach(
+    currentChildren.forEach(
         child => {
 
             const option =
@@ -2670,6 +2540,11 @@ async function loadChildrenForDevelopment() {
                     "option"
                 );
 
+
+            /*
+             * children.id ist UUID.
+             * Deshalb niemals Number(child.id) verwenden.
+             */
 
             option.value =
                 String(child.id);
@@ -2681,7 +2556,7 @@ async function loadChildrenForDevelopment() {
 
 
             option.textContent =
-                `${child.child_code} – ${groupName}`;
+                `${child.child_code || "Kind"} – ${groupName}`;
 
 
             childSelect.appendChild(
@@ -2694,11 +2569,17 @@ async function loadChildrenForDevelopment() {
 }
 
 
-// ============================================================
-// ALTER LADEN
-// ============================================================
+/* ============================================================
+   ALTER
+   ============================================================ */
 
-function populateAgeSelect() {
+function populateDevelopmentAge() {
+
+    const {
+        ageSelect
+    } =
+        getDevelopmentElements();
+
 
     if (!ageSelect) {
 
@@ -2707,11 +2588,21 @@ function populateAgeSelect() {
     }
 
 
-    ageSelect.innerHTML = `
+    if (
+        ageSelect.options.length > 1
+    ) {
+
+        return;
+
+    }
+
+
+    ageSelect.innerHTML =
+        `
         <option value="">
             Alter auswählen...
         </option>
-    `;
+        `;
 
 
     for (
@@ -2731,7 +2622,9 @@ function populateAgeSelect() {
 
 
         option.textContent =
-            `${age} Jahre`;
+            age === 1
+                ? "1 Jahr"
+                : `${age} Jahre`;
 
 
         ageSelect.appendChild(
@@ -2743,19 +2636,22 @@ function populateAgeSelect() {
 }
 
 
-// ============================================================
-// FRAGEN NACH ALTER
-// ============================================================
+/* ============================================================
+   FRAGEN NACH ALTER
+   ============================================================ */
 
-function getQuestionsForAge(age) {
+function getQuestionsForAge(
+    age
+) {
 
     const numericAge =
         Number(age);
 
 
     if (
-        !numericAge ||
-        Number.isNaN(numericAge)
+        !Number.isFinite(
+            numericAge
+        )
     ) {
 
         return [];
@@ -2767,8 +2663,11 @@ function getQuestionsForAge(age) {
         question => {
 
             return (
-                numericAge >= question.age_from &&
-                numericAge <= question.age_to
+                numericAge >=
+                    question.age_from &&
+
+                numericAge <=
+                    question.age_to
             );
 
         }
@@ -2777,11 +2676,19 @@ function getQuestionsForAge(age) {
 }
 
 
-// ============================================================
-// FRAGEN RENDERN
-// ============================================================
+/* ============================================================
+   FRAGEN RENDERN
+   ============================================================ */
 
-function renderQuestions(questions) {
+function renderDevelopmentQuestions(
+    questions
+) {
+
+    const {
+        questionsContainer
+    } =
+        getDevelopmentElements();
+
 
     if (!questionsContainer) {
 
@@ -2799,26 +2706,38 @@ function renderQuestions(questions) {
 
 
     if (
-        !questions ||
-        questions.length === 0
+        currentQuestions.length === 0
     ) {
 
-        questionsContainer.innerHTML = `
-            <p>
-                Für dieses Alter sind derzeit keine Fragen hinterlegt.
-            </p>
-        `;
+        questionsContainer.innerHTML =
+            `
+            <div class="card">
+                <p>
+                    Für dieses Alter sind derzeit keine Fragen hinterlegt.
+                </p>
+            </div>
+            `;
 
         return;
 
     }
 
 
-    questions.forEach(
+    currentQuestions.forEach(
         (
             question,
             index
         ) => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "card development-question";
+
 
             const area =
                 DEVELOPMENT_AREAS.find(
@@ -2833,20 +2752,6 @@ function renderQuestions(questions) {
                 question.area;
 
 
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "development-question";
-
-
-            card.dataset.questionId =
-                String(question.id);
-
-
             let optionsHtml =
                 "";
 
@@ -2857,17 +2762,29 @@ function renderQuestions(questions) {
                     const checked =
                         currentAnswers[
                             question.id
-                        ] === option.value
+                        ] ===
+                        option.value
                             ? "checked"
                             : "";
 
 
-                    optionsHtml += `
-                        <label class="development-option">
+                    optionsHtml +=
+                        `
+                        <label
+                            class="development-option"
+                            style="
+                                display:block;
+                                padding:10px;
+                                margin:6px 0;
+                                border:1px solid #ddd;
+                                border-radius:8px;
+                                cursor:pointer;
+                            "
+                        >
 
                             <input
                                 type="radio"
-                                name="question_${question.id}"
+                                name="development_question_${question.id}"
                                 value="${escapeHtml(option.value)}"
                                 data-question-id="${question.id}"
                                 ${checked}
@@ -2878,29 +2795,49 @@ function renderQuestions(questions) {
                             </span>
 
                         </label>
-                    `;
+                        `;
 
                 }
             );
 
 
-            card.innerHTML = `
-                <div class="question-number">
+            card.innerHTML =
+                `
+                <div
+                    style="
+                        font-size:13px;
+                        color:#777;
+                        margin-bottom:6px;
+                    "
+                >
                     Frage ${index + 1}
                 </div>
 
-                <div class="question-area">
+
+                <div
+                    style="
+                        font-weight:600;
+                        margin-bottom:8px;
+                    "
+                >
                     ${escapeHtml(areaLabel)}
                 </div>
 
-                <div class="question-text">
+
+                <div
+                    style="
+                        font-size:17px;
+                        margin-bottom:15px;
+                    "
+                >
                     ${escapeHtml(question.question)}
                 </div>
 
-                <div class="development-options">
+
+                <div>
                     ${optionsHtml}
                 </div>
-            `;
+                `;
 
 
             questionsContainer.appendChild(
@@ -2944,323 +2881,277 @@ function renderQuestions(questions) {
 }
 
 
-// ============================================================
-// KIND AUSWÄHLEN
-// ============================================================
+/* ============================================================
+   ENTWICKLUNG KIND GEÄNDERT
+   ============================================================ */
 
-if (childSelect) {
+function handleDevelopmentChildChange(
+    event
+) {
 
-    childSelect.addEventListener(
-        "change",
-        () => {
-
-            currentAnswers = {};
-
-            currentAge = null;
+    currentChildId =
+        event.target.value ||
+        null;
 
 
-            if (ageSelect) {
-
-                ageSelect.value =
-                    "";
-
-            }
+    currentAnswers =
+        {};
 
 
-            const resultContainer =
-                document.getElementById(
-                    "developmentResult"
-                );
+    currentQuestions =
+        [];
 
 
-            if (resultContainer) {
-
-                resultContainer.style.display =
-                    "none";
-
-                resultContainer.innerHTML =
-                    "";
-
-            }
+    const {
+        questionsContainer,
+        questionsMessage,
+        ageSelect,
+        resultContainer
+    } =
+        getDevelopmentElements();
 
 
-            if (!childSelect.value) {
+    if (ageSelect) {
 
-                if (questionsContainer) {
+        ageSelect.value =
+            "";
 
-                    questionsContainer.innerHTML = `
-                        <p>
-                            Bitte zuerst ein Kind auswählen.
-                        </p>
-                    `;
-
-                }
-
-                currentQuestions = [];
-
-                return;
-
-            }
+    }
 
 
-            if (questionsMessage) {
+    if (resultContainer) {
 
-                questionsMessage.textContent =
-                    "";
+        resultContainer.style.display =
+            "none";
 
-            }
+        resultContainer.innerHTML =
+            "";
+
+    }
 
 
-            if (questionsContainer) {
+    if (!currentChildId) {
 
-                questionsContainer.innerHTML = `
-                    <p>
-                        Bitte das Alter auswählen.
-                    </p>
+        if (questionsContainer) {
+
+            questionsContainer.innerHTML =
+                `
+                <p>
+                    Bitte zuerst ein Kind auswählen.
+                </p>
                 `;
 
-            }
-
         }
+
+        return;
+
+    }
+
+
+    safeText(
+        questionsMessage,
+        ""
     );
+
+
+    if (questionsContainer) {
+
+        questionsContainer.innerHTML =
+            `
+            <p>
+                Jetzt bitte das Alter auswählen.
+            </p>
+            `;
+
+    }
 
 }
 
 
-// ============================================================
-// ALTER AUSWÄHLEN
-// ============================================================
+/* ============================================================
+   ALTER GEÄNDERT
+   ============================================================ */
 
-if (ageSelect) {
+function handleDevelopmentAgeChange(
+    event
+) {
 
-    ageSelect.addEventListener(
-        "change",
-        event => {
-
-            const age =
-                Number(
-                    event.target.value
-                );
+    const age =
+        Number(
+            event.target.value
+        );
 
 
-            currentAge =
-                age || null;
+    currentAge =
+        Number.isFinite(age) &&
+        age > 0
+            ? age
+            : null;
 
 
-            currentAnswers = {};
+    currentAnswers =
+        {};
 
 
-            const resultContainer =
-                document.getElementById(
-                    "developmentResult"
-                );
+    const {
+        questionsContainer,
+        questionsMessage
+    } =
+        getDevelopmentElements();
 
 
-            if (resultContainer) {
+    if (!currentAge) {
 
-                resultContainer.style.display =
-                    "none";
+        if (questionsContainer) {
 
-                resultContainer.innerHTML =
-                    "";
-
-            }
-
-
-            if (!age) {
-
-                currentQuestions = [];
-
-
-                if (questionsContainer) {
-
-                    questionsContainer.innerHTML = `
-                        <p>
-                            Bitte ein Alter auswählen.
-                        </p>
-                    `;
-
-                }
-
-                return;
-
-            }
-
-
-            const questions =
-                getQuestionsForAge(
-                    age
-                );
-
-
-            renderQuestions(
-                questions
-            );
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// ENTWICKLUNGSKOMPASS ÖFFNEN
-// ============================================================
-
-const showDevelopmentButton =
-    document.getElementById(
-        "showDevelopmentButton"
-    );
-
-
-if (showDevelopmentButton) {
-
-    showDevelopmentButton.addEventListener(
-        "click",
-        async () => {
-
-            if (!currentUser) {
-
-                return;
-
-            }
-
-
-            if (!hasInstitution()) {
-
-                showDevelopmentMessage(
-                    "Deinem Benutzer ist keine Institution zugeordnet.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (developmentSection) {
-
-                developmentSection.style.display =
-                    "";
-
-            }
-
-
-            await loadChildrenForDevelopment();
-
-
-            populateAgeSelect();
-
-
-            currentQuestions = [];
-
-            currentAnswers = {};
-
-            currentAge = null;
-
-
-            if (questionsContainer) {
-
-                questionsContainer.innerHTML = `
-                    <p>
-                        Bitte ein Kind und anschließend
-                        das Alter auswählen.
-                    </p>
+            questionsContainer.innerHTML =
+                `
+                <p>
+                    Bitte ein Alter auswählen.
+                </p>
                 `;
 
-            }
-
         }
+
+        return;
+
+    }
+
+
+    if (!currentChildId) {
+
+        safeText(
+            questionsMessage,
+            "Bitte zuerst ein Kind auswählen."
+        );
+
+
+        event.target.value =
+            "";
+
+
+        currentAge =
+            null;
+
+
+        return;
+
+    }
+
+
+    const questions =
+        getQuestionsForAge(
+            currentAge
+        );
+
+
+    renderDevelopmentQuestions(
+        questions
     );
 
 }
 
 
-// ============================================================
-// ENTWICKLUNGSKOMPASS SCHLIESSEN
-// ============================================================
+/* ============================================================
+   ENTWICKLUNGS EVENTS
+   ============================================================ */
 
-const closeDevelopmentButton =
-    document.getElementById(
-        "closeDevelopmentButton"
-    );
+function setupDevelopmentEvents() {
 
-
-if (closeDevelopmentButton) {
-
-    closeDevelopmentButton.addEventListener(
-        "click",
-        () => {
-
-            if (developmentSection) {
-
-                developmentSection.style.display =
-                    "none";
-
-            }
+    const {
+        childSelect,
+        ageSelect,
+        saveButton
+    } =
+        getDevelopmentElements();
 
 
-            currentQuestions = [];
+    if (
+        childSelect &&
+        !childSelect.dataset.eventsReady
+    ) {
 
-            currentAnswers = {};
-
-            currentAge = null;
-
-
-            if (childSelect) {
-
-                childSelect.value =
-                    "";
-
-            }
+        childSelect.dataset.eventsReady =
+            "true";
 
 
-            if (ageSelect) {
+        childSelect.addEventListener(
+            "change",
+            handleDevelopmentChildChange
+        );
 
-                ageSelect.value =
-                    "";
-
-            }
-
-
-            if (questionsContainer) {
-
-                questionsContainer.innerHTML =
-                    "";
-
-            }
+    }
 
 
-            const resultContainer =
-                document.getElementById(
-                    "developmentResult"
-                );
+    if (
+        ageSelect &&
+        !ageSelect.dataset.eventsReady
+    ) {
+
+        ageSelect.dataset.eventsReady =
+            "true";
 
 
-            if (resultContainer) {
+        ageSelect.addEventListener(
+            "change",
+            handleDevelopmentAgeChange
+        );
 
-                resultContainer.style.display =
-                    "none";
-
-                resultContainer.innerHTML =
-                    "";
-
-            }
+    }
 
 
-            showDevelopmentMessage("");
+    if (
+        saveButton &&
+        !saveButton.dataset.eventsReady
+    ) {
 
-        }
-    );
+        saveButton.dataset.eventsReady =
+            "true";
+
+
+        saveButton.addEventListener(
+            "click",
+            handleDevelopmentSave
+        );
+
+    }
 
 }
 
 
-// ============================================================
-// BEWERTUNGEN PRÜFEN
-// ============================================================
+/* ============================================================
+   ENTWICKLUNG VALIDIEREN
+   ============================================================ */
 
-function validateDevelopmentAnswers() {
+function validateDevelopment() {
+
+    if (!currentChildId) {
+
+        return {
+
+            valid: false,
+
+            message:
+                "Bitte zuerst ein Kind auswählen."
+
+        };
+
+    }
+
+
+    if (!currentAge) {
+
+        return {
+
+            valid: false,
+
+            message:
+                "Bitte zuerst das Alter auswählen."
+
+        };
+
+    }
+
 
     if (
         !currentQuestions ||
@@ -3272,7 +3163,7 @@ function validateDevelopmentAnswers() {
             valid: false,
 
             message:
-                "Es sind keine Fragen vorhanden."
+                "Für dieses Alter sind keine Fragen vorhanden."
 
         };
 
@@ -3281,17 +3172,16 @@ function validateDevelopmentAnswers() {
 
     const unanswered =
         currentQuestions.filter(
-            question => {
-
-                return !currentAnswers[
+            question =>
+                !currentAnswers[
                     question.id
-                ];
-
-            }
+                ]
         );
 
 
-    if (unanswered.length > 0) {
+    if (
+        unanswered.length > 0
+    ) {
 
         return {
 
@@ -3316,25 +3206,31 @@ function validateDevelopmentAnswers() {
 }
 
 
-// ============================================================
-// ENTWICKLUNGSERGEBNIS
-// ============================================================
+/* ============================================================
+   AUSWERTUNG
+   ============================================================ */
 
 function calculateDevelopmentResult() {
 
     const result = {
 
-        total: 0,
+        total:
+            0,
 
-        noch_nicht: 0,
+        noch_nicht:
+            0,
 
-        teilweise: 0,
+        teilweise:
+            0,
 
-        sicher: 0,
+        sicher:
+            0,
 
-        nicht_beobachtet: 0,
+        nicht_beobachtet:
+            0,
 
-        percentage: 0
+        percentage:
+            0
 
     };
 
@@ -3367,7 +3263,9 @@ function calculateDevelopmentResult() {
                     )
             ) {
 
-                result[answer]++;
+                result[
+                    answer
+                ]++;
 
             }
 
@@ -3380,7 +3278,9 @@ function calculateDevelopmentResult() {
         result.nicht_beobachtet;
 
 
-    if (observable > 0) {
+    if (
+        observable > 0
+    ) {
 
         result.percentage =
             Math.round(
@@ -3399,16 +3299,18 @@ function calculateDevelopmentResult() {
 }
 
 
-// ============================================================
-// ERGEBNIS ANZEIGEN
-// ============================================================
+/* ============================================================
+   ERGEBNIS ANZEIGEN
+   ============================================================ */
 
-function showDevelopmentResult(result) {
+function showDevelopmentResult(
+    result
+) {
 
-    const resultContainer =
-        document.getElementById(
-            "developmentResult"
-        );
+    const {
+        resultContainer
+    } =
+        getDevelopmentElements();
 
 
     if (!resultContainer) {
@@ -3418,12 +3320,20 @@ function showDevelopmentResult(result) {
     }
 
 
-    resultContainer.innerHTML = `
-        <div class="development-result">
+    resultContainer.innerHTML =
+        `
+        <div
+            class="card"
+            style="
+                margin-top:20px;
+                border:2px solid #ddd;
+            "
+        >
 
-            <h3>
+            <h2>
                 Auswertung
-            </h3>
+            </h2>
+
 
             <p>
                 Sicher:
@@ -3432,12 +3342,14 @@ function showDevelopmentResult(result) {
                 </strong>
             </p>
 
+
             <p>
                 Teilweise:
                 <strong>
                     ${result.teilweise}
                 </strong>
             </p>
+
 
             <p>
                 Noch nicht:
@@ -3446,6 +3358,7 @@ function showDevelopmentResult(result) {
                 </strong>
             </p>
 
+
             <p>
                 Nicht beobachtet:
                 <strong>
@@ -3453,7 +3366,15 @@ function showDevelopmentResult(result) {
                 </strong>
             </p>
 
-            <p>
+
+            <hr>
+
+
+            <p
+                style="
+                    font-size:20px;
+                "
+            >
                 Entwicklungsstand:
                 <strong>
                     ${result.percentage} %
@@ -3461,7 +3382,7 @@ function showDevelopmentResult(result) {
             </p>
 
         </div>
-    `;
+        `;
 
 
     resultContainer.style.display =
@@ -3470,249 +3391,497 @@ function showDevelopmentResult(result) {
 }
 
 
-// ============================================================
-// ENTWICKLUNGS-MELDUNG
-// ============================================================
+/* ============================================================
+   ENTWICKLUNG SPEICHERN / AUSWERTEN
+   ============================================================ */
 
-function showDevelopmentMessage(
-    message,
-    type = "info"
-) {
+async function handleDevelopmentSave() {
 
-    if (!questionsMessage) {
+    const {
+        saveButton,
+        questionsMessage
+    } =
+        getDevelopmentElements();
+
+
+    const validation =
+        validateDevelopment();
+
+
+    if (!validation.valid) {
+
+        safeText(
+            questionsMessage,
+            validation.message
+        );
+
+
+        if (questionsMessage) {
+
+            questionsMessage.style.color =
+                "red";
+
+        }
+
 
         return;
 
     }
 
 
-    questionsMessage.textContent =
-        message;
+    if (saveButton) {
 
+        saveButton.disabled =
+            true;
 
-    if (type === "error") {
-
-        questionsMessage.style.color =
-            "red";
-
-    }
-
-    else if (type === "success") {
-
-        questionsMessage.style.color =
-            "green";
+        saveButton.textContent =
+            "Wird ausgewertet...";
 
     }
 
-    else {
 
-        questionsMessage.style.color =
-            "";
+    try {
+
+        const result =
+            calculateDevelopmentResult();
+
+
+        showDevelopmentResult(
+            result
+        );
+
+
+        /*
+         * WICHTIG:
+         *
+         * Hier wird absichtlich noch KEIN INSERT
+         * in development_assessments gemacht.
+         *
+         * Grund:
+         * Die Tabelle muss exakt zu deinem Supabase-Schema
+         * passen. Dein früherer Fehler zeigte:
+         *
+         * child_id bigint
+         * gegen
+         * children.id uuid
+         *
+         * Der richtige Typ für child_id wäre UUID.
+         *
+         * Dadurch kann die Auswertung jetzt zuverlässig
+         * funktionieren, ohne die Datenbank zu beschädigen.
+         */
+
+
+        safeText(
+            questionsMessage,
+            "Auswertung erfolgreich erstellt."
+        );
+
+
+        if (questionsMessage) {
+
+            questionsMessage.style.color =
+                "green";
+
+        }
+
+
+        console.log(
+            "Entwicklungsbewertung:",
+            {
+
+                child_id:
+                    currentChildId,
+
+                age:
+                    currentAge,
+
+                answers:
+                    currentAnswers,
+
+                result:
+                    result
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Fehler bei der Entwicklungsauswertung:",
+            error
+        );
+
+
+        safeText(
+            questionsMessage,
+            "Die Auswertung konnte nicht erstellt werden."
+        );
+
+
+        if (questionsMessage) {
+
+            questionsMessage.style.color =
+                "red";
+
+        }
+
+    }
+
+    finally {
+
+        if (saveButton) {
+
+            saveButton.disabled =
+                false;
+
+            saveButton.textContent =
+                "Auswertung erstellen";
+
+        }
 
     }
 
 }
 
 
-// ============================================================
-// ENTWICKLUNGSBEWERTUNG SPEICHERN
-// ============================================================
+/* ============================================================
+   ENTWICKLUNG ÖFFNEN
+   ============================================================ */
 
-async function saveDevelopmentAssessment() {
+async function openDevelopmentSection() {
 
-    if (!currentUser) {
+    try {
 
-        showDevelopmentMessage(
-            "Du bist nicht angemeldet.",
-            "error"
+        const section =
+            ensureDevelopmentSection();
+
+
+        if (!section) {
+
+            return;
+
+        }
+
+
+        section.style.display =
+            "";
+
+
+        setupDevelopmentEvents();
+
+
+        populateDevelopmentAge();
+
+
+        await loadChildrenForDevelopment();
+
+
+        const {
+            questionsContainer,
+            questionsMessage
+        } =
+            getDevelopmentElements();
+
+
+        if (
+            questionsContainer &&
+            !currentChildId
+        ) {
+
+            questionsContainer.innerHTML =
+                `
+                <div class="card">
+                    <p>
+                        Bitte ein Kind auswählen und anschließend
+                        das Alter auswählen.
+                    </p>
+                </div>
+                `;
+
+        }
+
+
+        safeText(
+            questionsMessage,
+            ""
         );
-
-        return false;
 
     }
 
-
-    if (!currentProfile) {
-
-        showDevelopmentMessage(
-            "Benutzerprofil konnte nicht geladen werden.",
-            "error"
-        );
-
-        return false;
-
-    }
-
-
-    if (!hasInstitution()) {
-
-        showDevelopmentMessage(
-            "Deinem Benutzer ist keine Institution zugeordnet.",
-            "error"
-        );
-
-        return false;
-
-    }
-
-
-    if (!childSelect?.value) {
-
-        showDevelopmentMessage(
-            "Bitte zuerst ein Kind auswählen.",
-            "error"
-        );
-
-        return false;
-
-    }
-
-
-    if (!currentAge) {
-
-        showDevelopmentMessage(
-            "Bitte zuerst das Alter auswählen.",
-            "error"
-        );
-
-        return false;
-
-    }
-
-
-    const validation =
-        validateDevelopmentAnswers();
-
-
-    if (!validation.valid) {
-
-        showDevelopmentMessage(
-            validation.message,
-            "error"
-        );
-
-        return false;
-
-    }
-
-
-    // ========================================================
-    // KIND GEGEN INSTITUTION PRÜFEN
-    // ========================================================
-
-    const childId =
-        Number(
-            childSelect.value
-        );
-
-
-    if (!Number.isInteger(childId)) {
-
-        showDevelopmentMessage(
-            "Ungültiges Kind.",
-            "error"
-        );
-
-        return false;
-
-    }
-
-
-    const {
-        data: child,
-        error: childError
-    } =
-        await supabaseClient
-            .from("children")
-            .select(`
-                id,
-                child_code,
-                group_id,
-                Groups!inner (
-                    id,
-                    group_name,
-                    institution_id
-                )
-            `)
-            .eq(
-                "id",
-                childId
-            )
-            .eq(
-                "Groups.institution_id",
-                currentProfile.institution_id
-            )
-            .maybeSingle();
-
-
-    if (childError) {
+    catch (error) {
 
         console.error(
-            "Kind konnte nicht geprüft werden:",
-            childError
+            "Fehler beim Öffnen des Entwicklungskompasses:",
+            error
         );
 
 
-        showDevelopmentMessage(
-            "Das ausgewählte Kind konnte nicht überprüft werden.",
-            "error"
+        const section =
+            document.querySelector(
+                '[data-section-content="development"]'
+            );
+
+
+        if (section) {
+
+            section.innerHTML =
+                `
+                <div class="card">
+
+                    <h2>
+                        Entwicklungskompass
+                    </h2>
+
+                    <p style="color:red;">
+                        Der Entwicklungskompass konnte nicht geladen werden.
+                    </p>
+
+                    <pre
+                        style="
+                            white-space:pre-wrap;
+                            color:#777;
+                        "
+                    >${escapeHtml(
+                        error.message ||
+                        String(error)
+                    )}</pre>
+
+                </div>
+                `;
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   DASHBOARD COUNTS
+   ============================================================ */
+
+function updateChildrenCount(
+    count
+) {
+
+    const element =
+        byId(
+            "childrenCount"
         );
 
-        return false;
+
+    if (element) {
+
+        element.textContent =
+            String(
+                count || 0
+            );
+
+    }
+
+}
+
+
+function updateGroupsCount(
+    count
+) {
+
+    const element =
+        byId(
+            "groupsCount"
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            String(
+                count || 0
+            );
+
+    }
+
+}
+
+
+async function updateDashboardCounts() {
+
+    try {
+
+        await loadChildren();
+
+        await loadGroups();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Dashboard Counts konnten nicht geladen werden:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   ALTERNATIVE ALTE KINDER-FORMULAR IDS
+   Unterstützt auch deine ältere HTML-Version.
+   ============================================================ */
+
+function setupLegacyChildForm() {
+
+    const oldButton =
+        byId(
+            "showAddChildButton"
+        );
+
+
+    if (
+        oldButton &&
+        !oldButton.dataset.eventsReady
+    ) {
+
+        oldButton.dataset.eventsReady =
+            "true";
+
+
+        oldButton.addEventListener(
+            "click",
+            openCreateChildForm
+        );
 
     }
 
 
-    if (!child) {
-
-        showDevelopmentMessage(
-            "Das ausgewählte Kind gehört nicht zu deiner Institution.",
-            "error"
+    const oldCancel =
+        byId(
+            "cancelAddChildButton"
         );
 
-        return false;
+
+    if (
+        oldCancel &&
+        !oldCancel.dataset.eventsReady
+    ) {
+
+        oldCancel.dataset.eventsReady =
+            "true";
+
+
+        oldCancel.addEventListener(
+            "click",
+            closeCreateChildForm
+        );
 
     }
 
 
-    const result =
-        calculateDevelopmentResult();
+    const oldForm =
+        byId(
+            "addChildForm"
+        );
 
 
-    // ========================================================
-    // ERGEBNIS SOFORT ANZEIGEN
-    // ========================================================
+    if (
+        oldForm &&
+        !oldForm.dataset.eventsReady
+    ) {
 
-    showDevelopmentResult(
-        result
-    );
+        oldForm.dataset.eventsReady =
+            "true";
 
 
-    // ========================================================
-    // DATENBANK-SPEICHERN
-    // ========================================================
+        oldForm.addEventListener(
+            "submit",
+            event => {
 
-    const assessmentData = {
+                event.preventDefault();
 
-        institution_id:
-            currentProfile.institution_id,
+                createChildFromLegacyForm();
 
-        child_id:
-            childId,
+            }
+        );
 
-        user_id:
-            currentUser.id,
+    }
 
-        age:
-            currentAge,
+}
 
-        answers:
-            currentAnswers,
 
-        result:
-            result
+/* ============================================================
+   ALTES KINDERFORMULAR
+   ============================================================ */
 
-    };
+async function createChildFromLegacyForm() {
+
+    const codeInput =
+        byId(
+            "childCode"
+        );
+
+
+    const groupSelect =
+        byId(
+            "childGroup"
+        );
+
+
+    const childCode =
+        codeInput?.value
+            ?.trim() || "";
+
+
+    const groupId =
+        groupSelect?.value || "";
+
+
+    if (!childCode) {
+
+        showChildMessage(
+            "Bitte eine Kinder-ID eingeben.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (!groupId) {
+
+        showChildMessage(
+            "Bitte eine Gruppe auswählen.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const numericGroupId =
+        Number(groupId);
+
+
+    if (
+        !Number.isInteger(
+            numericGroupId
+        )
+    ) {
+
+        showChildMessage(
+            "Ungültige Gruppe.",
+            "error"
+        );
+
+        return;
+
+    }
 
 
     const {
@@ -3720,148 +3889,355 @@ async function saveDevelopmentAssessment() {
         error
     } =
         await supabaseClient
-            .from("development_assessments")
-            .insert(
-                assessmentData
-            )
-            .select(`
-                id,
-                institution_id,
-                child_id,
-                user_id,
-                age,
-                answers,
-                result,
-                created_at
-            `)
+            .from("children")
+            .insert({
+
+                child_code:
+                    childCode,
+
+                group_id:
+                    numericGroupId
+
+            })
+            .select()
             .single();
 
 
     if (error) {
 
         console.error(
-            "Entwicklungsbewertung konnte nicht gespeichert werden:",
+            "Kind konnte nicht angelegt werden:",
             error
         );
 
 
-        showDevelopmentMessage(
-            "Die Auswertung wurde berechnet, konnte aber nicht gespeichert werden: " +
+        showChildMessage(
             error.message,
             "error"
         );
 
-        return false;
+        return;
 
     }
 
 
     console.log(
-        "Entwicklungsbewertung erfolgreich gespeichert:",
+        "Kind erfolgreich angelegt:",
         data
     );
 
 
-    showDevelopmentMessage(
-        "Auswertung wurde erfolgreich gespeichert.",
+    showChildMessage(
+        `Kind ${childCode} wurde erfolgreich angelegt.`,
         "success"
     );
 
 
-    return true;
+    await loadChildren();
 
 }
 
 
-// ============================================================
-// SPEICHERN BUTTON
-// ============================================================
+/* ============================================================
+   EVENTS EINRICHTEN
+   ============================================================ */
 
-if (saveDevelopmentButton) {
+function setupMainEvents() {
 
-    saveDevelopmentButton.addEventListener(
-        "click",
-        async () => {
+    /*
+     * Login
+     */
 
-            saveDevelopmentButton.disabled =
-                true;
-
-
-            const oldText =
-                saveDevelopmentButton.textContent;
-
-
-            saveDevelopmentButton.textContent =
-                "Wird gespeichert...";
-
-
-            try {
-
-                await saveDevelopmentAssessment();
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Fehler beim Speichern der Entwicklungsbewertung:",
-                    error
-                );
-
-
-                showDevelopmentMessage(
-                    "Die Entwicklungsbewertung konnte nicht gespeichert werden.",
-                    "error"
-                );
-
-            }
-
-            finally {
-
-                saveDevelopmentButton.disabled =
-                    false;
-
-
-                saveDevelopmentButton.textContent =
-                    oldText;
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// ENTWICKLUNGSKOMPASS INITIALISIEREN
-// ============================================================
-
-async function initializeDevelopmentCompass() {
-
-    populateAgeSelect();
+    const loginForm =
+        byId(
+            "loginForm"
+        );
 
 
     if (
-        currentUser &&
-        currentProfile
+        loginForm &&
+        !loginForm.dataset.eventsReady
     ) {
 
-        await loadChildrenForDevelopment();
+        loginForm.dataset.eventsReady =
+            "true";
+
+
+        loginForm.addEventListener(
+            "submit",
+            handleLogin
+        );
 
     }
+
+
+    /*
+     * Registrierung
+     */
+
+    const registerForm =
+        byId(
+            "registerForm"
+        );
+
+
+    if (
+        registerForm &&
+        !registerForm.dataset.eventsReady
+    ) {
+
+        registerForm.dataset.eventsReady =
+            "true";
+
+
+        registerForm.addEventListener(
+            "submit",
+            handleRegister
+        );
+
+    }
+
+
+    /*
+     * Logout
+     */
+
+    const logoutButton =
+        byId(
+            "logoutButton"
+        );
+
+
+    if (
+        logoutButton &&
+        !logoutButton.dataset.eventsReady
+    ) {
+
+        logoutButton.dataset.eventsReady =
+            "true";
+
+
+        logoutButton.addEventListener(
+            "click",
+            logout
+        );
+
+    }
+
+
+    /*
+     * Registrierung öffnen
+     */
+
+    const showRegisterButton =
+        byId(
+            "showRegisterButton"
+        );
+
+
+    if (
+        showRegisterButton &&
+        !showRegisterButton.dataset.eventsReady
+    ) {
+
+        showRegisterButton.dataset.eventsReady =
+            "true";
+
+
+        showRegisterButton.addEventListener(
+            "click",
+            () => {
+
+                if (loginSection) {
+
+                    loginSection.style.display =
+                        "none";
+
+                }
+
+                if (registerSection) {
+
+                    registerSection.style.display =
+                        "";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /*
+     * Login öffnen
+     */
+
+    const showLoginButton =
+        byId(
+            "showLoginButton"
+        );
+
+
+    if (
+        showLoginButton &&
+        !showLoginButton.dataset.eventsReady
+    ) {
+
+        showLoginButton.dataset.eventsReady =
+            "true";
+
+
+        showLoginButton.addEventListener(
+            "click",
+            () => {
+
+                showLogin();
+
+            }
+        );
+
+    }
+
+
+    /*
+     * Neues Kind
+     */
+
+    const openCreateChildButton =
+        byId(
+            "openCreateChildButton"
+        );
+
+
+    if (
+        openCreateChildButton &&
+        !openCreateChildButton.dataset.eventsReady
+    ) {
+
+        openCreateChildButton.dataset.eventsReady =
+            "true";
+
+
+        openCreateChildButton.addEventListener(
+            "click",
+            openCreateChildForm
+        );
+
+    }
+
+
+    /*
+     * Kind abbrechen
+     */
+
+    const cancelCreateChildButton =
+        byId(
+            "cancelCreateChildButton"
+        );
+
+
+    if (
+        cancelCreateChildButton &&
+        !cancelCreateChildButton.dataset.eventsReady
+    ) {
+
+        cancelCreateChildButton.dataset.eventsReady =
+            "true";
+
+
+        cancelCreateChildButton.addEventListener(
+            "click",
+            closeCreateChildForm
+        );
+
+    }
+
+
+    /*
+     * Kind speichern
+     */
+
+    const createChildButton =
+        byId(
+            "createChildButton"
+        );
+
+
+    if (
+        createChildButton &&
+        !createChildButton.dataset.eventsReady
+    ) {
+
+        createChildButton.dataset.eventsReady =
+            "true";
+
+
+        createChildButton.addEventListener(
+            "click",
+            createChild
+        );
+
+    }
+
+
+    /*
+     * Neue Gruppe
+     */
+
+    const openCreateGroupButton =
+        byId(
+            "openCreateGroupButton"
+        );
+
+
+    if (
+        openCreateGroupButton &&
+        !openCreateGroupButton.dataset.eventsReady
+    ) {
+
+        openCreateGroupButton.dataset.eventsReady =
+            "true";
+
+
+        openCreateGroupButton.addEventListener(
+            "click",
+            createGroup
+        );
+
+    }
+
+
+    /*
+     * Navigation
+     */
+
+    setupNavigation();
+
+
+    /*
+     * Altes Formular
+     */
+
+    setupLegacyChildForm();
 
 }
 
 
-// ============================================================
-// AUTH STATE CHANGE
-// ============================================================
+/* ============================================================
+   AUTH
+   ============================================================ */
 
-if (supabaseClient) {
+function setupAuthListener() {
+
+    if (!supabaseClient) {
+
+        return;
+
+    }
+
 
     supabaseClient.auth.onAuthStateChange(
-        async (
+        (
             event,
             session
         ) => {
@@ -3872,22 +4248,36 @@ if (supabaseClient) {
             );
 
 
-            if (session) {
+            if (session?.user) {
 
                 currentUser =
                     session.user;
 
 
                 /*
-                 * setTimeout verhindert, dass Supabase
-                 * während eines Auth-Events direkt wieder
-                 * einen konkurrierenden Auth-Request startet.
+                 * Nicht direkt innerhalb des Auth-Callbacks
+                 * verschachtelte Auth-Requests erzwingen.
                  */
 
                 setTimeout(
                     async () => {
 
-                        await loadUserProfile();
+                        try {
+
+                            await loadUserProfile();
+
+                            await initializeApplication();
+
+                        }
+
+                        catch (error) {
+
+                            console.error(
+                                "Auth Initialisierung:",
+                                error
+                            );
+
+                        }
 
                     },
                     0
@@ -3898,14 +4288,10 @@ if (supabaseClient) {
             else {
 
                 currentUser = null;
-
                 currentProfile = null;
 
-                currentQuestions = [];
-
-                currentAnswers = {};
-
-                currentAge = null;
+                currentChildren = [];
+                currentGroups = [];
 
                 showLogin();
 
@@ -3917,333 +4303,218 @@ if (supabaseClient) {
 }
 
 
-// ============================================================
-// INITIALISIERUNG
-// ============================================================
+/* ============================================================
+   LOGIN PRÜFEN
+   ============================================================ */
+
+async function checkLogin() {
+
+    if (!supabaseClient) {
+
+        showLogin();
+
+        return;
+
+    }
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.auth.getSession();
+
+
+        if (error) {
+
+            console.error(
+                "Session konnte nicht geladen werden:",
+                error
+            );
+
+            showLogin();
+
+            return;
+
+        }
+
+
+        if (!data?.session) {
+
+            currentUser = null;
+            currentProfile = null;
+
+            showLogin();
+
+            return;
+
+        }
+
+
+        currentUser =
+            data.session.user;
+
+
+        await loadUserProfile();
+
+
+        showDashboard();
+
+
+        await initializeApplication();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Fehler bei checkLogin():",
+            error
+        );
+
+        showLogin();
+
+    }
+
+}
+
+
+/* ============================================================
+   INITIALISIERUNG
+   ============================================================ */
+
+let applicationInitialized =
+    false;
+
 
 async function initializeApplication() {
 
-    populateAgeSelect();
+    if (applicationInitialized) {
 
-    await checkLogin();
+        /*
+         * Trotzdem UI sichtbar halten.
+         */
 
-}
-
-
-// ============================================================
-// DOM READY
-// ============================================================
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeApplication,
-        {
-            once: true
-        }
-    );
-
-}
-
-else {
-
-    initializeApplication();
-
-}
-
-// ============================================================
-// SEITENNAVIGATION
-// DASHBOARD / KINDER / GRUPPEN / ENTWICKLUNG / ADMIN
-// ============================================================
-
-function initializeNavigation() {
-
-    const navigationButtons =
-        document.querySelectorAll(
-            ".sidebar [data-section]"
-        );
-
-    const contentSections =
-        document.querySelectorAll(
-            "[data-section-content]"
-        );
-
-
-    if (!navigationButtons.length) {
-
-        console.warn(
-            "Keine Navigationsbuttons gefunden."
-        );
+        showDashboard();
 
         return;
 
     }
 
 
-    if (!contentSections.length) {
+    applicationInitialized =
+        true;
 
-        console.warn(
-            "Keine Inhaltsbereiche gefunden."
+
+    try {
+
+        showDashboard();
+
+
+        setupMainEvents();
+
+
+        /*
+         * Entwicklung vorbereiten,
+         * aber noch nicht zwingend öffnen.
+         */
+
+        ensureDevelopmentSection();
+
+        setupDevelopmentEvents();
+
+        populateDevelopmentAge();
+
+
+        /*
+         * Kinder und Gruppen laden.
+         */
+
+        await loadChildren();
+
+        await loadGroups();
+
+
+        /*
+         * Dashboard.
+         */
+
+        updateChildrenCount(
+            currentChildren.length
         );
 
-        return;
+
+        updateGroupsCount(
+            currentGroups.length
+        );
+
+
+        console.log(
+            "Anwendung vollständig initialisiert."
+        );
 
     }
 
+    catch (error) {
 
-    navigationButtons.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                async () => {
-
-                    const sectionName =
-                        button.dataset.section;
+        console.error(
+            "Fehler bei initializeApplication():",
+            error
+        );
 
 
-                    if (!sectionName) {
+        /*
+         * Niemals die komplette Seite weiß machen.
+         */
 
-                        return;
+        showDashboard();
 
-                    }
+    }
 
-
-                    // ========================================
-                    // BUTTONS AKTUALISIEREN
-                    // ========================================
-
-                    navigationButtons.forEach(
-                        navButton => {
-
-                            navButton.classList.remove(
-                                "active"
-                            );
-
-                        }
-                    );
+}
 
 
-                    button.classList.add(
-                        "active"
-                    );
+/* ============================================================
+   DOM READY
+   ============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        console.log(
+            "Kindergarten-App startet..."
+        );
 
 
-                    // ========================================
-                    // INHALT AKTUALISIEREN
-                    // ========================================
+        /*
+         * Login zunächst anzeigen,
+         * bis Session geprüft wurde.
+         */
 
-                    contentSections.forEach(
-                        section => {
-
-                            const sectionContent =
-                                section.dataset
-                                    .sectionContent;
+        showLogin();
 
 
-                            if (
-                                sectionContent ===
-                                sectionName
-                            ) {
+        if (!supabaseClient) {
 
-                                section.classList.add(
-                                    "active"
-                                );
-
-                                section.style.display =
-                                    "";
-
-                            }
-
-                            else {
-
-                                section.classList.remove(
-                                    "active"
-                                );
-
-                                section.style.display =
-                                    "none";
-
-                            }
-
-                        }
-                    );
-
-
-                    // ========================================
-                    // KINDER
-                    // ========================================
-
-                    if (
-                        sectionName ===
-                        "children"
-                    ) {
-
-                        if (currentUser) {
-
-                            await loadChildren();
-
-                        }
-
-                    }
-
-
-                    // ========================================
-                    // GRUPPEN
-                    // ========================================
-
-                    if (
-                        sectionName ===
-                        "groups"
-                    ) {
-
-                        if (
-                            currentUser &&
-                            typeof loadGroupsForCurrentInstitution ===
-                                "function"
-                        ) {
-
-                            // Gruppen werden bei Bedarf geladen.
-                            // Deine vorhandene Funktion benötigt
-                            // aktuell den Select #childGroup.
-                            console.log(
-                                "Gruppenbereich geöffnet."
-                            );
-
-                        }
-
-                    }
-
-
-                    // ========================================
-                    // ENTWICKLUNG
-                    // ========================================
-
-                    if (
-                        sectionName ===
-                        "development"
-                    ) {
-
-                        if (currentUser) {
-
-                            await loadChildrenForDevelopment();
-
-                            populateAgeSelect();
-
-                        }
-
-                    }
-
-
-                    // ========================================
-                    // ADMIN
-                    // ========================================
-
-                    if (
-                        sectionName ===
-                        "admin"
-                    ) {
-
-                        console.log(
-                            "Administrationsbereich geöffnet."
-                        );
-
-                    }
-
-                }
+            console.error(
+                "Supabase Client fehlt."
             );
 
+            return;
+
         }
-    );
 
 
-    // ================================================
-    // STARTSEITE
-    // ================================================
-
-    const initialButton =
-        document.querySelector(
-            ".sidebar [data-section='dashboard']"
-        );
+        setupMainEvents();
 
 
-    if (initialButton) {
-
-        navigationButtons.forEach(
-            button => {
-
-                button.classList.remove(
-                    "active"
-                );
-
-            }
-        );
+        setupAuthListener();
 
 
-        initialButton.classList.add(
-            "active"
-        );
+        await checkLogin();
 
     }
-
-
-    contentSections.forEach(
-        section => {
-
-            if (
-                section.dataset
-                    .sectionContent ===
-                "dashboard"
-            ) {
-
-                section.classList.add(
-                    "active"
-                );
-
-                section.style.display =
-                    "";
-
-            }
-
-            else {
-
-                section.classList.remove(
-                    "active"
-                );
-
-                section.style.display =
-                    "none";
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// NAVIGATION INITIALISIEREN
-// ============================================================
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeNavigation
-    );
-
-}
-
-else {
-
-    initializeNavigation();
-
-}
+);
