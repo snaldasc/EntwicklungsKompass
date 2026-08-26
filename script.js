@@ -4,6 +4,9 @@
    ============================================================ */
 
 "use strict";
+console.log(
+    "AKTUELLE SCRIPT-VERSION GELADEN: user_id-fix-2026-08-26"
+);
 
 
 /* ============================================================
@@ -52,6 +55,175 @@ let currentChildId = null;
    HILFSFUNKTIONEN
    ============================================================ */
 
+/* ============================================================
+   ALTER EINES KINDES BERECHNEN
+   ============================================================ */
+
+function calculateChildAge(birthDate) {
+
+    if (!birthDate) {
+        return null;
+    }
+
+    const birth = new Date(
+        birthDate + "T00:00:00"
+    );
+
+    const today = new Date();
+
+    if (Number.isNaN(birth.getTime())) {
+        return null;
+    }
+
+    let years =
+        today.getFullYear() -
+        birth.getFullYear();
+
+    let months =
+        today.getMonth() -
+        birth.getMonth();
+
+    let days =
+        today.getDate() -
+        birth.getDate();
+
+
+    if (days < 0) {
+
+        months--;
+
+    }
+
+
+    if (months < 0) {
+
+        years--;
+        months += 12;
+
+    }
+
+
+    return {
+        years,
+        months
+    };
+
+}
+
+
+/* ============================================================
+   ALTER ALS TEXT
+   ============================================================ */
+
+function formatChildAge(birthDate) {
+
+    const age =
+        calculateChildAge(birthDate);
+
+    if (!age) {
+
+        return "Alter unbekannt";
+
+    }
+
+
+    if (
+        age.years === 0 &&
+        age.months === 0
+    ) {
+
+        return "unter 1 Jahr";
+
+    }
+
+
+    if (age.years === 0) {
+
+        return `${age.months} Monate`;
+
+    }
+
+
+    if (age.months === 0) {
+
+        return age.years === 1
+            ? "1 Jahr"
+            : `${age.years} Jahre`;
+
+    }
+
+
+    const yearText =
+        age.years === 1
+            ? "1 Jahr"
+            : `${age.years} Jahre`;
+
+    const monthText =
+        age.months === 1
+            ? "1 Monat"
+            : `${age.months} Monate`;
+
+
+    return `${yearText}, ${monthText}`;
+
+}
+
+/* ============================================================
+   GEBURTSDATUM – ALTER LIVE ANZEIGEN
+   ============================================================ */
+
+function setupChildBirthDate() {
+
+    const birthDateInput =
+        document.getElementById(
+            "newChildBirthDate"
+        );
+
+    const ageDisplay =
+        document.getElementById(
+            "newChildAgeDisplay"
+        );
+
+
+    if (
+        !birthDateInput ||
+        !ageDisplay
+    ) {
+
+        return;
+
+    }
+
+
+    birthDateInput.addEventListener(
+        "change",
+        function () {
+
+            const birthDate =
+                birthDateInput.value;
+
+
+            if (!birthDate) {
+
+                ageDisplay.textContent =
+                    "Bitte zuerst das Geburtsdatum eingeben.";
+
+                return;
+
+            }
+
+
+            ageDisplay.textContent =
+                formatChildAge(
+                    birthDate
+                );
+
+        }
+    );
+
+}
+
+
 function escapeHtml(value) {
 
     if (
@@ -69,20 +241,15 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 }
 
-
 function byId(id) {
     return document.getElementById(id);
 }
 
-
 function safeText(element, text) {
-
     if (element) {
         element.textContent = text ?? "";
     }
-
 }
-
 
 /* ============================================================
    DOM
@@ -698,14 +865,12 @@ function setupNavigation() {
                     );
 
 
-                    if (
-                        sectionName ===
-                        "children"
-                    ) {
+                   if (sectionName === "children") {
+    await loadGroups();
+    await loadChildren();
+}
 
-                        await loadChildren();
-
-                    }
+                    
 
 
                     if (
@@ -828,170 +993,532 @@ sections.forEach(section => {
    ============================================================ */
 
 async function loadChildren() {
-
-    if (
-        !supabaseClient ||
-        !currentUser
-    ) {
-
+    if (!supabaseClient || !currentUser) {
         return [];
-
     }
-
 
     const childrenList =
         byId("childrenList");
 
-
     if (childrenList) {
-
         childrenList.innerHTML =
             "<p>Kinder werden geladen...</p>";
-
     }
 
+    let query = supabaseClient
+        .from("children")
+        .select(`
+            id,
+            child_code,
+            birth_date,
+            group_id,
+            institution_id,
+            created_at,
+            Groups (
+                id,
+                group_name,
+                institution_id
+            )
+        `)
+        .order("child_code", {
+            ascending: true
+        });
+
+    if (currentProfile?.institution_id) {
+        query = query.eq(
+            "institution_id",
+            currentProfile.institution_id
+        );
+    }
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("children")
-            .select(`
-                id,
-                child_code,
-                group_id,
-                created_at,
-                Groups (
-                    id,
-                    group_name
-                )
-            `)
-            .order(
-                "child_code",
-                {
-                    ascending: true
-                }
-            );
-
+    } = await query;
 
     if (error) {
-
         console.error(
             "Kinder konnten nicht geladen werden:",
             error
         );
 
-
         if (childrenList) {
-
-            childrenList.innerHTML =
-                `
+            childrenList.innerHTML = `
                 <p style="color:red;">
                     Kinder konnten nicht geladen werden.<br>
                     ${escapeHtml(error.message)}
                 </p>
-                `;
-
+            `;
         }
 
-
         return [];
-
     }
 
-
-    currentChildren =
-        data || [];
-
+    currentChildren = data || [];
 
     renderChildrenList(
         currentChildren
     );
 
-
     updateChildrenCount(
         currentChildren.length
     );
 
-
     return currentChildren;
-
 }
 
 
 function renderChildrenList(children) {
-
-    const childrenList =
-        byId("childrenList");
-
+    const childrenList = byId("childrenList");
 
     if (!childrenList) {
         return;
     }
 
-
-    if (
-        !children ||
-        children.length === 0
-    ) {
-
-        childrenList.innerHTML =
-            `
-            <p>
-                Noch keine Kinder angelegt.
-            </p>
-            `;
-
+    if (!children || children.length === 0) {
+        childrenList.innerHTML = `
+            <p>Noch keine Kinder angelegt.</p>
+        `;
         return;
-
     }
-
 
     childrenList.innerHTML = "";
 
-
     children.forEach(child => {
+        const item = document.createElement("div");
 
-        const item =
-            document.createElement("div");
-
-
-        item.className =
-            "child-item";
-
+        item.className = "child-item";
 
         const groupName =
-            child.Groups?.group_name ||
-            "Keine Gruppe";
+            child.Groups?.group_name || "Keine Gruppe";
 
+        const birthDate =
+            child.birth_date
+                ? new Date(
+                    `${child.birth_date}T00:00:00`
+                ).toLocaleDateString("de-DE")
+                : "Kein Geburtsdatum";
 
-        item.innerHTML =
-            `
+        item.innerHTML = `
             <div>
-
-                <strong>
+                <strong class="child-code">
                     ${escapeHtml(
-                        child.child_code ||
-                        "Keine Kinder-ID"
+                        child.child_code || "Keine Kinder-ID"
                     )}
                 </strong>
 
                 <br>
 
                 <span>
+                    Geburtsdatum:
+                    ${escapeHtml(birthDate)}
+                </span>
+
+                <br>
+
+                <span class="child-group">
                     Gruppe:
                     ${escapeHtml(groupName)}
                 </span>
-
             </div>
-            `;
 
+            <div
+                style="
+                    display:flex;
+                    gap:8px;
+                    margin-top:12px;
+                    flex-wrap:wrap;
+                "
+            >
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-edit-child="${escapeHtml(child.id)}"
+                >
+                    Bearbeiten
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    data-delete-child="${escapeHtml(child.id)}"
+                >
+                    Löschen
+                </button>
+            </div>
+        `;
 
         childrenList.appendChild(item);
-
     });
 
+    childrenList
+        .querySelectorAll("[data-edit-child]")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    openEditChildModal(
+                        button.dataset.editChild
+                    );
+                }
+            );
+        });
+
+    childrenList
+        .querySelectorAll("[data-delete-child]")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    deleteChild(
+                        button.dataset.deleteChild
+                    );
+                }
+            );
+        });
+}
+
+async function loadInstitutions() {
+    if (!supabaseClient || !currentUser) {
+        return [];
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("institutions")
+        .select(`
+            institution_id,
+            institution_name
+        `)
+        .order("institution_name", {
+            ascending: true
+        });
+
+    if (error) {
+        console.error(
+            "Institutionen konnten nicht geladen werden:",
+            error
+        );
+
+        return [];
+    }
+
+    return data || [];
+}
+
+
+async function openEditChildModal(childId) {
+    const child = currentChildren.find(
+        item =>
+            String(item.id) === String(childId)
+    );
+
+    if (!child) {
+        return;
+    }
+
+    const institutions =
+        await loadInstitutions();
+
+    const modal =
+        document.createElement("div");
+
+    modal.className = "modal";
+    modal.id = "editChildModal";
+
+    const groupOptions =
+        currentGroups
+            .map(group => `
+                <option
+                    value="${escapeHtml(group.id)}"
+                    ${
+                        String(group.id) ===
+                        String(child.group_id)
+                            ? "selected"
+                            : ""
+                    }
+                >
+                    ${escapeHtml(
+                        group.group_name ||
+                        "Unbenannte Gruppe"
+                    )}
+                </option>
+            `)
+            .join("");
+
+    const institutionOptions =
+        institutions
+            .map(institution => `
+                <option
+                    value="${escapeHtml(
+                        institution.institution_id
+                    )}"
+                    ${
+                        String(
+                            institution.institution_id
+                        ) ===
+                        String(child.institution_id)
+                            ? "selected"
+                            : ""
+                    }
+                >
+                    ${escapeHtml(
+                        institution.institution_name ||
+                        "Unbenannte Institution"
+                    )}
+                </option>
+            `)
+            .join("");
+
+    modal.innerHTML = `
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h2>Kind bearbeiten</h2>
+
+                <button
+                    type="button"
+                    class="btn btn-light"
+                    id="closeEditChildModal"
+                >
+                    Schließen
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label for="editChildCode">
+                    Kinder-ID
+                </label>
+
+                <input
+                    type="text"
+                    id="editChildCode"
+                    value="${escapeHtml(
+                        child.child_code || ""
+                    )}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="editChildBirthDate">
+                    Geburtsdatum
+                </label>
+
+                <input
+                    type="date"
+                    id="editChildBirthDate"
+                    value="${escapeHtml(
+                        child.birth_date || ""
+                    )}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="editChildGroup">
+                    Gruppe
+                </label>
+
+                <select id="editChildGroup" required>
+                    <option value="">
+                        Gruppe auswählen...
+                    </option>
+                    ${groupOptions}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="editChildInstitution">
+                    Institution
+                </label>
+
+                <select id="editChildInstitution">
+                    <option value="">
+                        Institution auswählen...
+                    </option>
+                    ${institutionOptions}
+                </select>
+            </div>
+
+            <button
+                type="button"
+                class="btn btn-success"
+                id="saveEditedChild"
+            >
+                Änderungen speichern
+            </button>
+
+            <button
+                type="button"
+                class="btn btn-light"
+                id="cancelEditChild"
+            >
+                Abbrechen
+            </button>
+
+            <div
+                id="editChildMessage"
+                class="message"
+            ></div>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const closeModal = () => {
+        modal.remove();
+    };
+
+    byId("closeEditChildModal")
+        ?.addEventListener("click", closeModal);
+
+    byId("cancelEditChild")
+        ?.addEventListener("click", closeModal);
+
+    byId("saveEditedChild")
+        ?.addEventListener(
+            "click",
+            () => saveEditedChild(child.id, modal)
+        );
+}
+
+
+async function saveEditedChild(childId, modal) {
+    const childCode =
+        byId("editChildCode")
+            ?.value
+            ?.trim() || "";
+
+    const birthDate =
+        byId("editChildBirthDate")
+            ?.value || "";
+
+    const groupId =
+        byId("editChildGroup")
+            ?.value || "";
+
+    const institutionId =
+        byId("editChildInstitution")
+            ?.value || null;
+
+    const message =
+        byId("editChildMessage");
+
+    if (!childCode || !birthDate || !groupId) {
+        safeText(
+            message,
+            "Bitte Kinder-ID, Geburtsdatum und Gruppe ausfüllen."
+        );
+
+        message?.classList.add("show", "error");
+
+        return;
+    }
+
+    const saveButton =
+        byId("saveEditedChild");
+
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = "Wird gespeichert...";
+    }
+
+    const {
+        error
+    } = await supabaseClient
+        .from("children")
+        .update({
+            child_code: childCode,
+            birth_date: birthDate,
+            group_id: Number(groupId),
+            institution_id: institutionId
+        })
+        .eq("id", childId);
+
+    if (error) {
+        console.error(
+            "Kind konnte nicht aktualisiert werden:",
+            error
+        );
+
+        safeText(
+            message,
+            `Kind konnte nicht aktualisiert werden: ${
+                error.message
+            }`
+        );
+
+        message?.classList.add("show", "error");
+
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent =
+                "Änderungen speichern";
+        }
+
+        return;
+    }
+
+    modal.remove();
+
+    await loadChildren();
+}
+
+
+async function deleteChild(childId) {
+    const child =
+        currentChildren.find(
+            item =>
+                String(item.id) === String(childId)
+        );
+
+    const childCode =
+        child?.child_code || "dieses Kind";
+
+    const confirmed =
+        window.confirm(
+            `Soll ${childCode} wirklich gelöscht werden?`
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const {
+        error
+    } = await supabaseClient
+        .from("children")
+        .delete()
+        .eq("id", childId);
+
+    if (error) {
+        console.error(
+            "Kind konnte nicht gelöscht werden:",
+            error
+        );
+
+        alert(
+            `Kind konnte nicht gelöscht werden: ${
+                error.message
+            }`
+        );
+
+        return;
+    }
+
+    if (
+        String(currentChildId) === String(childId)
+    ) {
+        currentChildId = null;
+        currentAnswers = {};
+        currentQuestions = [];
+    }
+
+    await loadChildren();
 }
 
 
@@ -999,62 +1526,116 @@ function renderChildrenList(children) {
    GRUPPEN
    ============================================================ */
 
-async function loadGroups() {
+function populateChildGroupSelect(groups) {
+    const select = document.getElementById("newChildGroup");
 
-    if (!supabaseClient) {
+    if (!select) {
+        console.error(
+            "Dropdown #newChildGroup wurde nicht gefunden."
+        );
+        return;
+    }
+
+    console.log("Gruppen für Dropdown:", groups);
+
+    select.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Gruppe auswählen...";
+    select.appendChild(placeholder);
+
+    if (!Array.isArray(groups) || groups.length === 0) {
+        const emptyOption = document.createElement("option");
+        emptyOption.value = "";
+        emptyOption.disabled = true;
+        emptyOption.textContent = "Keine Gruppen vorhanden";
+        select.appendChild(emptyOption);
+
+        return;
+    }
+
+    groups.forEach(group => {
+        const option = document.createElement("option");
+
+        option.value = String(group.id);
+
+        // Prüft mehrere mögliche Spaltennamen
+        option.textContent =
+            group.group_name ||
+            group.name ||
+            group.title ||
+            "Unbenannte Gruppe";
+
+        select.appendChild(option);
+    });
+
+    console.log(
+        "Dropdown-Optionen:",
+        select.options.length
+    );
+}
+
+
+async function loadGroups() {
+    if (!supabaseClient || !currentUser) {
         return [];
     }
 
+    
+
+let query = supabaseClient
+    .from("Groups")
+    .select(`
+        id,
+        group_name,
+        description,
+        institution_id
+    `)
+    .order("group_name", {
+        ascending: true
+    });
+
+    if (currentProfile?.institution_id) {
+        query = query.eq(
+            "institution_id",
+            currentProfile.institution_id
+        );
+    }
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("Groups")
-            .select(`
-                id,
-                group_name,
-                description,
-                institution_id
-            `)
-            .order(
-                "group_name",
-                {
-                    ascending: true
-                }
-            );
+    } = await query;
 
+
+    console.log("Gruppen-Abfrage:", {
+        data,
+        error,
+        currentProfile
+    });
 
     if (error) {
-
         console.error(
             "Gruppen konnten nicht geladen werden:",
             error
         );
 
-        return [];
+        currentGroups = [];
+        populateChildGroupSelect([]);
 
+        return [];
     }
 
+    currentGroups = data || [];
 
-    currentGroups =
-        data || [];
-
-
-    renderGroups(
-        currentGroups
-    );
-
-
-    updateGroupsCount(
-        currentGroups.length
-    );
-
+    renderGroups(currentGroups);
+    populateChildGroupSelect(currentGroups);
+    updateGroupsCount(currentGroups.length);
 
     return currentGroups;
-
 }
+
 
 
 function renderGroups(groups) {
@@ -2908,108 +3489,130 @@ function ensureDevelopmentRatingStyles() {
    ============================================================ */
 
 async function handleDevelopmentChildChange(event) {
-
     currentChildId =
-    event.target.value ||
-    null;
+        event.target.value || null;
 
-
-currentAnswers = {};
-
-currentQuestions = [];
-
-currentAge = null;
-
+    currentAnswers = {};
+    currentQuestions = [];
+    currentAge = null;
 
     const {
         questionsContainer,
         questionsMessage,
         ageSelect,
         resultContainer
-    } =
-        getDevelopmentElements();
-
-
-    if (ageSelect) {
-        ageSelect.value = "";
-    }
-
+    } = getDevelopmentElements();
 
     if (resultContainer) {
-
-        resultContainer.style.display =
-            "none";
-
+        resultContainer.style.display = "none";
         resultContainer.innerHTML = "";
-
     }
 
-
     if (!currentChildId) {
+        if (ageSelect) {
+            ageSelect.value = "";
+        }
 
         if (questionsContainer) {
-
-            questionsContainer.innerHTML =
-                `
+            questionsContainer.innerHTML = `
                 <p>
                     Bitte zuerst ein Kind auswählen.
                 </p>
-                `;
-
+            `;
         }
 
         return;
-
-    }
-/*
- * Gespeicherte Auswertung dieses Kindes laden
- */
-
-const savedAssessment =
-    await loadDevelopmentAssessment(
-        currentChildId
-    );
-
-
-if (savedAssessment) {
-
-    safeText(
-        questionsMessage,
-        "Gespeicherte Auswertung wurde geladen."
-    );
-
-
-    if (questionsMessage) {
-
-        questionsMessage.style.color =
-            "green";
-
     }
 
-    return;
+    const selectedChild =
+        currentChildren.find(
+            child =>
+                String(child.id) ===
+                String(currentChildId)
+        );
 
-}
+    const calculatedAge =
+        calculateChildAge(
+            selectedChild?.birth_date
+        );
+
+    if (calculatedAge && ageSelect) {
+        const ageValue = Math.min(
+            7,
+            Math.max(1, calculatedAge.years)
+        );
+
+        currentAge = ageValue;
+        ageSelect.value = String(ageValue);
+
+        const selectedOption =
+            ageSelect.options[
+                ageSelect.selectedIndex
+            ];
+
+        if (selectedOption) {
+            selectedOption.textContent =
+                formatChildAge(
+                    selectedChild.birth_date
+                );
+        }
+
+        currentQuestions =
+            getQuestionsForAge(currentAge);
+
+        renderDevelopmentQuestions(
+            currentQuestions
+        );
+    }
+    else {
+        if (ageSelect) {
+            ageSelect.value = "";
+        }
+
+        if (questionsContainer) {
+            questionsContainer.innerHTML = `
+                <p>
+                    Für dieses Kind ist kein gültiges
+                    Geburtsdatum vorhanden.
+                </p>
+            `;
+        }
+    }
+await loadSavedDevelopmentReports();
+enableDevelopmentReportActions();
+
+    /*
+     * Gespeicherte Auswertung laden.
+     * Falls vorhanden, überschreibt deren Alter
+     * die automatisch berechnete Anzeige.
+     */
+    const savedAssessment =
+        await loadDevelopmentAssessment(
+            currentChildId
+        );
+
+    if (savedAssessment) {
+        safeText(
+            questionsMessage,
+            "Gespeicherte Auswertung wurde geladen."
+        );
+
+        if (questionsMessage) {
+            questionsMessage.classList.add(
+                "show",
+                "success"
+            );
+        }
+
+        return;
+    }
 
     safeText(
         questionsMessage,
         ""
     );
-
-
-    if (questionsContainer) {
-
-        questionsContainer.innerHTML =
-            `
-            <p>
-                Jetzt bitte das Alter auswählen.
-            </p>
-            `;
-
-    }
-
 }
-
-
+    
 /* ============================================================
    ALTER GEÄNDERT
    ============================================================ */
@@ -3208,68 +3811,7 @@ if (
 
 }
     }
-function handleCreateDevelopmentReport() {
 
-    const validation =
-        validateDevelopment();
-
-
-    if (!validation.valid) {
-
-        const {
-            questionsMessage
-        } =
-            getDevelopmentElements();
-
-
-        safeText(
-            questionsMessage,
-            validation.message
-        );
-
-
-        if (questionsMessage) {
-
-            questionsMessage.style.color =
-                "red";
-
-        }
-
-
-        return;
-
-    }
-
-
-    const result =
-        calculateDevelopmentResult();
-
-
-    const report =
-        generateDevelopmentReport(
-            result
-        );
-
-
-    const form =
-        byId(
-            "developmentReportForm"
-        );
-
-
-    if (form) {
-
-        form.style.display =
-            "";
-
-    }
-
-
-    showDevelopmentReport(
-        report
-    );
-
-}
 
    function handleCreateDevelopmentReport() {
 
@@ -4283,9 +4825,25 @@ function ensureDevelopmentResultStyles() {
    AUSWERTUNG ERSTELLEN
    ============================================================ */
 async function saveDevelopmentAssessment(result) {
-
     if (!supabaseClient) {
         throw new Error("Supabase Client ist nicht verfügbar.");
+    }
+
+    const {
+        data: {
+            user
+        },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError) {
+        throw userError;
+    }
+
+    if (!user?.id) {
+        throw new Error(
+            "Kein authentifizierter Benutzer gefunden."
+        );
     }
 
     if (!currentChildId) {
@@ -4298,25 +4856,28 @@ async function saveDevelopmentAssessment(result) {
 
     const payload = {
         child_id: currentChildId,
+        user_id: user.id,
         age: currentAge,
         answers: currentAnswers,
-        result: result,
-        created_by: currentUser?.id || null,
+        result,
         updated_at: new Date().toISOString()
     };
+
+    console.log(
+        "Payload vor dem Speichern:",
+        payload
+    );
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("development_assessments")
-            .insert(payload)
-            .select()
-            .single();
+    } = await supabaseClient
+        .from("development_assessments")
+        .insert(payload)
+        .select()
+        .single();
 
     if (error) {
-
         console.error(
             "Entwicklungsauswertung konnte nicht gespeichert werden:",
             error
@@ -4325,13 +4886,11 @@ async function saveDevelopmentAssessment(result) {
         throw error;
     }
 
-    console.log(
-        "Entwicklungsauswertung gespeichert:",
-        data
-    );
-
     return data;
 }
+
+
+
 
 async function loadDevelopmentAssessment(childId) {
 
@@ -5076,7 +5635,8 @@ async function handleCreateDevelopmentReport() {
          * Gutachten auf Basis der Auswertung erstellen
          */
         const report =
-            buildDevelopmentReport(result);
+            generateDevelopmentReport(result);
+
 
         currentDevelopmentReport =
             report;
@@ -5193,10 +5753,13 @@ async function handleSaveDevelopmentReport() {
             error
         );
 
-        safeText(
-            message,
-            "Das Gutachten konnte nicht gespeichert werden."
-        );
+    safeText(
+        message,
+        `Speichern fehlgeschlagen: ${
+            error?.message || "Unbekannter Datenbankfehler"
+        }`
+    );
+
 
     }
     finally {
@@ -5226,6 +5789,12 @@ async function loadSavedDevelopmentReports() {
         );
 
     if (!container || !currentChildId) {
+        return;
+    }
+
+if (!supabaseClient) {
+        container.innerHTML =
+            "<p>Keine Verbindung zur Datenbank.</p>";
         return;
     }
 
@@ -5325,33 +5894,49 @@ async function loadSavedDevelopmentReports() {
                             <div class="saved-report-actions">
 
                                 <button
-                                    type="button"
-                                    class="btn btn-secondary"
-                                    onclick="loadDevelopmentReport(
-                                        '${escapeHtml(report.id)}'
-                                    )">
-                                    Öffnen
-                                </button>
+    type="button"
+    class="btn btn-secondary"
+    data-open-report="${escapeHtml(report.id)}"
+>
+    Öffnen
+</button>
 
-                                <button
-                                    type="button"
-                                    class="btn btn-danger"
-                                    onclick="deleteDevelopmentReport(
-                                        '${escapeHtml(report.id)}'
-                                    )">
-                                    Löschen
+<button
+    type="button"
+    class="btn btn-danger"
+    data-delete-report="${escapeHtml(report.id)}"
+>
+    Löschen
                                 </button>
-
                             </div>
-
                         </div>
                         `;
-
                     }
                 )
                 .join("");
 
-    }
+        container
+        .querySelectorAll("[data-open-report]")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => loadDevelopmentReport(
+                    button.dataset.openReport
+                )
+            );
+        });
+
+    container
+        .querySelectorAll("[data-delete-report]")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => deleteDevelopmentReport(
+                    button.dataset.deleteReport
+                )
+            );
+        });
+}
     catch (error) {
 
         console.error(
@@ -6010,6 +6595,83 @@ async function updateDashboardCounts() {
 }
 
 
+async function handleCreateChild() {
+
+    
+    const childCode = document
+        .getElementById("newChildCode")
+        ?.value
+        ?.trim();
+
+    const birthDate = document
+        .getElementById("newChildBirthDate")
+        ?.value;
+
+    const groupId = document
+        .getElementById("newChildGroup")
+        ?.value || null;
+    
+    const message = document.getElementById("childMessage");
+
+    if (!childCode || !birthDate) {
+        safeText(
+            message,
+            "Bitte Kinder-ID und Geburtsdatum eingeben."
+        );
+        return;
+    }
+
+    if (!currentUser) {
+        safeText(message, "Du bist nicht angemeldet.");
+        return;
+    }
+
+    if (!groupId) {
+            safeText(
+                message,
+                "Bitte eine Gruppe auswählen."
+            );
+
+            message?.classList.add(
+                "show",
+                "error"
+            );
+
+            return;
+        }
+
+    const { error } = await supabaseClient
+        .from("children")
+        .insert({
+            child_code: childCode,
+            birth_date: birthDate,
+            group_id: groupId,
+            institution_id: currentProfile?.institution_id || null
+        });
+
+    
+
+
+    if (error) {
+        console.error("Kind konnte nicht gespeichert werden:", error);
+
+        safeText(
+            message,
+            `Kind konnte nicht gespeichert werden: ${error.message}`
+        );
+
+        return;
+    }
+
+    safeText(message, "Kind wurde erfolgreich angelegt.");
+
+    document.getElementById("newChildCode").value = "";
+    document.getElementById("newChildBirthDate").value = "";
+    document.getElementById("newChildGroup").value = "";
+
+    await loadChildren();
+}
+
 /* ============================================================
    EVENTS
    ============================================================ */
@@ -6034,6 +6696,22 @@ function setupMainEvents() {
         );
 
     }
+
+
+const createChildButton =
+    document.getElementById("createChildButton");
+
+if (
+    createChildButton &&
+    !createChildButton.dataset.eventsReady
+) {
+    createChildButton.dataset.eventsReady = "true";
+
+    createChildButton.addEventListener(
+        "click",
+        handleCreateChild
+    );
+}
 
 
     const registerForm =
@@ -6126,6 +6804,91 @@ function setupMainEvents() {
         );
 
     }
+
+
+
+const openCreateChildButton =
+    byId("openCreateChildButton");
+
+if (
+    openCreateChildButton &&
+    !openCreateChildButton.dataset.eventsReady
+) {
+    openCreateChildButton.dataset.eventsReady =
+        "true";
+
+    openCreateChildButton.addEventListener(
+        "click",
+        () => {
+            const section =
+                byId("createChildSection");
+
+            if (section) {
+                section.style.display = "";
+            }
+        }
+    );
+}
+
+const cancelCreateChildButton =
+    byId("cancelCreateChildButton");
+
+if (
+    cancelCreateChildButton &&
+    !cancelCreateChildButton.dataset.eventsReady
+) {
+    cancelCreateChildButton.dataset.eventsReady =
+        "true";
+
+    cancelCreateChildButton.addEventListener(
+        "click",
+        () => {
+            const section =
+                byId("createChildSection");
+
+            if (section) {
+                section.style.display = "none";
+            }
+
+            const childCode =
+                byId("newChildCode");
+
+            const birthDate =
+                byId("newChildBirthDate");
+
+            const groupSelect =
+                byId("newChildGroup");
+
+            const ageDisplay =
+                byId("newChildAgeDisplay");
+
+            const message =
+                byId("childMessage");
+
+            if (childCode) {
+                childCode.value = "";
+            }
+
+            if (birthDate) {
+                birthDate.value = "";
+            }
+
+            if (groupSelect) {
+                groupSelect.value = "";
+            }
+
+            if (ageDisplay) {
+                ageDisplay.textContent =
+                    "Bitte zuerst das Geburtsdatum eingeben.";
+            }
+
+            if (message) {
+                message.textContent = "";
+                message.className = "message";
+            }
+        }
+    );
+}
 
 
     setupNavigation();
@@ -6393,9 +7156,639 @@ document.addEventListener(
 
         setupMainEvents();
 
+        setupChildBirthDate();
+
         setupAuthListener();
 
         await checkLogin();
 
+    }
+);
+
+/* ============================================================
+   NEUE ENTWICKLUNGSAUSWERTUNG
+   ============================================================ */
+
+function calculateDevelopmentResult() {
+    const result = {
+        total: 0,
+        noch_nicht: 0,
+        teilweise: 0,
+        sicher: 0,
+        nicht_beobachtet: 0,
+        percentage: 0,
+        ratedPercentage: 0,
+        areas: {}
+    };
+
+    const validAnswers = [
+        "noch_nicht",
+        "teilweise",
+        "sicher",
+        "nicht_beobachtet"
+    ];
+
+    currentQuestions.forEach(question => {
+        const areaDefinition =
+            DEVELOPMENT_AREAS.find(
+                area => area.key === question.area
+            );
+
+        if (!result.areas[question.area]) {
+            result.areas[question.area] = {
+                key: question.area,
+                label:
+                    areaDefinition?.label ||
+                    question.area,
+                total: 0,
+                rated: 0,
+                sicher: 0,
+                teilweise: 0,
+                noch_nicht: 0,
+                nicht_beobachtet: 0,
+                percentage: 0,
+                ratedPercentage: 0,
+                questions: []
+            };
+        }
+
+        const area = result.areas[question.area];
+        const answer =
+            currentAnswers[question.id] ||
+            currentAnswers[String(question.id)] ||
+            null;
+
+        area.total++;
+
+        area.questions.push({
+            ...question,
+            answer
+        });
+
+        if (
+            !answer ||
+            !validAnswers.includes(answer)
+        ) {
+            return;
+        }
+
+        result.total++;
+        result[answer]++;
+
+        area.rated++;
+        area[answer]++;
+    });
+
+    const questionCount =
+        currentQuestions.length;
+
+    result.ratedPercentage =
+        questionCount > 0
+            ? Math.min(
+                100,
+                Math.round(
+                    result.total /
+                    questionCount *
+                    100
+                )
+            )
+            : 0;
+
+    const observable =
+        result.total -
+        result.nicht_beobachtet;
+
+    result.percentage =
+        observable > 0
+            ? Math.min(
+                100,
+                Math.round(
+                    (
+                        result.sicher +
+                        result.teilweise * 0.5
+                    ) /
+                    observable *
+                    100
+                )
+            )
+            : 0;
+
+    Object.values(result.areas)
+        .forEach(area => {
+            area.ratedPercentage =
+                area.total > 0
+                    ? Math.min(
+                        100,
+                        Math.round(
+                            area.rated /
+                            area.total *
+                            100
+                        )
+                    )
+                    : 0;
+
+            const areaObservable =
+                area.rated -
+                area.nicht_beobachtet;
+
+            area.percentage =
+                areaObservable > 0
+                    ? Math.min(
+                        100,
+                        Math.round(
+                            (
+                                area.sicher +
+                                area.teilweise * 0.5
+                            ) /
+                            areaObservable *
+                            100
+                        )
+                    )
+                    : 0;
+        });
+
+    return result;
+}
+
+
+/*
+ * Unvollständige Auswertungen dürfen gespeichert werden.
+ */
+function validateDevelopment() {
+    if (!currentChildId) {
+        return {
+            valid: false,
+            message: "Bitte zuerst ein Kind auswählen."
+        };
+    }
+
+    if (!currentAge) {
+        return {
+            valid: false,
+            message: "Bitte zuerst das Alter auswählen."
+        };
+    }
+
+    if (
+        !currentQuestions ||
+        currentQuestions.length === 0
+    ) {
+        return {
+            valid: false,
+            message:
+                "Für dieses Alter sind keine Fragen vorhanden."
+        };
+    }
+
+    return {
+        valid: true,
+        message: ""
+    };
+}
+
+
+/* ============================================================
+   AUSWERTUNG DARSTELLEN
+   ============================================================ */
+
+function showDevelopmentResult(result) {
+    const {
+        resultContainer
+    } = getDevelopmentElements();
+
+    if (!resultContainer) {
+        return;
+    }
+
+    const areaEntries =
+        Object.values(result.areas);
+
+    const areasHtml =
+        areaEntries
+            .map(area => {
+                const incompleteQuestions =
+                    area.questions.filter(
+                        question =>
+                            question.answer !== "sicher"
+                    );
+
+                const detailsHtml =
+                    incompleteQuestions.length > 0
+                        ? incompleteQuestions
+                            .map(question => {
+                                const answerLabel =
+                                    DEVELOPMENT_OPTIONS.find(
+                                        option =>
+                                            option.value ===
+                                            question.answer
+                                    )?.label ||
+                                    "Noch nicht bewertet";
+
+                                return `
+                                    <li>
+                                        <span>
+                                            ${escapeHtml(
+                                                question.question
+                                            )}
+                                        </span>
+                                        <small>
+                                            ${escapeHtml(
+                                                answerLabel
+                                            )}
+                                        </small>
+                                    </li>
+                                `;
+                            })
+                            .join("")
+                        : `
+                            <li class="development-complete">
+                                Alle Punkte sind vollständig erreicht.
+                            </li>
+                        `;
+
+                return `
+                    <article
+                        class="development-result-area"
+                    >
+                        <button
+                            type="button"
+                            class="development-result-area-toggle"
+                            aria-expanded="false"
+                        >
+                            <span>
+                                ${escapeHtml(area.label)}
+                            </span>
+
+                            <span
+                                class="development-result-circle"
+                                style="
+                                    --area-progress:
+                                    ${area.percentage}%;
+                                "
+                                aria-label="Entwicklungsstand"
+                            >
+                                <span></span>
+                            </span>
+                        </button>
+
+                        <div
+                            class="
+                                development-result-area-details
+                            "
+                            hidden
+                        >
+                            <h4>
+                                Noch nicht vollständig erreicht
+                            </h4>
+
+                            <ul>
+                                ${detailsHtml}
+                            </ul>
+                        </div>
+                    </article>
+                `;
+            })
+            .join("");
+
+    resultContainer.innerHTML = `
+        <div class="development-result-card">
+            <h2>Auswertung</h2>
+
+            <div class="development-result-overview">
+                <span>Bereits bewertet</span>
+                <strong>
+                    ${result.ratedPercentage} %
+                </strong>
+            </div>
+
+            <h3>Entwicklungsbereiche</h3>
+
+            <div class="development-result-areas">
+                ${areasHtml}
+            </div>
+        </div>
+    `;
+
+    resultContainer
+        .querySelectorAll(
+            ".development-result-area-toggle"
+        )
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    const details =
+                        button.parentElement
+                            .querySelector(
+                                ".development-result-area-details"
+                            );
+
+                    if (!details) {
+                        return;
+                    }
+
+                    const isOpen =
+                        button.getAttribute(
+                            "aria-expanded"
+                        ) === "true";
+
+                    button.setAttribute(
+                        "aria-expanded",
+                        String(!isOpen)
+                    );
+
+                    details.hidden = isOpen;
+                }
+            );
+        });
+
+    resultContainer.style.display = "";
+}
+
+
+/* ============================================================
+   AUSWERTUNGS-STYLES
+   ============================================================ */
+
+function ensureDevelopmentResultStyles() {
+    if (
+        document.getElementById(
+            "developmentResultStyles"
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "developmentResultStyles";
+
+    style.textContent = `
+        .development-result-card {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
+        }
+
+        .development-result-card h2 {
+            margin-top: 0;
+        }
+
+        .development-result-overview {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px;
+            border-radius: 16px;
+            background: #f1f8f3;
+            color: #237a34;
+        }
+
+        .development-result-overview span {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .development-result-overview strong {
+            font-size: 32px;
+        }
+
+        .development-result-card h3 {
+            margin-top: 30px;
+        }
+
+        .development-result-area {
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .development-result-area-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 18px 0;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            text-align: left;
+            font: inherit;
+            font-weight: 700;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .development-result-area-toggle:hover {
+            color: #27913a;
+        }
+
+        .development-result-circle {
+            --area-progress: 0%;
+            width: 54px;
+            height: 54px;
+            flex: 0 0 54px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background:
+                conic-gradient(
+                    #39b54a var(--area-progress),
+                    #e5e5e5 var(--area-progress)
+                );
+        }
+
+        .development-result-circle span {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        .development-result-area-details {
+            padding: 0 0 18px;
+            color: #555;
+        }
+
+        .development-result-area-details h4 {
+            margin: 0 0 10px;
+            font-size: 15px;
+        }
+
+        .development-result-area-details ul {
+            display: grid;
+            gap: 8px;
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .development-result-area-details li {
+            line-height: 1.4;
+        }
+
+        .development-result-area-details small {
+            display: block;
+            color: #888;
+        }
+
+        .development-result-area-details
+        .development-complete {
+            color: #27913a;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .development-result-overview span {
+                font-size: 16px;
+            }
+
+            .development-result-overview strong {
+                font-size: 26px;
+            }
+
+            .development-result-area-toggle {
+                font-size: 16px;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+/* ============================================================
+   GUTACHTEN-AKTIONEN AKTIVIEREN
+   ============================================================ */
+
+function prepareDevelopmentReportBeforeAction() {
+    if (currentDevelopmentReport) {
+        return true;
+    }
+
+    if (!currentChildId) {
+        safeText(
+            byId("developmentReportMessage"),
+            "Bitte zuerst ein Kind auswählen."
+        );
+
+        return false;
+    }
+
+    try {
+        const result =
+            calculateDevelopmentResult();
+
+        currentDevelopmentReport =
+            generateDevelopmentReport(result);
+
+        showDevelopmentReport(
+            currentDevelopmentReport
+        );
+
+        return true;
+    }
+    catch (error) {
+        console.error(
+            "Gutachten konnte nicht vorbereitet werden:",
+            error
+        );
+
+        safeText(
+            byId("developmentReportMessage"),
+            "Das Gutachten konnte nicht erstellt werden."
+        );
+
+        return false;
+    }
+}
+
+
+function enableDevelopmentReportActions() {
+    const createButton =
+        byId("createDevelopmentReportButton");
+
+    const saveButton =
+        byId("saveDevelopmentReportButton");
+
+    const printButton =
+        byId("printDevelopmentReportButton");
+
+    /*
+     * Die Schaltflächen dürfen nicht dauerhaft grau bleiben.
+     */
+    [
+        createButton,
+        saveButton,
+        printButton
+    ]
+        .filter(Boolean)
+        .forEach(button => {
+            button.disabled = false;
+            button.removeAttribute("disabled");
+        });
+
+    if (
+        saveButton &&
+        !saveButton.dataset.autoPrepareReady
+    ) {
+        saveButton.dataset.autoPrepareReady = "true";
+
+        saveButton.addEventListener(
+            "click",
+            event => {
+                if (
+                    !prepareDevelopmentReportBeforeAction()
+                ) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            },
+            true
+        );
+    }
+
+    if (
+        printButton &&
+        !printButton.dataset.autoPrepareReady
+    ) {
+        printButton.dataset.autoPrepareReady = "true";
+
+        printButton.addEventListener(
+            "click",
+            event => {
+                if (
+                    !prepareDevelopmentReportBeforeAction()
+                ) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            },
+            true
+        );
+    }
+}
+
+
+/*
+ * Beim Öffnen der Anwendung und nach dem Laden der Seite
+ * erneut prüfen, ob die Schaltflächen vorhanden sind.
+ */
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+        enableDevelopmentReportActions();
+
+        setTimeout(
+            enableDevelopmentReportActions,
+            500
+        );
+
+        setTimeout(
+            enableDevelopmentReportActions,
+            1500
+        );
     }
 );
