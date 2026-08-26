@@ -6712,6 +6712,50 @@ if (
         handleCreateChild
     );
 }
+const openCreateGroupButton =
+    byId("openCreateGroupButton");
+
+if (
+    openCreateGroupButton &&
+    !openCreateGroupButton.dataset.eventsReady
+) {
+    openCreateGroupButton.dataset.eventsReady = "true";
+
+    openCreateGroupButton.addEventListener(
+        "click",
+        () => {
+            const modal =
+                byId("createGroupModal");
+
+            if (modal) {
+                modal.style.display = "flex";
+            }
+        }
+    );
+}
+
+
+const closeCreateGroupModal =
+    byId("closeCreateGroupModal");
+
+if (
+    closeCreateGroupModal &&
+    !closeCreateGroupModal.dataset.eventsReady
+) {
+    closeCreateGroupModal.dataset.eventsReady = "true";
+
+    closeCreateGroupModal.addEventListener(
+        "click",
+        () => {
+            const modal =
+                byId("createGroupModal");
+
+            if (modal) {
+                modal.style.display = "none";
+            }
+        }
+    );
+}
 
 
     const registerForm =
