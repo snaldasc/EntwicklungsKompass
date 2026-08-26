@@ -4115,7 +4115,7 @@ function showDevelopmentResult(result) {
                 <div class="development-result-area-details">
 
                     <span>
-                        Sicher: ${area.sicher}
+                        Voll: ${area.sicher}
                     </span>
 
                     <span>
@@ -4123,11 +4123,11 @@ function showDevelopmentResult(result) {
                     </span>
 
                     <span>
-                        Noch nicht: ${area.noch_nicht}
+                        Noch nicht gewertet: ${area.noch_nicht}
                     </span>
 
                     <span>
-                        Nicht beobachtet: ${area.nicht_beobachtet}
+                        Nicht sichtbar: ${area.nicht_beobachtet}
                     </span>
 
                 </div>
