@@ -1636,7 +1636,148 @@ let query = supabaseClient
     return currentGroups;
 }
 
+async function createGroup() {
 
+    const nameInput =
+        byId("newGroupName");
+
+    const descriptionInput =
+        byId("newGroupDescription");
+
+    const message =
+        byId("groupMessage");
+
+    const saveButton =
+        byId("createGroupButton");
+
+    const groupName =
+        nameInput?.value?.trim() || "";
+
+    const description =
+        descriptionInput?.value?.trim() || "";
+
+    if (!groupName) {
+
+        safeText(
+            message,
+            "Bitte einen Gruppennamen eingeben."
+        );
+
+        message?.classList.add(
+            "show",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!currentUser) {
+
+        safeText(
+            message,
+            "Du bist nicht angemeldet."
+        );
+
+        message?.classList.add(
+            "show",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!currentProfile?.institution_id) {
+
+        safeText(
+            message,
+            "Deinem Benutzer ist keine Einrichtung zugeordnet."
+        );
+
+        message?.classList.add(
+            "show",
+            "error"
+        );
+
+        return;
+    }
+
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent =
+            "Wird gespeichert...";
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("Groups")
+        .insert({
+            group_name: groupName,
+            description: description || null,
+            institution_id:
+                currentProfile.institution_id
+        })
+        .select()
+        .single();
+
+    if (error) {
+
+        console.error(
+            "Gruppe konnte nicht gespeichert werden:",
+            error
+        );
+
+        safeText(
+            message,
+            `Gruppe konnte nicht gespeichert werden: ${error.message}`
+        );
+
+        message?.classList.add(
+            "show",
+            "error"
+        );
+
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent =
+                "Gruppe speichern";
+        }
+
+        return;
+    }
+
+    console.log(
+        "Gruppe erfolgreich gespeichert:",
+        data
+    );
+
+    safeText(
+        message,
+        "Gruppe wurde erfolgreich gespeichert."
+    );
+
+    message?.classList.add(
+        "show",
+        "success"
+    );
+
+    if (nameInput) {
+        nameInput.value = "";
+    }
+
+    if (descriptionInput) {
+        descriptionInput.value = "";
+    }
+
+    await loadGroups();
+
+    if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent =
+            "Gruppe speichern";
+    }
+}
 
 function renderGroups(groups) {
 
@@ -6678,6 +6819,37 @@ async function handleCreateChild() {
 
 function setupMainEvents() {
 
+const cancelCreateGroupButton =
+    byId("cancelCreateGroupButton");
+
+if (
+    cancelCreateGroupButton &&
+    !cancelCreateGroupButton.dataset.eventsReady
+) {
+    cancelCreateGroupButton.dataset.eventsReady = "true";
+
+    cancelCreateGroupButton.addEventListener(
+        "click",
+        () => {
+
+            const section =
+                byId("createGroupSection");
+
+            if (section) {
+                section.style.display = "none";
+            }
+
+            byId("newGroupName").value = "";
+            byId("newGroupDescription").value = "";
+
+            safeText(
+                byId("groupMessage"),
+                ""
+            );
+        }
+    );
+}
+
     const loginForm =
         byId("loginForm");
 
@@ -6712,6 +6884,22 @@ if (
         handleCreateChild
     );
 }
+
+const createGroupButton =
+    document.getElementById("createGroupButton");
+
+if (
+    createGroupButton &&
+    !createGroupButton.dataset.eventsReady
+) {
+    createGroupButton.dataset.eventsReady = "true";
+
+    createGroupButton.addEventListener(
+        "click",
+        createGroup
+    );
+}
+
 const openCreateGroupButton =
     byId("openCreateGroupButton");
 
