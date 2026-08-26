@@ -3277,11 +3277,12 @@ function handleDevelopmentAgeChange(event) {
 
 function setupDevelopmentEvents() {
 
-    /*
-     * WICHTIG:
-     * Hier müssen die Klammern stehen.
-     */
 
+if (currentChildId) {
+    loadSavedDevelopmentReports();
+}
+
+   
     ensureDevelopmentRatingStyles();
 
 
@@ -5049,6 +5050,68 @@ function showDevelopmentReport(report) {
 
 async function saveDevelopmentReport(report) {
 
+const createReportButton =
+    byId(
+        "createDevelopmentReportButton"
+    );
+
+if (
+    createReportButton &&
+    !createReportButton.dataset.eventsReady
+) {
+
+    createReportButton.dataset.eventsReady =
+        "true";
+
+    createReportButton.addEventListener(
+        "click",
+        handleCreateDevelopmentReport
+    );
+
+}
+
+
+const saveReportButton =
+    byId(
+        "saveDevelopmentReportButton"
+    );
+
+if (
+    saveReportButton &&
+    !saveReportButton.dataset.eventsReady
+) {
+
+    saveReportButton.dataset.eventsReady =
+        "true";
+
+    saveReportButton.addEventListener(
+        "click",
+        handleSaveDevelopmentReport
+    );
+
+}
+
+
+const printReportButton =
+    byId(
+        "printDevelopmentReportButton"
+    );
+
+if (
+    printReportButton &&
+    !printReportButton.dataset.eventsReady
+) {
+
+    printReportButton.dataset.eventsReady =
+        "true";
+
+    printReportButton.addEventListener(
+        "click",
+        printDevelopmentReport
+    );
+
+}
+   
     if (!supabaseClient) {
 
         throw new Error(
@@ -5158,7 +5221,694 @@ async function saveDevelopmentReport(report) {
     return data;
 
 }
+let currentDevelopmentReport = null;
 
+
+/* ============================================================
+   ENTWICKLUNGSGUTACHTEN ERSTELLEN
+   ============================================================ */
+
+async function handleCreateDevelopmentReport() {
+
+    const message =
+        byId("developmentReportMessage");
+
+    if (!currentChildId) {
+
+        safeText(
+            message,
+            "Bitte zuerst ein Kind auswählen."
+        );
+
+        return;
+    }
+
+    try {
+
+        safeText(
+            message,
+            "Entwicklungsgutachten wird erstellt..."
+        );
+
+        /*
+         * Aktuelle Auswertung berechnen
+         */
+        const result =
+            calculateDevelopmentResult();
+
+        /*
+         * Gutachten auf Basis der Auswertung erstellen
+         */
+        const report =
+            buildDevelopmentReport(result);
+
+        currentDevelopmentReport =
+            report;
+
+        /*
+         * Gutachten anzeigen
+         */
+        showDevelopmentReport(report);
+
+        /*
+         * Buttons aktivieren
+         */
+        const saveButton =
+            byId(
+                "saveDevelopmentReportButton"
+            );
+
+        const printButton =
+            byId(
+                "printDevelopmentReportButton"
+            );
+
+        if (saveButton) {
+            saveButton.disabled = false;
+        }
+
+        if (printButton) {
+            printButton.disabled = false;
+        }
+
+        safeText(
+            message,
+            "Entwicklungsgutachten wurde erstellt."
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "Fehler beim Erstellen des Gutachtens:",
+            error
+        );
+
+        safeText(
+            message,
+            "Das Entwicklungsgutachten konnte nicht erstellt werden."
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   GUTACHTEN SPEICHERN
+   ============================================================ */
+
+async function handleSaveDevelopmentReport() {
+
+    const message =
+        byId("developmentReportMessage");
+
+    if (!currentDevelopmentReport) {
+
+        safeText(
+            message,
+            "Bitte zuerst ein Gutachten erstellen."
+        );
+
+        return;
+    }
+
+    if (!currentChildId) {
+
+        safeText(
+            message,
+            "Kein Kind ausgewählt."
+        );
+
+        return;
+    }
+
+    const button =
+        byId(
+            "saveDevelopmentReportButton"
+        );
+
+    try {
+
+        if (button) {
+
+            button.disabled = true;
+            button.textContent =
+                "Wird gespeichert...";
+
+        }
+
+        await saveDevelopmentReport(
+            currentDevelopmentReport
+        );
+
+        safeText(
+            message,
+            "Gutachten wurde erfolgreich gespeichert."
+        );
+
+        await loadSavedDevelopmentReports();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Fehler beim Speichern des Gutachtens:",
+            error
+        );
+
+        safeText(
+            message,
+            "Das Gutachten konnte nicht gespeichert werden."
+        );
+
+    }
+    finally {
+
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Gutachten speichern";
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   GESPEICHERTE GUTACHTEN LADEN
+   ============================================================ */
+
+async function loadSavedDevelopmentReports() {
+
+    const container =
+        byId(
+            "savedDevelopmentReportsList"
+        );
+
+    if (!container || !currentChildId) {
+        return;
+    }
+
+    container.innerHTML =
+        `
+        <div class="card">
+            <p>Gutachten werden geladen...</p>
+        </div>
+        `;
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from(
+                    "development_reports"
+                )
+                .select(`
+                    id,
+                    child_id,
+                    age,
+                    report_title,
+                    observations,
+                    strengths,
+                    support_needs,
+                    recommendations,
+                    report_text,
+                    result,
+                    created_at
+                `)
+                .eq(
+                    "child_id",
+                    currentChildId
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+
+            container.innerHTML =
+                `
+                <div class="card">
+                    <p>
+                        Für dieses Kind wurden noch keine
+                        Gutachten gespeichert.
+                    </p>
+                </div>
+                `;
+
+            return;
+        }
+
+        container.innerHTML =
+            data
+                .map(
+                    report => {
+
+                        const date =
+                            new Date(
+                                report.created_at
+                            ).toLocaleString(
+                                "de-DE"
+                            );
+
+                        return `
+                        <div
+                            class="saved-report-card"
+                            data-report-id="${escapeHtml(
+                                report.id
+                            )}"
+                        >
+
+                            <div>
+                                <strong>
+                                    ${escapeHtml(
+                                        report.report_title ||
+                                        "Entwicklungsgutachten"
+                                    )}
+                                </strong>
+
+                                <small>
+                                    ${escapeHtml(date)}
+                                </small>
+                            </div>
+
+                            <div class="saved-report-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onclick="loadDevelopmentReport(
+                                        '${escapeHtml(report.id)}'
+                                    )">
+                                    Öffnen
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-danger"
+                                    onclick="deleteDevelopmentReport(
+                                        '${escapeHtml(report.id)}'
+                                    )">
+                                    Löschen
+                                </button>
+
+                            </div>
+
+                        </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
+    catch (error) {
+
+        console.error(
+            "Gespeicherte Gutachten konnten nicht geladen werden:",
+            error
+        );
+
+        container.innerHTML =
+            `
+            <div class="card">
+                <p>
+                    Gespeicherte Gutachten konnten nicht geladen werden.
+                </p>
+            </div>
+            `;
+
+    }
+
+}
+
+
+/* ============================================================
+   GUTACHTEN ÖFFNEN
+   ============================================================ */
+
+async function loadDevelopmentReport(
+    reportId
+) {
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from(
+                    "development_reports"
+                )
+                .select("*")
+                .eq(
+                    "id",
+                    reportId
+                )
+                .eq(
+                    "child_id",
+                    currentChildId
+                )
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        let report =
+            null;
+
+        if (data.report_text) {
+
+            try {
+
+                report =
+                    JSON.parse(
+                        data.report_text
+                    );
+
+            }
+            catch {
+                report = null;
+            }
+
+        }
+
+        /*
+         * Falls report_text nicht mehr geparst werden kann,
+         * aus den gespeicherten Feldern wieder aufbauen.
+         */
+        if (!report) {
+
+            report = {
+
+                childCode:
+                    currentChildId,
+
+                age:
+                    data.age,
+
+                date:
+                    new Date(
+                        data.created_at
+                    ).toLocaleDateString(
+                        "de-DE"
+                    ),
+
+                observations:
+                    data.observations || "",
+
+                strengths:
+                    data.strengths || "",
+
+                supportNeeds:
+                    data.support_needs || "",
+
+                recommendations:
+                    data.recommendations || "",
+
+                result:
+                    data.result || {
+                        percentage: 0,
+                        areas: {}
+                    }
+
+            };
+
+        }
+
+        currentDevelopmentReport =
+            report;
+
+        showDevelopmentReport(
+            report
+        );
+
+        const saveButton =
+            byId(
+                "saveDevelopmentReportButton"
+            );
+
+        const printButton =
+            byId(
+                "printDevelopmentReportButton"
+            );
+
+        if (saveButton) {
+            saveButton.disabled = false;
+        }
+
+        if (printButton) {
+            printButton.disabled = false;
+        }
+
+        safeText(
+            byId(
+                "developmentReportMessage"
+            ),
+            "Gespeichertes Gutachten wurde geladen."
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "Gutachten konnte nicht geladen werden:",
+            error
+        );
+
+        safeText(
+            byId(
+                "developmentReportMessage"
+            ),
+            "Das Gutachten konnte nicht geladen werden."
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   GUTACHTEN LÖSCHEN
+   ============================================================ */
+
+async function deleteDevelopmentReport(
+    reportId
+) {
+
+    if (
+        !confirm(
+            "Soll dieses Gutachten wirklich gelöscht werden?"
+        )
+    ) {
+        return;
+    }
+
+    try {
+
+        const {
+            error
+        } =
+            await supabaseClient
+                .from(
+                    "development_reports"
+                )
+                .delete()
+                .eq(
+                    "id",
+                    reportId
+                )
+                .eq(
+                    "child_id",
+                    currentChildId
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        await loadSavedDevelopmentReports();
+
+        safeText(
+            byId(
+                "developmentReportMessage"
+            ),
+            "Gutachten wurde gelöscht."
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "Gutachten konnte nicht gelöscht werden:",
+            error
+        );
+
+        safeText(
+            byId(
+                "developmentReportMessage"
+            ),
+            "Das Gutachten konnte nicht gelöscht werden."
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   GUTACHTEN DRUCKEN / PDF
+   ============================================================ */
+
+function printDevelopmentReport() {
+
+    const report =
+        byId(
+            "developmentReportDocument"
+        );
+
+    if (!report) {
+
+        alert(
+            "Bitte zuerst ein Gutachten erstellen."
+        );
+
+        return;
+    }
+
+    const printWindow =
+        window.open(
+            "",
+            "_blank"
+        );
+
+    if (!printWindow) {
+
+        alert(
+            "Das Druckfenster konnte nicht geöffnet werden."
+        );
+
+        return;
+    }
+
+    printWindow.document.write(
+        `
+        <!DOCTYPE html>
+
+        <html lang="de">
+
+        <head>
+
+            <meta charset="UTF-8">
+
+            <title>
+                Entwicklungsgutachten
+            </title>
+
+            <style>
+
+                body {
+                    font-family:
+                        Arial,
+                        sans-serif;
+
+                    color: #222;
+
+                    margin: 40px;
+                }
+
+                h1 {
+                    color: #234;
+                }
+
+                h2 {
+                    margin-top: 30px;
+                    border-bottom:
+                        1px solid #ddd;
+                    padding-bottom: 6px;
+                }
+
+                .report-area {
+                    margin-bottom: 18px;
+                }
+
+                .report-progress {
+                    height: 10px;
+                    background: #eee;
+                    border-radius: 5px;
+                    overflow: hidden;
+                }
+
+                .report-progress-bar {
+                    height: 100%;
+                    background: #4f7cff;
+                }
+
+                .report-main-score {
+                    font-size: 22px;
+                    font-weight: bold;
+                    padding: 15px;
+                    background: #f5f7fa;
+                }
+
+                .development-report-footer {
+                    margin-top: 60px;
+                    display: grid;
+                    gap: 30px;
+                }
+
+                @media print {
+
+                    body {
+                        margin: 20mm;
+                    }
+
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            ${report.innerHTML}
+
+        </body>
+
+        </html>
+        `
+    );
+
+    printWindow.document.close();
+
+    printWindow.focus();
+
+    setTimeout(
+        () => {
+
+            printWindow.print();
+
+        },
+        300
+    );
+
+}
 async function handleDevelopmentSave() {
 
     const {
