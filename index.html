@@ -578,177 +578,6 @@
             </p>
 
         </div>
-
-
-        <div class="card">
-
-            <div class="form-group">
-
-                <label for="developmentChild">
-                    Kind
-                </label>
-
-                <select id="developmentChild">
-
-                    <option value="">
-                        Kind auswählen...
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="developmentAge">
-                    Alter
-                </label>
-
-                <select id="developmentAge">
-
-                    <option value="">
-                        Alter auswählen...
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div
-                id="questionsMessage"
-                class="message"
-            ></div>
-
-
-            <div
-                id="questionsContainer"
-            ></div>
-
-
-            <div
-                id="developmentResult"
-                style="display:none;"
-            ></div>
-
-
-<div
-    id="developmentReportForm"
-    class="development-report-form"
-    style="display:none;"
->
-
-    <h3>
-        Entwicklungsgutachten
-    </h3>
-
-    <div class="form-group">
-
-        <label for="reportObservations">
-            Beobachtungen
-        </label>
-
-        <textarea
-            id="reportObservations"
-            placeholder="Besondere Beobachtungen zum Entwicklungsstand..."
-        ></textarea>
-
-    </div>
-
-
-    <div class="form-group">
-
-        <label for="reportStrengths">
-            Stärken des Kindes
-        </label>
-
-        <textarea
-            id="reportStrengths"
-            placeholder="Besondere Stärken und Ressourcen..."
-        ></textarea>
-
-    </div>
-
-
-    <div class="form-group">
-
-        <label for="reportSupportNeeds">
-            Entwicklungs- und Unterstützungsbedarf
-        </label>
-
-        <textarea
-            id="reportSupportNeeds"
-            placeholder="Bereiche, in denen weitere Unterstützung sinnvoll ist..."
-        ></textarea>
-
-    </div>
-
-
-    <div class="form-group">
-
-        <label for="reportRecommendations">
-            Pädagogische Empfehlungen
-        </label>
-
-        <textarea
-            id="reportRecommendations"
-            placeholder="Empfehlungen für die weitere pädagogische Begleitung..."
-        ></textarea>
-
-    </div>
-
-
-    <button
-        type="button"
-        class="btn btn-success"
-        id="saveDevelopmentReportButton"
-    >
-        Gutachten speichern
-    </button>
-
-    <button
-        type="button"
-        class="btn btn-secondary"
-        id="printDevelopmentReportButton"
-    >
-        Gutachten drucken / PDF
-    </button>
-
-</div>
-
-
-
-            <button
-        type="button"
-        class="btn btn-success"
-        id="saveDevelopmentButton"
-    >
-        Auswertung speichern
-    </button>
-
-    <button
-        type="button"
-        class="btn btn-primary"
-        id="createDevelopmentReportButton"
-    >
-        Entwicklungsgutachten erstellen
-    </button>
-    
-    <div
-    id="developmentReport"
-    style="display:none;"
-></div>
-
-        </div>
-        `;
-
-
-    setupDevelopmentEvents();
-
-}
-
-
 </head>
 
 
@@ -1219,6 +1048,173 @@
                     >
                         Schließen
                     </button>
+
+
+
+        <div class="card">
+
+            <div class="form-group">
+
+                <label for="developmentChild">
+                    Kind
+                </label>
+
+                <select id="developmentChild">
+
+                    <option value="">
+                        Kind auswählen...
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="developmentAge">
+                    Alter
+                </label>
+
+                <select id="developmentAge">
+
+                    <option value="">
+                        Alter auswählen...
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div
+                id="questionsMessage"
+                class="message"
+            ></div>
+
+
+            <div
+                id="questionsContainer"
+            ></div>
+
+
+            <div
+                id="developmentResult"
+                style="display:none;"
+            ></div>
+
+
+<div
+    id="developmentReportForm"
+    class="development-report-form"
+    style="display:none;"
+>
+
+    <h3>
+        Entwicklungsgutachten
+    </h3>
+
+    <div class="form-group">
+
+        <label for="reportObservations">
+            Beobachtungen
+        </label>
+
+        <textarea
+            id="reportObservations"
+            placeholder="Besondere Beobachtungen zum Entwicklungsstand..."
+        ></textarea>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="reportStrengths">
+            Stärken des Kindes
+        </label>
+
+        <textarea
+            id="reportStrengths"
+            placeholder="Besondere Stärken und Ressourcen..."
+        ></textarea>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="reportSupportNeeds">
+            Entwicklungs- und Unterstützungsbedarf
+        </label>
+
+        <textarea
+            id="reportSupportNeeds"
+            placeholder="Bereiche, in denen weitere Unterstützung sinnvoll ist..."
+        ></textarea>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="reportRecommendations">
+            Pädagogische Empfehlungen
+        </label>
+
+        <textarea
+            id="reportRecommendations"
+            placeholder="Empfehlungen für die weitere pädagogische Begleitung..."
+        ></textarea>
+
+    </div>
+
+
+    <button
+        type="button"
+        class="btn btn-success"
+        id="saveDevelopmentReportButton"
+    >
+        Gutachten speichern
+    </button>
+
+    <button
+        type="button"
+        class="btn btn-secondary"
+        id="printDevelopmentReportButton"
+    >
+        Gutachten drucken / PDF
+    </button>
+
+</div>
+
+
+
+            <button
+        type="button"
+        class="btn btn-success"
+        id="saveDevelopmentButton"
+    >
+        Auswertung speichern
+    </button>
+
+    <button
+        type="button"
+        class="btn btn-primary"
+        id="createDevelopmentReportButton"
+    >
+        Entwicklungsgutachten erstellen
+    </button>
+    
+    <div
+    id="developmentReport"
+    style="display:none;"
+></div>
+
+        </div>
+}
+<script>    setupDevelopmentEvents();
+</script>
 
                 </div>
 
