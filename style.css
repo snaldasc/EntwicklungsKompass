@@ -244,3 +244,80 @@ button:hover {
 #developmentResult {
     width: 100%;
 }
+
+
+/* =========================================================
+   BEWERTUNGSFRAGEN – KATEGORIEFARBEN
+   ========================================================= */
+
+.development-question {
+    --question-color: #D9EAF7;
+
+    border: 2px solid var(--question-color);
+    background: #ffffff;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        transform 0.2s ease;
+}
+
+.development-question.rating-full {
+    background-color: var(--question-color) !important;
+}
+
+.development-question.rating-half {
+    background-color:
+        color-mix(
+            in srgb,
+            var(--question-color) 50%,
+            white
+        ) !important;
+}
+
+.development-question.rating-minimal {
+    background-color:
+        color-mix(
+            in srgb,
+            var(--question-color) 10%,
+            white
+        ) !important;
+}
+
+.development-question.rating-empty {
+    background-color: #ffffff !important;
+    border-color: var(--question-color) !important;
+}
+
+.development-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+
+.development-filter {
+    border: 2px solid #d8d8d8;
+    background: #ffffff;
+    color: #555;
+    border-radius: 12px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all .2s ease;
+}
+
+.development-filter:hover {
+    transform: translateY(-1px);
+}
+
+.development-filter.active {
+    background: #e8f0f7;
+    border-color: #8fb5d6;
+    color: #315b7d;
+}
