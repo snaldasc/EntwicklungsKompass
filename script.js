@@ -650,11 +650,11 @@ async function handleLogin(event) {
         passwordInput?.value || "";
 
 
-    if (!email || !password) {
-
+if (!email || !password || !institutionId) {
+    
         safeText(
             message,
-            "Bitte E-Mail und Passwort eingeben."
+            "Bitte E-Mail, Passwort und Institution auswählen."
         );
 
         return;
@@ -718,6 +718,61 @@ async function handleLogin(event) {
 
 }
 
+async function loadInstitutions() {
+
+    const select =
+        byId("registerInstitution");
+
+    if (!select || !supabaseClient) {
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            from("institutions")
+            .select("institution_id, institution_name")
+            .order("institution_name", {
+                ascending: true
+            });
+
+    if (error) {
+
+        console.error(
+            "Institutionen konnten nicht geladen werden:",
+            error
+        );
+
+        select.innerHTML =
+            `<option value="">
+                Fehler beim Laden
+            </option>`;
+
+        return;
+    }
+
+    select.innerHTML = `
+        <option value="">
+            Institution auswählen...
+        </option>
+    `;
+
+    data.forEach(institution => {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            institution.institution_id;
+
+        option.textContent =
+            institution.institution_name;
+        
+        select.appendChild(option);
+
+    });
+}
+loadInstitutions();
+
 /* ============================================================
    REGISTRIERUNG
    ============================================================ */
@@ -750,6 +805,10 @@ async function handleRegister(event) {
         byId("registerLastName")
             ?.value
             ?.trim() || "";
+
+    const institutionId =
+        byId("registerInstitution")
+            ?.value || "";
 
     const message =
         byId("registerMessage");
@@ -792,7 +851,10 @@ async function handleRegister(event) {
                 data: {
 
                     full_name:
-                        fullName
+                        fullName,
+
+                    institution_id:
+                        institutionId
 
                 }
 
