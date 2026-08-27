@@ -718,7 +718,6 @@ async function handleLogin(event) {
 
 }
 
-
 /* ============================================================
    REGISTRIERUNG
    ============================================================ */
@@ -819,6 +818,16 @@ async function handleRegister(event) {
     }
 
 
+    /*
+     * WICHTIG:
+     *
+     * Der Supabase-Trigger "on_auth_user_created"
+     * erstellt automatisch den Eintrag in "profiles".
+     *
+     * Deshalb hier KEIN .insert() und KEIN .update().
+     */
+
+
     safeText(
         message,
         "Registrierung erfolgreich. Bitte überprüfe deine E-Mail."
@@ -826,11 +835,183 @@ async function handleRegister(event) {
 
 
     if (data?.user) {
-        currentUser = data.user;
+
+        currentUser =
+            data.user;
+
     }
 
 }
 
+/* ============================================================
+   ADMINISTRATION – OFFENE FREIGABEN
+   ============================================================ */
+
+async function loadPendingUsers() {
+
+    if (!supabaseClient) {
+        return;
+    }
+
+    const container =
+        byId("pendingUsersList");
+
+    if (!container) {
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("profiles")
+            .select(`
+                id,
+                full_name,
+                email,
+                role,
+                institution_id,
+                created_at,
+                approval_status
+            `)
+            .eq(
+                "approval_status",
+                "pending"
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Offene User konnten nicht geladen werden:",
+            error
+        );
+
+        container.innerHTML =
+            "<p>Fehler beim Laden der Benutzer.</p>";
+
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    if (!data || data.length === 0) {
+
+        container.innerHTML =
+            "<p>Keine offenen Freigaben.</p>";
+
+        return;
+    }
+
+
+    data.forEach(user => {
+
+        const userElement =
+            document.createElement("div");
+
+        userElement.className =
+            "pending-user";
+
+
+        userElement.innerHTML = `
+
+            <div class="pending-user-info">
+
+                <strong>
+                    ${user.full_name || "Kein Name"}
+                </strong>
+
+                <span>
+                    ${user.email || "Keine E-Mail"}
+                </span>
+
+                <span>
+                    Rolle: ${user.role || "Keine Rolle"}
+                </span>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="approve-user-button"
+                onclick="approveUser('${user.id}')"
+            >
+                Annehmen
+            </button>
+
+        `;
+
+
+        container.appendChild(
+            userElement
+        );
+
+    });
+
+}
+
+
+/* ============================================================
+   ADMINISTRATION – USER ANNEHMEN
+   ============================================================ */
+
+async function approveUser(userId) {
+
+    if (!supabaseClient) {
+        return;
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from("profiles")
+            .update({
+
+                approval_status:
+                    "approved",
+
+                approved_at:
+                    new Date().toISOString()
+
+            })
+            .eq(
+                "id",
+                userId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "User konnte nicht freigegeben werden:",
+            error
+        );
+
+        alert(
+            "User konnte nicht freigegeben werden."
+        );
+
+        return;
+    }
+
+
+    alert(
+        "User wurde erfolgreich freigegeben."
+    );
+
+
+    // Liste aktualisieren
+    loadPendingUsers();
+
+}
 
 /* ============================================================
    NAVIGATION
