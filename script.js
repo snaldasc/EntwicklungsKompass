@@ -50,6 +50,8 @@ let currentAnswers = {};
 let currentAge = null;
 let currentChildId = null;
 
+let developmentQuestionFilter = "offen";
+
 
 /* ============================================================
    HILFSFUNKTIONEN
@@ -306,6 +308,45 @@ function showDashboard() {
 
 }
 
+async function updateDashboardGreeting() {
+
+    const greeting =
+        document.getElementById("dashboardGreeting");
+
+    if (!greeting || !currentUser || !supabaseClient) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("profiles")
+        .select("full_name")
+        .eq("id", currentUser.id)
+        .single();
+
+    if (error) {
+
+        console.error(
+            "Name konnte nicht geladen werden:",
+            error
+        );
+
+        greeting.textContent = "Hallo!";
+
+        return;
+    }
+
+    const name =
+        data?.full_name?.trim();
+
+    greeting.textContent =
+        name
+            ? `Hallo ${name}!`
+            : "Hallo!";
+}
+
 
 /* ============================================================
    PROFIL
@@ -352,7 +393,7 @@ async function loadUserProfile() {
 
 
         currentUser = user;
-
+        await updateDashboardGreeting();
 
         const {
             data,
@@ -776,7 +817,20 @@ async function handleRegister(event) {
         "Registrierung läuft..."
     );
 
+const institutionId =
+    byId("registerInstitution")
+        ?.value
+        ?.trim() || "";
 
+if (!institutionId) {
+
+    safeText(
+        message,
+        "Bitte eine Institution auswählen."
+    );
+
+    return;
+}
     const {
         data,
         error
@@ -791,8 +845,8 @@ async function handleRegister(event) {
 
                 data: {
 
-                    full_name:
-                        fullName
+                    full_name: fullName,
+                    institution_id: institutionId
 
                 }
 
@@ -1411,34 +1465,106 @@ function renderChildrenList(children) {
 }
 
 async function loadInstitutions() {
-    if (!supabaseClient || !currentUser) {
-        return [];
+
+    console.log(
+        "LOAD INSTITUTIONS GESTARTET"
+    );
+
+    const select =
+        byId("registerInstitution");
+
+    if (!select) {
+
+        console.error(
+            "registerInstitution wurde nicht gefunden!"
+        );
+
+        return;
+    }
+
+    if (!supabaseClient) {
+
+        console.error(
+            "Supabase Client fehlt!"
+        );
+
+        return;
     }
 
     const {
         data,
         error
-    } = await supabaseClient
-        .from("institutions")
-        .select(`
-            institution_id,
-            institution_name
-        `)
-        .order("institution_name", {
-            ascending: true
-        });
+    } =
+        await supabaseClient
+            .from("institutions")
+            .select(
+                "institution_id, institution_name"
+            )
+            .order(
+                "institution_name",
+                {
+                    ascending: true
+                }
+            );
+
+    console.log(
+        "INSTITUTION DATA:",
+        data
+    );
+
+    console.log(
+        "INSTITUTION ERROR:",
+        error
+    );
 
     if (error) {
-        console.error(
-            "Institutionen konnten nicht geladen werden:",
-            error
-        );
 
-        return [];
+        console.error(
+    "Institutionen konnten nicht geladen werden:",
+    JSON.stringify(error, null, 2)
+);
+
+        select.innerHTML =
+            `<option value="">
+                Fehler beim Laden der Institutionen
+            </option>`;
+
+        return;
     }
 
-    return data || [];
+    select.innerHTML = `
+        <option value="">
+            Institution auswählen...
+        </option>
+    `;
+
+    (data || []).forEach(
+        institution => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                institution.institution_id;
+
+            option.textContent =
+                institution.institution_name;
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+    console.log(
+        "Institutionen im Dropdown:",
+        select.options.length
+    );
 }
+
 
 
 async function openEditChildModal(childId) {
@@ -2121,11 +2247,6 @@ const DEVELOPMENT_AREAS = [
 const DEVELOPMENT_OPTIONS = [
 
     {
-        value: "noch_nicht",
-        label: "Noch nicht"
-    },
-
-    {
         value: "sicher",
         label: "Sicher"
     },
@@ -2136,8 +2257,13 @@ const DEVELOPMENT_OPTIONS = [
     },
 
     {
-        value: "nicht_beobachtet",
-        label: "Nicht beobachtet"
+        value: "wird_nicht_gezeigt",
+        label: "Nicht beobachtbar"
+    },
+
+    {
+        value: "noch_nicht_bewertet",
+        label: "O"
     }
 
 ];
@@ -2146,6 +2272,8 @@ const DEVELOPMENT_OPTIONS = [
 /* ============================================================
    FRAGENKATALOG
    ============================================================ */
+
+
 
 const DEVELOPMENT_QUESTIONS = [
 
@@ -3192,7 +3320,17 @@ function getQuestionsForAge(age) {
 
 }
 
+const DEVELOPMENT_AREA_COLORS = {
+    sprache: "#0091ff",
+    sozial: "#10fe04",
+    literacy: "#6906f5",
+    grundlagen: "#fa7509",
 
+    // falls später Fragen dazukommen:
+    motorik: "#ef0707",
+    kognition: "#f7af07",
+    selbststaendigkeit: "#05fd81"
+};
 /* ============================================================
    FRAGEN RENDERN
    ============================================================ */
@@ -3212,10 +3350,33 @@ function renderDevelopmentQuestions(questions) {
 
     questionsContainer.innerHTML = "";
 
-
     currentQuestions =
         questions || [];
 
+        let filteredQuestions = currentQuestions;
+
+if (developmentQuestionFilter === "offen") {
+
+    filteredQuestions =
+        currentQuestions.filter(question => {
+
+            const value =
+                currentAnswers[question.id] ||
+                "noch_nicht_bewertet";
+
+            return value === "noch_nicht_bewertet";
+        });
+
+} else if (
+    developmentQuestionFilter !== "alle"
+) {
+
+    filteredQuestions =
+        currentQuestions.filter(question =>
+            question.area ===
+            developmentQuestionFilter
+        );
+}
 
     if (
         currentQuestions.length === 0
@@ -3231,20 +3392,19 @@ function renderDevelopmentQuestions(questions) {
             `;
 
         return;
-
     }
 
 
-    currentQuestions.forEach(
-        (question, index) => {
+filteredQuestions.forEach(
+            (question, index) => {
 
             const card =
                 document.createElement("div");
 
 
-            card.className =
-                "card development-question";
-
+            /*
+             * Kategorie
+             */
 
             const area =
                 DEVELOPMENT_AREAS.find(
@@ -3260,14 +3420,72 @@ function renderDevelopmentQuestions(questions) {
 
 
             /*
-             * Standard:
-             * NOCH NICHT
+             * Farbe der Kategorie
+             */
+
+            const areaColor =
+                DEVELOPMENT_AREA_COLORS[
+                    question.area
+                ] ||
+                "#D9EAF7";
+ 
+            card.style.setProperty(
+                "--question-color",
+                areaColor
+            );
+
+            /*
+             * Aktueller Bewertungsstand
              */
 
             const currentValue =
                 currentAnswers[question.id] ||
-                "noch_nicht";
+            "noch_nicht_bewertet";
 
+            /*
+             * Farbe der Bewertung
+             */
+
+ let ratingClass;
+
+switch (currentValue) {
+
+    case "sicher":
+        ratingClass = "rating-full";
+        break;
+
+    case "teilweise":
+        ratingClass = "rating-half";
+        break;
+
+    case "wird_nicht_gezeigt":
+        ratingClass = "rating-minimal";
+        break;
+
+    case "noch_nicht_bewertet":
+    default:
+        ratingClass = "rating-empty";
+        break;
+}
+
+
+            /*
+             * Karte
+             */
+
+            card.className =
+                `card development-question ${ratingClass}`;
+
+
+            card.style.setProperty(
+                "--question-color",
+                areaColor
+            );
+
+
+            /*
+             * Bewertungsoption
+             */
 
             const currentOption =
                 DEVELOPMENT_OPTIONS.find(
@@ -3285,6 +3503,10 @@ function renderDevelopmentQuestions(questions) {
             const stateClass =
                 `development-state-${currentValue}`;
 
+
+            /*
+             * HTML der Frage
+             */
 
             card.innerHTML =
                 `
@@ -3324,7 +3546,6 @@ function renderDevelopmentQuestions(questions) {
                     </button>
 
                 </div>
-
                 `;
 
 
@@ -3333,6 +3554,10 @@ function renderDevelopmentQuestions(questions) {
         }
     );
 
+
+    /*
+     * Klick auf Bewertung
+     */
 
     questionsContainer
         .querySelectorAll(
@@ -3360,43 +3585,62 @@ function renderDevelopmentQuestions(questions) {
                     let nextValue;
 
 
+                    /*
+                     * 1. Klick
+                     * noch nicht → sicher
+                     */
+
                     if (
-                        currentValue ===
-                        "noch_nicht"
-                    ) {
+    currentValue ===
+    "noch_nicht_bewertet"
+) {
 
-                        nextValue =
-                            "sicher";
+    nextValue =
+        "sicher";
 
-                    }
+}
 
-                    else if (
-                        currentValue ===
-                        "sicher"
-                    ) {
+else if (
+    currentValue ===
+    "sicher"
+) {
 
-                        nextValue =
-                            "teilweise";
+    nextValue =
+        "teilweise";
 
-                    }
+}
 
-                    else if (
-                        currentValue ===
-                        "teilweise"
-                    ) {
+else if (
+    currentValue ===
+    "teilweise"
+) {
 
-                        nextValue =
-                            "nicht_beobachtet";
+    nextValue =
+        "wird_nicht_gezeigt";
 
-                    }
+}
 
-                    else {
+else if (
+    currentValue ===
+    "wird_nicht_gezeigt"
+) {
 
-                        nextValue =
-                            "noch_nicht";
+    nextValue =
+        "noch_nicht_bewertet";
 
-                    }
+}
 
+else {
+
+    nextValue =
+        "noch_nicht_bewertet";
+
+}
+
+
+                    /*
+                     * Bewertung speichern
+                     */
 
                     currentAnswers[
                         questionId
@@ -3404,9 +3648,116 @@ function renderDevelopmentQuestions(questions) {
                         nextValue;
 
 
+                    /*
+                     * Anzeige aktualisieren
+                     */
+
                     updateDevelopmentRatingBox(
                         box,
                         nextValue
+                    );
+
+
+                    /*
+                     * Kartenfarbe aktualisieren
+                     */
+
+                    const card =
+                        box.closest(
+                            ".development-question"
+                        );
+
+
+                    if (card) {
+
+                        card.classList.remove(
+                            "rating-full",
+                            "rating-half",
+                            "rating-minimal",
+                            "rating-empty"
+                        );
+
+
+                        if (
+                            nextValue ===
+                            "sicher"
+                        ) {
+
+                            card.classList.add(
+                                "rating-full"
+                            );
+
+                        }
+
+                        else if (
+                            nextValue ===
+                            "teilweise"
+                        ) {
+
+                            card.classList.add(
+                                "rating-half"
+                            );
+
+                        }
+
+                        else if (
+                            nextValue ===
+                            "nicht_beobachtet"
+                        ) {
+
+                            card.classList.add(
+                                "rating-empty"
+                            );
+
+                        }
+
+                        else {
+
+                            card.classList.add(
+                                "rating-minimal"
+                            );
+
+                        }
+
+                    }
+
+                }
+            );
+
+        });
+
+}
+function setupDevelopmentFilters() {
+
+    document
+        .querySelectorAll(".development-filter")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    developmentQuestionFilter =
+                        button.dataset.filter;
+
+                    document
+                        .querySelectorAll(
+                            ".development-filter"
+                        )
+                        .forEach(btn => {
+
+                            btn.classList.remove(
+                                "active"
+                            );
+
+                        });
+
+                    button.classList.add(
+                        "active"
+                    );
+
+                    renderDevelopmentQuestions(
+                        currentQuestions
                     );
 
                 }
@@ -3415,7 +3766,6 @@ function renderDevelopmentQuestions(questions) {
         });
 
 }
-
 
 /* ============================================================
    BEWERTUNGSKASTEN
@@ -3431,17 +3781,10 @@ function updateDevelopmentRatingBox(
     }
 
 
-    box.classList.remove(
-        "development-state-noch_nicht",
-        "development-state-sicher",
-        "development-state-teilweise",
-        "development-state-nicht_beobachtet"
-    );
-
-
-    box.classList.add(
-        `development-state-${value}`
-    );
+    const card =
+        box.closest(
+            ".development-question"
+        );
 
 
     box.dataset.value =
@@ -3451,60 +3794,92 @@ function updateDevelopmentRatingBox(
     const option =
         DEVELOPMENT_OPTIONS.find(
             item =>
-                item.value ===
-                value
+                item.value === value
         );
 
 
     const label =
+        option?.label ||
+        "Wurde noch nicht bewertet";
+
+
+    const labelElement =
         box.querySelector(
             ".development-rating-label"
         );
 
 
-    if (label) {
+    if (labelElement) {
 
-        label.textContent =
-            option?.label ||
-            "Noch nicht";
+        labelElement.textContent =
+            label;
 
     }
 
 
-    box.title =
-        option?.label ||
-        "Noch nicht";
+    box.className =
+        `
+        development-rating-box
+        development-state-${value}
+        `;
 
 
     box.setAttribute(
         "aria-label",
-        "Bewertung: " +
-        (
-            option?.label ||
-            "Noch nicht"
-        )
+        `Bewertung: ${label}`
     );
 
 
-    /*
-     * Animation bei Teilweise neu starten.
-     */
-
-    box.classList.remove(
-        "development-wave-animation"
+    box.setAttribute(
+        "title",
+        label
     );
 
 
-    if (
-        value ===
-        "teilweise"
-    ) {
+    if (card) {
 
-        void box.offsetWidth;
-
-        box.classList.add(
-            "development-wave-animation"
+        card.classList.remove(
+            "rating-full",
+            "rating-half",
+            "rating-minimal",
+            "rating-empty"
         );
+
+
+        if (value === "sicher") {
+
+            card.classList.add(
+                "rating-full"
+            );
+
+        }
+
+        else if (value === "teilweise") {
+
+            card.classList.add(
+                "rating-half"
+            );
+
+        }
+
+        else if (
+            value ===
+            "wird_nicht_gezeigt"
+        ) {
+
+            card.classList.add(
+                "rating-minimal"
+            );
+
+        }
+
+        else {
+
+            card.classList.add(
+                "rating-empty"
+            );
+
+        }
 
     }
 
@@ -3541,189 +3916,320 @@ function ensureDevelopmentRatingStyles() {
 
         .development-question {
 
-            margin-bottom:20px;
+    --question-color: #D9EAF7;
 
-        }
+    margin-bottom: 20px;
 
+    border: 2px solid var(--question-color);
 
-        .development-question-number {
+    background: #ffffff;
 
-            font-size:13px;
+    border-radius: 16px;
 
-            color:#777;
+    padding: 20px;
 
-            margin-bottom:6px;
+    transition:
+        background-color .25s ease,
+        border-color .25s ease,
+        color .25s ease,
+        transform .2s ease,
+        box-shadow .25s ease;
 
-        }
+}
 
 
-        .development-question-area {
+/* =========================================================
+   FRAGENKARTE – BEWERTUNGSSTUFEN
+   ========================================================= */
 
-            font-weight:600;
+/*
+ * 1. KLICK
+ * Vollständig eingefärbt
+ */
 
-            margin-bottom:8px;
+.development-question.rating-full {
 
-        }
+    background-color:
+        var(--question-color);
 
+    border-color:
+        var(--question-color);
 
-        .development-question-text {
+}
 
-            font-size:17px;
 
-            line-height:1.45;
+/*
+ * 2. KLICK
+ * 50 % eingefärbt
+ */
 
-            margin-bottom:18px;
+.development-question.rating-half {
 
-        }
+    background-color:
+        color-mix(
+            in srgb,
+            var(--question-color) 50%,
+            white
+        );
 
+    border-color:
+        var(--question-color);
 
-        .development-rating-wrapper {
+}
 
-            display:flex;
 
-            justify-content:center;
+/*
+ * 3. KLICK
+ * 1 % eingefärbt
+ */
 
-            align-items:center;
+.development-question.rating-minimal {
 
-            padding:10px 0 5px;
+    background-color:
+        color-mix(
+            in srgb,
+            var(--question-color) 1%,
+            white
+        );
 
-        }
+    border-color:
+        var(--question-color);
 
+}
 
-        .development-rating-box {
 
-            position:relative;
+/*
+ * Ausgangszustand
+ * Weiß mit farbiger Outline
+ */
 
-            width:100%;
+.development-question.rating-empty {
 
-            max-width:420px;
+    background-color:
+        #ffffff;
 
-            height:85px;
+    border-color:
+        var(--question-color);
 
-            border-radius:16px;
+}
 
-            border:3px solid #d8d8d8;
 
-            background:#ffffff;
+/* =========================================================
+   FRAGENNUMMER
+   ========================================================= */
 
-            color:#555;
+.development-question-number {
 
-            cursor:pointer;
+    font-size: 13px;
 
-            overflow:hidden;
+    color: #777;
 
-            display:flex;
+    margin-bottom: 6px;
 
-            align-items:center;
+}
 
-            justify-content:center;
 
-            font-size:17px;
+/* =========================================================
+   KATEGORIE
+   ========================================================= */
 
-            font-weight:700;
+.development-question-area {
 
-            transition:
-                background .25s ease,
-                border-color .25s ease,
-                color .25s ease,
-                transform .2s ease,
-                box-shadow .25s ease;
+    font-weight: 600;
 
-        }
+    margin-bottom: 8px;
 
+}
 
-        .development-rating-box:hover {
 
-            transform:scale(1.02);
+/* =========================================================
+   FRAGE
+   ========================================================= */
 
-            box-shadow:
-                0 4px 14px rgba(
-                    0,
-                    0,
-                    0,
-                    .10
-                );
+.development-question-text {
 
-        }
+    font-size: 17px;
 
+    line-height: 1.45;
 
-        .development-rating-label {
+    margin-bottom: 18px;
 
-            position:relative;
+}
 
-            z-index:3;
 
-            pointer-events:none;
+/* =========================================================
+   BEWERTUNGSBEREICH
+   ========================================================= */
 
-        }
+.development-rating-wrapper {
 
+    display: flex;
 
-        /*
-         * WEISS
-         */
+    justify-content: center;
 
-        .development-state-noch_nicht {
+    align-items: center;
 
-            background:#ffffff;
+    padding: 10px 0 5px;
 
-            border-color:#d8d8d8;
+}
 
-            color:#555;
 
-        }
+/* =========================================================
+   BEWERTUNGSBOX
+   ========================================================= */
 
+.development-rating-box {
 
-        /*
-         * GRÜN
-         */
+    position: relative;
 
-        .development-state-sicher {
+    width: 100%;
 
-            background:#39b54a;
+    max-width: 420px;
 
-            border-color:#2f9e3f;
+    height: 85px;
 
-            color:#ffffff;
+    border-radius: 16px;
 
-            box-shadow:
-                0 4px 12px rgba(
-                    57,
-                    181,
-                    74,
-                    .25
-                );
+    border: 3px solid #d8d8d8;
 
-        }
+    // background: #ffffff;
 
+    color: #555;
 
-        /*
-         * HALB GRÜN / HALB WEISS
-         */
+    cursor: pointer;
 
-        .development-state-teilweise {
+    overflow: hidden;
 
-            background:
-                linear-gradient(
-                    to right,
-                    #39b54a 0%,
-                    #39b54a 50%,
-                    #ffffff 50%,
-                    #ffffff 100%
-                );
+    display: flex;
 
-            border-color:#39b54a;
+    align-items: center;
 
-            color:#333;
+    justify-content: center;
 
-            box-shadow:
-                0 4px 12px rgba(
-                    57,
-                    181,
-                    74,
-                    .18
-                );
+    font-size: 17px;
 
-        }
+    font-weight: 700;
+
+    transition:
+        background .25s ease,
+        border-color .25s ease,
+        color .25s ease,
+        transform .2s ease,
+        box-shadow .25s ease;
+
+}
+
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+.development-rating-box:hover {
+
+    transform: scale(1.02);
+
+    box-shadow:
+        0 4px 14px rgba(
+            0,
+            0,
+            0,
+            .10
+        );
+
+}
+
+
+/* =========================================================
+   BEWERTUNGSTEXT
+   ========================================================= */
+
+.development-rating-label {
+
+    position: relative;
+
+    z-index: 3;
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   BEWERTUNGSBOX – AUSGANGSZUSTAND
+   ========================================================= */
+
+.development-state-noch_nicht {
+
+    background: transparent;
+
+    border-color: #d8d8d8;
+
+    color: #555;
+
+}
+
+
+/* =========================================================
+   BEWERTUNGSBOX – SICHER
+   Die eigentliche Farbe kommt von der KARTE.
+   ========================================================= */
+
+.development-state-sicher {
+
+    background: transparent;
+
+    border-color: transparent;
+
+    color: #555;
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================================
+   BEWERTUNGSBOX – TEILWEISE
+   ========================================================= */
+
+.development-state-teilweise {
+
+    background: transparent;
+
+    border-color: transparent;
+
+    color: #555;
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================================
+   BEWERTUNGSBOX – NICHT BEOBACHTET
+   ========================================================= */
+
+.development-state-nicht_beobachtet {
+
+    background: transparent;
+
+    border-color: transparent;
+
+    color: #777;
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================================
+   KATEGORIEFARBEN
+   ========================================================= */
+
+.development-question[style*="--question-color"] {
+
+    /* Farbe wird durch JavaScript gesetzt */
+
+}
 
 
         /*
@@ -4529,7 +5035,7 @@ function validateDevelopment() {
 
     if (
         !currentQuestions ||
-        currentQuestions.length === 0
+    filteredQuestions.length === 0
     ) {
 
         return {
@@ -7624,7 +8130,11 @@ document.addEventListener(
 
         setupAuthListener();
 
+        setupDevelopmentFilters();
+
         await checkLogin();
+
+        await loadInstitutions();
 
     }
 );
