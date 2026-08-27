@@ -921,33 +921,62 @@ async function loadPendingUsers() {
 
 
         userElement.innerHTML = `
+    <div class="pending-user-info">
 
-            <div class="pending-user-info">
+        <strong>
+            ${user.full_name || "Kein Name"}
+        </strong>
 
-                <strong>
-                    ${user.full_name || "Kein Name"}
-                </strong>
+        <span>
+            ${user.email || "Keine E-Mail"}
+        </span>
 
-                <span>
-                    ${user.email || "Keine E-Mail"}
-                </span>
+    </div>
 
-                <span>
-                    Rolle: ${user.role || "Keine Rolle"}
-                </span>
+    <div class="pending-user-actions">
 
-            </div>
+        <label for="role-${user.id}">
+            Rolle:
+        </label>
 
+        <select
+            id="role-${user.id}"
+            class="user-role-select"
+        >
 
-            <button
-                type="button"
-                class="approve-user-button"
-                onclick="approveUser('${user.id}')"
+            <option
+                value="ELTERN"
+                ${user.role === "ELTERN" ? "selected" : ""}
             >
-                Annehmen
-            </button>
+                Eltern
+            </option>
 
-        `;
+            <option
+                value="ERZIEHER"
+                ${user.role === "ERZIEHER" ? "selected" : ""}
+            >
+                ERZIEHER
+            </option>
+
+            <option
+                value="ADMIN"
+                ${user.role === "ADMIN" ? "selected" : ""}
+            >
+                Administrator
+            </option>
+
+        </select>
+
+        <button
+            type="button"
+            class="approve-user-button"
+            onclick="approveUser('${user.id}')"
+        >
+            Annehmen
+        </button>
+
+    </div>
+`;
 
 
         container.appendChild(
@@ -957,60 +986,82 @@ async function loadPendingUsers() {
     });
 
 }
-
+loadPendingUsers();
 
 /* ============================================================
    ADMINISTRATION – USER ANNEHMEN
    ============================================================ */
-
 async function approveUser(userId) {
 
-    if (!supabaseClient) {
+    const roleSelect =
+        document.getElementById(`role-${userId}`);
+
+    if (!roleSelect) {
+        console.error(
+            "Rollen-Auswahl nicht gefunden:",
+            userId
+        );
         return;
     }
 
+    const selectedRole =
+        roleSelect.value;
+
+    console.log(
+        "User wird freigegeben:",
+        userId,
+        "Rolle:",
+        selectedRole
+    );
 
     const { error } =
         await supabaseClient
             .from("profiles")
             .update({
-
-                approval_status:
-                    "approved",
-
-                approved_at:
-                    new Date().toISOString()
-
+                role: selectedRole,
+                approval_status: "approved",
+                approved_at: new Date().toISOString()
             })
-            .eq(
-                "id",
-                userId
-            );
-
+            .eq("id", userId);
 
     if (error) {
 
         console.error(
-            "User konnte nicht freigegeben werden:",
+            "Benutzer konnte nicht freigegeben werden:",
             error
         );
 
         alert(
-            "User konnte nicht freigegeben werden."
+            `Fehler: ${error.message}`
         );
 
         return;
     }
 
+    await loadPendingUsers();
+}
 
-    alert(
-        "User wurde erfolgreich freigegeben."
-    );
+async function changeUserRole(userId) {
+    const roleSelect =
+        document.getElementById(`role-${userId}`);
 
+    const newRole =
+        roleSelect.value;
 
-    // Liste aktualisieren
-    loadPendingUsers();
+    const { error } =
+        await supabaseClient
+            .from("profiles")
+            .update({
+                role: newRole
+            })
+            .eq("id", userId);
 
+    if (error) {
+        console.error("Rolle konnte nicht geändert werden:", error);
+        return;
+    }
+
+    console.log("Rolle geändert:", newRole);
 }
 
 /* ============================================================
