@@ -2232,6 +2232,8 @@ const DEVELOPMENT_OPTIONS = [
    FRAGENKATALOG
    ============================================================ */
 
+
+
 const DEVELOPMENT_QUESTIONS = [
 
     // =========================================================
@@ -3277,6 +3279,17 @@ function getQuestionsForAge(age) {
 
 }
 
+const DEVELOPMENT_AREA_COLORS = {
+    sprache: "#D9EAF7",
+    sozial: "#DDEEDC",
+    literacy: "#E7DDF5",
+    grundlagen: "#F8E0CC",
+
+    // falls später Fragen dazukommen:
+    motorik: "#F6D6D6",
+    kognition: "#F3E1B8",
+    selbststaendigkeit: "#D8E8E0"
+};
 
 /* ============================================================
    FRAGEN RENDERN
@@ -3330,6 +3343,11 @@ function renderDevelopmentQuestions(questions) {
             card.className =
                 "card development-question";
 
+            card.style.setProperty(
+                "--question-color",
+                areaColor
+            );
+
 
             const area =
                 DEVELOPMENT_AREAS.find(
@@ -3342,6 +3360,10 @@ function renderDevelopmentQuestions(questions) {
             const areaLabel =
                 area?.label ||
                 question.area;
+
+            const areaColor =
+            DEVELOPMENT_AREA_COLORS[question.area] ||
+            "#D9EAF7";
 
 
             /*
