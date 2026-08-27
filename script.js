@@ -776,7 +776,20 @@ async function handleRegister(event) {
         "Registrierung läuft..."
     );
 
+const institutionId =
+    byId("registerInstitution")
+        ?.value
+        ?.trim() || "";
 
+if (!institutionId) {
+
+    safeText(
+        message,
+        "Bitte eine Institution auswählen."
+    );
+
+    return;
+}
     const {
         data,
         error
@@ -791,8 +804,8 @@ async function handleRegister(event) {
 
                 data: {
 
-                    full_name:
-                        fullName
+                    full_name: fullName,
+                    institution_id: institutionId
 
                 }
 
@@ -1411,34 +1424,106 @@ function renderChildrenList(children) {
 }
 
 async function loadInstitutions() {
-    if (!supabaseClient || !currentUser) {
-        return [];
+
+    console.log(
+        "LOAD INSTITUTIONS GESTARTET"
+    );
+
+    const select =
+        byId("registerInstitution");
+
+    if (!select) {
+
+        console.error(
+            "registerInstitution wurde nicht gefunden!"
+        );
+
+        return;
+    }
+
+    if (!supabaseClient) {
+
+        console.error(
+            "Supabase Client fehlt!"
+        );
+
+        return;
     }
 
     const {
         data,
         error
-    } = await supabaseClient
-        .from("institutions")
-        .select(`
-            institution_id,
-            institution_name
-        `)
-        .order("institution_name", {
-            ascending: true
-        });
+    } =
+        await supabaseClient
+            .from("institutions")
+            .select(
+                "institution_id, institution_name"
+            )
+            .order(
+                "institution_name",
+                {
+                    ascending: true
+                }
+            );
+
+    console.log(
+        "INSTITUTION DATA:",
+        data
+    );
+
+    console.log(
+        "INSTITUTION ERROR:",
+        error
+    );
 
     if (error) {
-        console.error(
-            "Institutionen konnten nicht geladen werden:",
-            error
-        );
 
-        return [];
+        console.error(
+    "Institutionen konnten nicht geladen werden:",
+    JSON.stringify(error, null, 2)
+);
+
+        select.innerHTML =
+            `<option value="">
+                Fehler beim Laden der Institutionen
+            </option>`;
+
+        return;
     }
 
-    return data || [];
+    select.innerHTML = `
+        <option value="">
+            Institution auswählen...
+        </option>
+    `;
+
+    (data || []).forEach(
+        institution => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                institution.institution_id;
+
+            option.textContent =
+                institution.institution_name;
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+    console.log(
+        "Institutionen im Dropdown:",
+        select.options.length
+    );
 }
+
 
 
 async function openEditChildModal(childId) {
@@ -7625,6 +7710,9 @@ document.addEventListener(
         setupAuthListener();
 
         await checkLogin();
+
+        await loadInstitutions();
+
 
     }
 );
