@@ -776,20 +776,7 @@ async function handleRegister(event) {
         "Registrierung läuft..."
     );
 
-const institutionId =
-    byId("registerInstitution")
-        ?.value
-        ?.trim() || "";
 
-if (!institutionId) {
-
-    safeText(
-        message,
-        "Bitte eine Institution auswählen."
-    );
-
-    return;
-}
     const {
         data,
         error
@@ -804,8 +791,8 @@ if (!institutionId) {
 
                 data: {
 
-                    full_name: fullName,
-                    institution_id: institutionId
+                    full_name:
+                        fullName
 
                 }
 
@@ -1424,106 +1411,34 @@ function renderChildrenList(children) {
 }
 
 async function loadInstitutions() {
-
-    console.log(
-        "LOAD INSTITUTIONS GESTARTET"
-    );
-
-    const select =
-        byId("registerInstitution");
-
-    if (!select) {
-
-        console.error(
-            "registerInstitution wurde nicht gefunden!"
-        );
-
-        return;
-    }
-
-    if (!supabaseClient) {
-
-        console.error(
-            "Supabase Client fehlt!"
-        );
-
-        return;
+    if (!supabaseClient || !currentUser) {
+        return [];
     }
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("institutions")
-            .select(
-                "institution_id, institution_name"
-            )
-            .order(
-                "institution_name",
-                {
-                    ascending: true
-                }
-            );
-
-    console.log(
-        "INSTITUTION DATA:",
-        data
-    );
-
-    console.log(
-        "INSTITUTION ERROR:",
-        error
-    );
+    } = await supabaseClient
+        .from("institutions")
+        .select(`
+            institution_id,
+            institution_name
+        `)
+        .order("institution_name", {
+            ascending: true
+        });
 
     if (error) {
-
         console.error(
-    "Institutionen konnten nicht geladen werden:",
-    JSON.stringify(error, null, 2)
-);
+            "Institutionen konnten nicht geladen werden:",
+            error
+        );
 
-        select.innerHTML =
-            `<option value="">
-                Fehler beim Laden der Institutionen
-            </option>`;
-
-        return;
+        return [];
     }
 
-    select.innerHTML = `
-        <option value="">
-            Institution auswählen...
-        </option>
-    `;
-
-    (data || []).forEach(
-        institution => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                institution.institution_id;
-
-            option.textContent =
-                institution.institution_name;
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-    console.log(
-        "Institutionen im Dropdown:",
-        select.options.length
-    );
+    return data || [];
 }
-
 
 
 async function openEditChildModal(childId) {
@@ -2231,8 +2146,6 @@ const DEVELOPMENT_OPTIONS = [
 /* ============================================================
    FRAGENKATALOG
    ============================================================ */
-
-
 
 const DEVELOPMENT_QUESTIONS = [
 
@@ -3279,17 +3192,6 @@ function getQuestionsForAge(age) {
 
 }
 
-const DEVELOPMENT_AREA_COLORS = {
-    sprache: "#D9EAF7",
-    sozial: "#DDEEDC",
-    literacy: "#E7DDF5",
-    grundlagen: "#F8E0CC",
-
-    // falls später Fragen dazukommen:
-    motorik: "#F6D6D6",
-    kognition: "#F3E1B8",
-    selbststaendigkeit: "#D8E8E0"
-};
 
 /* ============================================================
    FRAGEN RENDERN
@@ -3343,11 +3245,6 @@ function renderDevelopmentQuestions(questions) {
             card.className =
                 "card development-question";
 
-            card.style.setProperty(
-                "--question-color",
-                areaColor
-            );
-
 
             const area =
                 DEVELOPMENT_AREAS.find(
@@ -3360,10 +3257,6 @@ function renderDevelopmentQuestions(questions) {
             const areaLabel =
                 area?.label ||
                 question.area;
-
-            const areaColor =
-            DEVELOPMENT_AREA_COLORS[question.area] ||
-            "#D9EAF7";
 
 
             /*
@@ -7732,9 +7625,6 @@ document.addEventListener(
         setupAuthListener();
 
         await checkLogin();
-
-        await loadInstitutions();
-
 
     }
 );
