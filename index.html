@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 
-<head>
+<hd>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -818,6 +818,7 @@
     </style>
 </head>
 
+
 <body>
 
 <!-- =========================================================
@@ -1116,6 +1117,15 @@
                         Übersicht deiner Einrichtung
                     </p>
 
+                    <div
+    id="dashboardAppointmentCountdowns"
+    style="
+        margin-top:20px;
+        margin-bottom:20px;
+    "
+>
+</div>
+
                 </div>
 
                 <div class="grid">
@@ -1184,6 +1194,10 @@
                         id="openCreateChildButton"
                     >
                         + Kind anlegen
+                    </button>
+
+                    <button id="addAppointmentBtn" class="btn-primary">
+                        📅 Termin planen
                     </button>
 
                 </div>
@@ -1893,5 +1907,154 @@
 
 </div>
 
+<div id="appointmentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📅 Termin planen</h2>
+            <button id="closeAppointmentModal" type="button">✕</button>
+        </div>
 </body>
+
+<!-- Termin-Modal -->
+
+
+```
+    <div class="form-group">
+        <label for="appointmentTitle">Terminname</label>
+        <input
+            type="text"
+            id="appointmentTitle"
+            placeholder="z. B. Elterngespräch"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="appointmentChild">Kind</label>
+        <select id="appointmentChild">
+            <option value="">Kind auswählen</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+    <label for="appointmentDate">Datum</label>
+    <input
+        type="text"
+        id="appointmentDate"
+        placeholder="TT.MM.JJJJ"
+        inputmode="numeric"
+        autocomplete="off"
+        maxlength="10"
+    >
+</div>
+
+        <div class="form-group">
+            <label for="appointmentTime">Uhrzeit</label>
+            <input type="time" id="appointmentTime">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="appointmentRecurrence">Wiederholung</label>
+        <select id="appointmentRecurrence">
+            <option value="once">Einmalig</option>
+            <option value="daily">Täglich</option>
+            <option value="weekly">Wöchentlich</option>
+            <option value="monthly">Monatlich</option>
+            <option value="yearly">Jährlich</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>
+            <input type="checkbox" id="appointmentCountdown">
+            Countdown anzeigen, wenn weniger als 60 Tage
+        </label>
+    </div>
+
+    <div class="modal-actions">
+        <button type="button" id="cancelAppointmentBtn">
+            Abbrechen
+        </button>
+
+        <button type="button" id="saveAppointmentBtn" class="btn-primary">
+            Termin speichern
+        </button>
+    </div>
+</div>
+```
+
+</div>
+
+<div
+    id="childAppointmentsModal"
+    class="modal"
+    style="display:none;"
+>
+    <div class="modal-content">
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:20px;
+            "
+        >
+            <h2 id="childAppointmentsTitle">
+                📅 Termine
+            </h2>
+
+            <button
+                type="button"
+                id="closeChildAppointmentsModal"
+                class="btn btn-secondary"
+            >
+                Schließen
+            </button>
+        </div>
+
+        <div
+    style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:15px;
+    "
+>
+    <button
+        type="button"
+        id="appointmentPrevMonth"
+        class="btn btn-secondary"
+    >
+        ◀
+    </button>
+
+    <h3
+        id="appointmentCurrentMonth"
+        style="margin:0;"
+    >
+        Monat
+    </h3>
+
+    <button
+        type="button"
+        id="appointmentNextMonth"
+        class="btn btn-secondary"
+    >
+        ▶
+    </button>
+</div>
+
+<div id="childAppointmentsList">
+    Termine werden geladen...
+</div>
+
+    </div>
+</div>
+
+
+
+
+
 </html>
