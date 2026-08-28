@@ -5560,82 +5560,7 @@ async function loadStartedDevelopmentObservations() {
    ANGEFANGENE BEOBACHTUNG – KLICK
    ============================================================ */
 
-container
-    .querySelectorAll(".started-development-card")
-    .forEach(card => {
 
-        card.addEventListener("click", async () => {
-
-            const childId =
-                card.dataset.developmentChildId;
-
-
-            if (!childId) {
-
-                console.error(
-                    "Keine childId für angefangene Beobachtung gefunden."
-                );
-
-                return;
-
-            }
-
-
-            console.log(
-                "Angefangene Beobachtung öffnen:",
-                childId
-            );
-
-
-            /*
-             * 1. Aktuelles Kind setzen
-             */
-
-            currentChildId =
-                childId;
-
-
-            /*
-             * 2. Entwicklungsbereich öffnen
-             *
-             * HIER muss deine vorhandene
-             * Navigationsfunktion verwendet werden.
-             */
-
-            const developmentSection =
-                document.getElementById(
-                    "developmentSection"
-                );
-
-
-            if (developmentSection) {
-
-                document
-                    .querySelectorAll(".section")
-                    .forEach(section => {
-
-                        section.classList.add("hidden");
-
-                    });
-
-
-                developmentSection
-                    .classList.remove("hidden");
-
-            }
-
-
-            /*
-             * 3. Gespeicherte Beobachtung laden
-             */
-
-            await loadDevelopmentAssessment(
-                childId
-            );
-
-        });
-
-    });
 
             }
 
@@ -5661,9 +5586,30 @@ container
    ENTWICKLUNG FÜR EIN KIND ÖFFNEN
    ============================================================ */
 
-async function openDevelopmentForChild(
-    childId
-) {
+/* ============================================================
+   ENTWICKLUNG FÜR EIN KIND ÖFFNEN
+   ============================================================ */
+
+async function openDevelopmentForChild(childId) {
+
+    if (!childId) {
+
+        console.error(
+            "openDevelopmentForChild: Keine childId."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Aktuelles Kind sofort setzen
+     */
+
+    currentChildId =
+        String(childId);
+
 
     /*
      * Entwicklungs-Reiter öffnen
@@ -5675,22 +5621,55 @@ async function openDevelopmentForChild(
 
 
     /*
-     * Select holen
+     * Elemente holen
      */
 
     const {
-        childSelect
+        childSelect,
+        section
     } =
         getDevelopmentElements();
 
 
     if (!childSelect) {
+
+        console.error(
+            "Development Child Select nicht gefunden."
+        );
+
         return;
+
     }
 
 
     /*
-     * Kind auswählen
+     * WICHTIG:
+     * Sicherstellen, dass die Kinder bereits
+     * im Select vorhanden sind.
+     */
+
+    if (
+        !currentChildren ||
+        currentChildren.length === 0
+    ) {
+
+        await loadChildren();
+
+    }
+
+
+    /*
+     * Select neu befüllen.
+     *
+     * Dadurch ist garantiert, dass das
+     * gewünschte Kind als <option> existiert.
+     */
+
+    await loadChildrenForDevelopment();
+
+
+    /*
+     * Jetzt das richtige Kind auswählen.
      */
 
     childSelect.value =
@@ -5698,20 +5677,63 @@ async function openDevelopmentForChild(
 
 
     /*
-     * Bestehenden
-     * Change-Handler ausführen.
+     * Kontrolle
+     */
+
+    console.log(
+        "Entwicklung geöffnet für:",
+        {
+            childId:
+                childId,
+
+            selectValue:
+                childSelect.value,
+
+            selectedText:
+                childSelect
+                    .options[
+                        childSelect.selectedIndex
+                    ]
+                    ?.textContent
+        }
+    );
+
+
+    /*
+     * Bestehenden Change-Handler ausführen.
      *
-     * Dieser setzt:
+     * Dadurch werden:
      * - currentChildId
-     * - currentAge
-     * - currentQuestions
-     * - currentAnswers
+     * - Alter
+     * - Fragen
+     * - Antworten
      * - gespeicherte Bewertung
+     *
+     * korrekt geladen.
      */
 
     await handleDevelopmentChildChange({
-        target: childSelect
+        target:
+            childSelect
     });
+
+
+    /*
+     * Zum Entwicklungsbereich scrollen
+     */
+
+    if (section) {
+
+        section.scrollIntoView({
+            behavior:
+                "smooth",
+
+            block:
+                "start"
+
+        });
+
+    }
 
 }
 
