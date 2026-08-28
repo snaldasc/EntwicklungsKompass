@@ -8,7 +8,6 @@ console.log(
     "AKTUELLE SCRIPT-VERSION GELADEN: user_id-fix-2026-08-26"
 );
 
-
 /* ============================================================
    SUPABASE
    ============================================================ */
@@ -18,7 +17,6 @@ const SUPABASE_URL =
 
 const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
-
 
 if (
     !window.supabase ||
@@ -2270,17 +2268,17 @@ const DEVELOPMENT_OPTIONS = [
 
     {
         value: "sicher",
-        label: "Sicher"
+        label: ""
     },
 
     {
         value: "teilweise",
-        label: "Teilweise"
+        // label: ""
     },
 
     {
         value: "wird_nicht_gezeigt",
-        label: "Nicht beobachtbar"
+        // label: ""
     },
 
     {
@@ -3496,7 +3494,7 @@ switch (currentValue) {
              */
 
             card.className =
-                `card development-question ${ratingClass}`;
+                `card development-question`;
 
 
             card.style.setProperty(
@@ -3692,54 +3690,29 @@ else {
 
                     if (card) {
 
-                        card.classList.remove(
-                            "rating-full",
-                            "rating-half",
-                            "rating-minimal",
-                            "rating-empty"
-                        );
+                        box.classList.remove(
+    "rating-full",
+    "rating-half",
+    "rating-minimal",
+    "rating-empty"
+);
 
+if (nextValue === "sicher") {
 
-                        if (
-                            nextValue ===
-                            "sicher"
-                        ) {
+    box.classList.add("rating-full");
 
-                            card.classList.add(
-                                "rating-full"
-                            );
+} else if (nextValue === "teilweise") {
 
-                        }
+    box.classList.add("rating-half");
 
-                        else if (
-                            nextValue ===
-                            "teilweise"
-                        ) {
+} else if (nextValue === "wird_nicht_gezeigt") {
 
-                            card.classList.add(
-                                "rating-half"
-                            );
+    box.classList.add("rating-minimal");
 
-                        }
+} else {
 
-                        else if (
-                            nextValue ===
-                            "nicht_beobachtet"
-                        ) {
-
-                            card.classList.add(
-                                "rating-empty"
-                            );
-
-                        }
-
-                        else {
-
-                            card.classList.add(
-                                "rating-minimal"
-                            );
-
-                        }
+    box.classList.add("rating-empty");
+}   
 
                     }
 
@@ -3792,7 +3765,6 @@ function setupDevelopmentFilters() {
 /* ============================================================
    BEWERTUNGSKASTEN
    ============================================================ */
-
 function updateDevelopmentRatingBox(
     box,
     value
@@ -3801,12 +3773,6 @@ function updateDevelopmentRatingBox(
     if (!box) {
         return;
     }
-
-
-    const card =
-        box.closest(
-            ".development-question"
-        );
 
 
     box.dataset.value =
@@ -3822,7 +3788,7 @@ function updateDevelopmentRatingBox(
 
     const label =
         option?.label ||
-        "Wurde noch nicht bewertet";
+        "";
 
 
     const labelElement =
@@ -3839,11 +3805,71 @@ function updateDevelopmentRatingBox(
     }
 
 
-    box.className =
-        `
-        development-rating-box
-        development-state-${value}
-        `;
+    /*
+     * Nur die Bewertungsbox
+     * bekommt die Bewertungs-Klasse.
+     */
+
+    box.classList.remove(
+        "rating-full",
+        "rating-half",
+        "rating-minimal",
+        "rating-empty"
+    );
+
+
+    if (value === "sicher") {
+
+        box.classList.add(
+            "rating-full"
+        );
+
+    }
+
+    else if (value === "teilweise") {
+
+        box.classList.add(
+            "rating-half"
+        );
+
+    }
+
+    else if (
+        value === "wird_nicht_gezeigt"
+    ) {
+
+        box.classList.add(
+            "rating-minimal"
+        );
+
+    }
+
+    else {
+
+        box.classList.add(
+            "rating-empty"
+        );
+
+    }
+
+
+    /*
+     * State-Klasse aktualisieren
+     */
+
+    box.classList.remove(
+        "development-state-noch_nicht",
+        "development-state-noch_nicht_bewertet",
+        "development-state-sicher",
+        "development-state-teilweise",
+        "development-state-wird_nicht_gezeigt",
+        "development-state-nicht_beobachtet"
+    );
+
+
+    box.classList.add(
+        `development-state-${value}`
+    );
 
 
     box.setAttribute(
@@ -3857,59 +3883,11 @@ function updateDevelopmentRatingBox(
         label
     );
 
-
-    if (card) {
-
-        card.classList.remove(
-            "rating-full",
-            "rating-half",
-            "rating-minimal",
-            "rating-empty"
-        );
-
-
-        if (value === "sicher") {
-
-            card.classList.add(
-                "rating-full"
-            );
-
-        }
-
-        else if (value === "teilweise") {
-
-            card.classList.add(
-                "rating-half"
-            );
-
-        }
-
-        else if (
-            value ===
-            "wird_nicht_gezeigt"
-        ) {
-
-            card.classList.add(
-                "rating-minimal"
-            );
-
-        }
-
-        else {
-
-            card.classList.add(
-                "rating-empty"
-            );
-
-        }
-
-    }
-
 }
 
 
 /* ============================================================
-   CSS
+   CSS FÜR DIE BEWERTUNGSBOX
    ============================================================ */
 
 function ensureDevelopmentRatingStyles() {
@@ -3919,358 +3897,343 @@ function ensureDevelopmentRatingStyles() {
             "developmentRatingStyles"
         )
     ) {
-
         return;
-
     }
-
 
     const style =
         document.createElement("style");
 
-
     style.id =
         "developmentRatingStyles";
 
+    style.textContent = `
 
-    style.textContent =
-        `
+        /* =====================================================
+           FRAGEN-CONTAINER
+           Bleibt IMMER weiß
+           ===================================================== */
 
         .development-question {
 
-    --question-color: #D9EAF7;
+            --question-color: #D9EAF7;
 
-    margin-bottom: 20px;
+            margin-bottom: 20px;
 
-    border: 2px solid var(--question-color);
+            border: 2px solid var(--question-color);
 
-    background: #ffffff;
+            background-color: #ffffff !important;
 
-    border-radius: 16px;
+            border-radius: 16px;
 
-    padding: 20px;
+            padding: 20px;
 
-    transition:
-        background-color .25s ease,
-        border-color .25s ease,
-        color .25s ease,
-        transform .2s ease,
-        box-shadow .25s ease;
+            transition:
+                border-color .25s ease,
+                transform .2s ease,
+                box-shadow .25s ease;
 
-}
+        }
 
 
-/* =========================================================
-   FRAGENKARTE – BEWERTUNGSSTUFEN
-   ========================================================= */
+        /* =====================================================
+           FRAGENNUMMER
+           ===================================================== */
 
-/*
- * 1. KLICK
- * Vollständig eingefärbt
- */
+        .development-question-number {
 
-.development-question.rating-full {
+            font-size: 13px;
 
-    background-color:
-        var(--question-color);
+            color: #777;
 
-    border-color:
-        var(--question-color);
+            margin-bottom: 6px;
 
-}
+        }
 
 
-/*
- * 2. KLICK
- * 50 % eingefärbt
- */
+        /* =====================================================
+           KATEGORIE
+           ===================================================== */
 
-.development-question.rating-half {
+        .development-question-area {
 
-    background-color:
-        color-mix(
-            in srgb,
-            var(--question-color) 50%,
-            white
-        );
+            font-weight: 600;
 
-    border-color:
-        var(--question-color);
+            margin-bottom: 8px;
 
-}
+        }
 
 
-/*
- * 3. KLICK
- * 1 % eingefärbt
- */
+        /* =====================================================
+           FRAGE
+           ===================================================== */
 
-.development-question.rating-minimal {
+        .development-question-text {
 
-    background-color:
-        color-mix(
-            in srgb,
-            var(--question-color) 1%,
-            white
-        );
+            font-size: 17px;
 
-    border-color:
-        var(--question-color);
+            line-height: 1.45;
 
-}
+            margin-bottom: 18px;
 
+        }
 
-/*
- * Ausgangszustand
- * Weiß mit farbiger Outline
- */
 
-.development-question.rating-empty {
+        /* =====================================================
+           BEWERTUNGSBEREICH
+           ===================================================== */
 
-    background-color:
-        #ffffff;
+        .development-rating-wrapper {
 
-    border-color:
-        var(--question-color);
+            display: flex;
 
-}
+            justify-content: center;
 
+            align-items: center;
 
-/* =========================================================
-   FRAGENNUMMER
-   ========================================================= */
+            padding: 10px 0 5px;
 
-.development-question-number {
+        }
 
-    font-size: 13px;
 
-    color: #777;
+        /* =====================================================
+           KLEINE BEWERTUNGSBOX
+           ===================================================== */
 
-    margin-bottom: 6px;
+        .development-rating-box {
 
-}
+            position: relative;
 
+            width: 100%;
 
-/* =========================================================
-   KATEGORIE
-   ========================================================= */
+            max-width: 420px;
 
-.development-question-area {
+            height: 85px;
 
-    font-weight: 600;
+            border-radius: 16px;
 
-    margin-bottom: 8px;
+            border: 3px solid var(--question-color);
 
-}
+            background-color: #ffffff !important;
 
+            color: #555;
 
-/* =========================================================
-   FRAGE
-   ========================================================= */
+            cursor: pointer;
 
-.development-question-text {
+            overflow: hidden;
 
-    font-size: 17px;
+            display: flex;
 
-    line-height: 1.45;
+            align-items: center;
 
-    margin-bottom: 18px;
+            justify-content: center;
 
-}
+            font-size: 17px;
 
+            font-weight: 700;
 
-/* =========================================================
-   BEWERTUNGSBEREICH
-   ========================================================= */
+            transition:
+                background-color .25s ease,
+                border-color .25s ease,
+                color .25s ease,
+                transform .2s ease,
+                box-shadow .25s ease;
 
-.development-rating-wrapper {
+        }
 
-    display: flex;
 
-    justify-content: center;
+        /* =====================================================
+           HOVER
+           ===================================================== */
 
-    align-items: center;
+        .development-rating-box:hover {
 
-    padding: 10px 0 5px;
+            transform: scale(1.02);
 
-}
+            box-shadow:
+                0 4px 14px rgba(
+                    0,
+                    0,
+                    0,
+                    .10
+                );
 
+        }
 
-/* =========================================================
-   BEWERTUNGSBOX
-   ========================================================= */
 
-.development-rating-box {
+        /* =====================================================
+           TEXT
+           ===================================================== */
 
-    position: relative;
+        .development-rating-label {
 
-    width: 100%;
+            position: relative;
 
-    max-width: 420px;
+            z-index: 3;
 
-    height: 85px;
+            pointer-events: none;
 
-    border-radius: 16px;
+        }
 
-    border: 3px solid #d8d8d8;
 
-    // background: #ffffff;
+        /* =====================================================
+           NOCH NICHT BEWERTET
+           ===================================================== */
 
-    color: #555;
+        .development-rating-box.rating-empty {
 
-    cursor: pointer;
+            background-color: #ffffff !important;
 
-    overflow: hidden;
+            border-color: var(--question-color) !important;
 
-    display: flex;
+            color: #555;
 
-    align-items: center;
+        }
 
-    justify-content: center;
 
-    font-size: 17px;
+        /* =====================================================
+           SICHER
+           100 % Farbe
+           ===================================================== */
 
-    font-weight: 700;
+        .development-rating-box.rating-full {
 
-    transition:
-        background .25s ease,
-        border-color .25s ease,
-        color .25s ease,
-        transform .2s ease,
-        box-shadow .25s ease;
+            background-color:
+                var(--question-color) !important;
 
-}
+            border-color:
+                var(--question-color) !important;
 
+            color: #555;
 
-/* =========================================================
-   HOVER
-   ========================================================= */
+        }
 
-.development-rating-box:hover {
 
-    transform: scale(1.02);
+        /* =====================================================
+           TEILWEISE
+           50 % Farbe
+           ===================================================== */
 
-    box-shadow:
-        0 4px 14px rgba(
-            0,
-            0,
-            0,
-            .10
-        );
+        .development-rating-box.rating-half {
 
-}
+            background-color:
+                color-mix(
+                    in srgb,
+                    var(--question-color) 50%,
+                    white
+                ) !important;
 
+            border-color:
+                var(--question-color) !important;
 
-/* =========================================================
-   BEWERTUNGSTEXT
-   ========================================================= */
+            color: #555;
 
-.development-rating-label {
+        }
 
-    position: relative;
 
-    z-index: 3;
+        /* =====================================================
+           WIRD NICHT GEZEIGT
+           10 % Farbe
+           ===================================================== */
 
-    pointer-events: none;
+        .development-rating-box.rating-minimal {
 
-}
+            background-color:
+                color-mix(
+                    in srgb,
+                    var(--question-color) 10%,
+                    white
+                ) !important;
 
+            border-color:
+                var(--question-color) !important;
 
-/* =========================================================
-   BEWERTUNGSBOX – AUSGANGSZUSTAND
-   ========================================================= */
+            color: #555;
 
-.development-state-noch_nicht {
+        }
 
-    background: transparent;
 
-    border-color: #d8d8d8;
+        /* =====================================================
+           STATE-KLASSEN
+           Dürfen die Rating-Farben NICHT überschreiben
+           ===================================================== */
 
-    color: #555;
+        .development-rating-box.development-state-sicher {
 
-}
+            background-color:
+                var(--question-color) !important;
 
+            border-color:
+                var(--question-color) !important;
 
-/* =========================================================
-   BEWERTUNGSBOX – SICHER
-   Die eigentliche Farbe kommt von der KARTE.
-   ========================================================= */
+            color: #555;
 
-.development-state-sicher {
+        }
 
-    background: transparent;
 
-    border-color: transparent;
+        .development-rating-box.development-state-teilweise {
 
-    color: #555;
+            background-color:
+                color-mix(
+                    in srgb,
+                    var(--question-color) 50%,
+                    white
+                ) !important;
 
-    box-shadow: none;
+            border-color:
+                var(--question-color) !important;
 
-}
+            color: #555;
 
+        }
 
-/* =========================================================
-   BEWERTUNGSBOX – TEILWEISE
-   ========================================================= */
 
-.development-state-teilweise {
+        .development-rating-box.development-state-wird_nicht_gezeigt {
 
-    background: transparent;
+            background-color:
+                color-mix(
+                    in srgb,
+                    var(--question-color) 10%,
+                    white
+                ) !important;
 
-    border-color: transparent;
+            border-color:
+                var(--question-color) !important;
 
-    color: #555;
+            color: #555;
 
-    box-shadow: none;
+        }
 
-}
 
+        .development-rating-box.development-state-noch_nicht_bewertet {
 
-/* =========================================================
-   BEWERTUNGSBOX – NICHT BEOBACHTET
-   ========================================================= */
+            background-color:
+                #ffffff !important;
 
-.development-state-nicht_beobachtet {
+            border-color:
+                var(--question-color) !important;
 
-    background: transparent;
+            color: #555;
 
-    border-color: transparent;
+        }
 
-    color: #777;
 
-    box-shadow: none;
+        /* =====================================================
+           WELLEN-EFFEKT BEI "TEILWEISE"
+           ===================================================== */
 
-}
+        .development-rating-box.development-state-teilweise::before {
 
+            content: "";
 
-/* =========================================================
-   KATEGORIEFARBEN
-   ========================================================= */
+            position: absolute;
 
-.development-question[style*="--question-color"] {
+            left: -30%;
 
-    /* Farbe wird durch JavaScript gesetzt */
+            top: 0;
 
-}
+            width: 80%;
 
-
-        /*
-         * WELLEN
-         */
-
-        .development-state-teilweise::before {
-
-            content:"";
-
-            position:absolute;
-
-            left:-30%;
-
-            top:0;
-
-            width:80%;
-
-            height:100%;
+            height: 100%;
 
             background:
                 repeating-linear-gradient(
@@ -4301,14 +4264,18 @@ function ensureDevelopmentRatingStyles() {
                     ) 16px
                 );
 
-            pointer-events:none;
+            pointer-events: none;
 
-            z-index:1;
+            z-index: 1;
 
         }
 
 
-        .development-wave-animation::before {
+        /* =====================================================
+           WELLEN-ANIMATION
+           ===================================================== */
+
+        .development-rating-box.development-wave-animation::before {
 
             animation:
                 developmentRatingWave
@@ -4338,17 +4305,20 @@ function ensureDevelopmentRatingStyles() {
         }
 
 
-        /*
-         * ROT
-         */
+        /* =====================================================
+           ROTER STATUS
+           ===================================================== */
 
-        .development-state-nicht_beobachtet {
+        .development-rating-box.development-state-nicht_beobachtet {
 
-            background:#e53935;
+            background-color:
+                #e53935 !important;
 
-            border-color:#c62828;
+            border-color:
+                #c62828 !important;
 
-            color:#ffffff;
+            color:
+                #ffffff;
 
             box-shadow:
                 0 4px 12px rgba(
@@ -4361,29 +4331,28 @@ function ensureDevelopmentRatingStyles() {
         }
 
 
-        @media (
-            max-width:600px
-        ) {
+        /* =====================================================
+           MOBILE
+           ===================================================== */
+
+        @media (max-width: 600px) {
 
             .development-rating-box {
 
-                max-width:100%;
+                max-width: 100%;
 
-                height:75px;
+                height: 75px;
 
-                font-size:16px;
+                font-size: 16px;
 
             }
 
         }
 
-        `;
-
+    `;
 
     document.head.appendChild(style);
-
 }
-
 
 /* ============================================================
    KIND GEÄNDERT
@@ -5289,6 +5258,462 @@ function calculateDevelopmentResult() {
 }
 
     
+/* ============================================================
+   ANGEFANGENE ENTWICKLUNGSBEOBACHTUNGEN
+   ============================================================ */
+
+async function loadStartedDevelopmentObservations() {
+
+    const container =
+        byId("startedDevelopmentObservations");
+
+    if (!container) {
+        return;
+    }
+
+    if (!supabaseClient) {
+        container.innerHTML = "";
+        return;
+    }
+
+    if (
+        !currentChildren ||
+        currentChildren.length === 0
+    ) {
+        container.innerHTML = "";
+        return;
+    }
+
+    try {
+
+        /*
+         * Für jedes Kind prüfen,
+         * ob bereits eine Bewertung begonnen wurde.
+         */
+
+        const entries = [];
+
+        for (const child of currentChildren) {
+
+            const questions =
+                getQuestionsForAge(
+                    Math.min(
+                        7,
+                        Math.max(
+                            1,
+                            calculateChildAge(
+                                child.birth_date
+                            )?.years || 1
+                        )
+                    )
+                );
+
+            if (
+                !questions ||
+                questions.length === 0
+            ) {
+                continue;
+            }
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from(
+                        "development_assessments"
+                    )
+                    .select("*")
+                    .eq(
+                        "child_id",
+                        child.id
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending: false
+                        }
+                    )
+                    .limit(1)
+                    .maybeSingle();
+
+            if (error) {
+                console.error(
+                    "Bewertung konnte nicht geladen werden:",
+                    error
+                );
+                continue;
+            }
+
+            if (!data) {
+                continue;
+            }
+
+            /*
+             * Antworten aus gespeicherter Bewertung holen.
+             */
+
+            let answers = {};
+
+            if (data.answers) {
+
+                if (
+                    typeof data.answers ===
+                    "string"
+                ) {
+
+                    try {
+
+                        answers =
+                            JSON.parse(
+                                data.answers
+                            );
+
+                    } catch {
+
+                        answers = {};
+
+                    }
+
+                }
+
+                else {
+
+                    answers =
+                        data.answers;
+
+                }
+
+            }
+
+            /*
+             * Anzahl beantworteter Fragen.
+             */
+
+            const answered =
+                questions.filter(
+                    question =>
+                        answers[
+                            question.id
+                        ]
+                ).length;
+
+            if (answered === 0) {
+                continue;
+            }
+
+            const percentage =
+                Math.round(
+                    answered /
+                    questions.length *
+                    100
+                );
+
+            entries.push({
+
+                child,
+
+                answered,
+
+                total:
+                    questions.length,
+
+                percentage
+
+            });
+
+        }
+
+
+        /*
+         * Nichts angefangen
+         */
+
+        if (entries.length === 0) {
+
+            container.innerHTML =
+                `
+                <div class="started-development-empty">
+                    Noch keine angefangenen Beobachtungen.
+                </div>
+                `;
+
+            return;
+
+        }
+
+
+        /*
+         * Karten rendern
+         */
+
+        container.innerHTML =
+        
+            entries
+                .map(entry => {
+
+                    const childName =
+                        entry.child.child_code ||
+                        "Kind";
+
+                    return `
+                        <button
+                            type="button"
+                            class="started-development-card"
+                            data-development-child-id="${escapeHtml(
+                                entry.child.id
+                            )}"
+                        >
+
+                            <div class="started-development-header">
+
+                                <div class="started-development-child">
+
+                                    <strong>
+                                        ${escapeHtml(childName)}
+                                    </strong>
+
+                                    <span>
+                                        Beobachtung fortsetzen
+                                    </span>
+
+                                </div>
+
+
+                                <div
+                                    class="started-development-ring"
+                                    style="--progress:${entry.percentage}%"
+                                >
+
+                                    <div class="started-development-ring-inner">
+
+                                        <strong>
+                                            ${entry.percentage}%
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="started-development-progress">
+
+                                <div
+                                    class="started-development-progress-bar"
+                                    style="width:${entry.percentage}%"
+                                ></div>
+
+                            </div>
+
+
+                            <div class="started-development-footer">
+
+                                <span>
+                                    ${entry.answered}
+                                    von
+                                    ${entry.total}
+                                    Fragen
+                                </span>
+
+                                <span>
+                                    Beobachtung fortsetzen →
+                                </span>
+
+                            </div>
+
+                        </button>
+                    `;
+
+                })
+                .join("");
+                /*
+                * Klick auf angefangene Beobachtung
+                */
+
+                container
+                    .querySelectorAll(
+                        "[data-development-child-id]"
+                    )
+                    .forEach(button => {
+
+                        button.addEventListener(
+                            "click",
+                            async () => {
+
+                                const childId =
+                                    button.dataset
+                                        .developmentChildId;
+
+                                await openDevelopmentForChild(
+                                    childId
+                                );
+
+                            }
+                        );
+
+                    }
+                );
+
+                /* ============================================================
+   ANGEFANGENE BEOBACHTUNG – KLICK
+   ============================================================ */
+
+container
+    .querySelectorAll(".started-development-card")
+    .forEach(card => {
+
+        card.addEventListener("click", async () => {
+
+            const childId =
+                card.dataset.developmentChildId;
+
+
+            if (!childId) {
+
+                console.error(
+                    "Keine childId für angefangene Beobachtung gefunden."
+                );
+
+                return;
+
+            }
+
+
+            console.log(
+                "Angefangene Beobachtung öffnen:",
+                childId
+            );
+
+
+            /*
+             * 1. Aktuelles Kind setzen
+             */
+
+            currentChildId =
+                childId;
+
+
+            /*
+             * 2. Entwicklungsbereich öffnen
+             *
+             * HIER muss deine vorhandene
+             * Navigationsfunktion verwendet werden.
+             */
+
+            const developmentSection =
+                document.getElementById(
+                    "developmentSection"
+                );
+
+
+            if (developmentSection) {
+
+                document
+                    .querySelectorAll(".section")
+                    .forEach(section => {
+
+                        section.classList.add("hidden");
+
+                    });
+
+
+                developmentSection
+                    .classList.remove("hidden");
+
+            }
+
+
+            /*
+             * 3. Gespeicherte Beobachtung laden
+             */
+
+            await loadDevelopmentAssessment(
+                childId
+            );
+
+        });
+
+    });
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Angefangene Beobachtungen konnten nicht geladen werden:",
+                    error
+                );
+
+                container.innerHTML =
+                    `
+                    <div class="started-development-empty">
+                        Angefangene Beobachtungen konnten nicht geladen werden.
+                    </div>
+                    `;
+
+            }
+
+}
+
+/* ============================================================
+   ENTWICKLUNG FÜR EIN KIND ÖFFNEN
+   ============================================================ */
+
+async function openDevelopmentForChild(
+    childId
+) {
+
+    /*
+     * Entwicklungs-Reiter öffnen
+     */
+
+    openSection(
+        "development"
+    );
+
+
+    /*
+     * Select holen
+     */
+
+    const {
+        childSelect
+    } =
+        getDevelopmentElements();
+
+
+    if (!childSelect) {
+        return;
+    }
+
+
+    /*
+     * Kind auswählen
+     */
+
+    childSelect.value =
+        String(childId);
+
+
+    /*
+     * Bestehenden
+     * Change-Handler ausführen.
+     *
+     * Dieser setzt:
+     * - currentChildId
+     * - currentAge
+     * - currentQuestions
+     * - currentAnswers
+     * - gespeicherte Bewertung
+     */
+
+    await handleDevelopmentChildChange({
+        target: childSelect
+    });
+
+}
 
 /* ============================================================
    AUSWERTUNG ANZEIGEN
@@ -5721,7 +6146,6 @@ function ensureDevelopmentResultStyles() {
 
 }
 
-
 /* ============================================================
    AUSWERTUNG ERSTELLEN
    ============================================================ */
@@ -5789,9 +6213,6 @@ async function saveDevelopmentAssessment(result) {
 
     return data;
 }
-
-
-
 
 async function loadDevelopmentAssessment(childId) {
 
@@ -5926,7 +6347,6 @@ function getCurrentDevelopmentChild() {
     ) || null;
 
 }
-
 
 function generateDevelopmentReport(result) {
 
@@ -6325,6 +6745,442 @@ function showDevelopmentReport(report) {
 }
 
 async function saveDevelopmentReport(report) {
+
+/* ============================================================
+   ANGEFANGENE ENTWICKLUNGSBEOBACHTUNGEN AUF DEM DASHBOARD
+   ============================================================ */
+
+async function loadStartedDevelopmentObservations() {
+
+    const container =
+        document.getElementById(
+            "startedDevelopmentObservations"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    if (
+        !supabaseClient ||
+        !currentChildren ||
+        currentChildren.length === 0
+    ) {
+        return;
+    }
+
+    try {
+
+        const entries = [];
+
+        /*
+         * Für jedes Kind die letzte gespeicherte
+         * Entwicklungsbewertung laden.
+         */
+
+        for (const child of currentChildren) {
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("development_assessments")
+                    .select(`
+                        id,
+                        child_id,
+                        age,
+                        answers,
+                        result,
+                        created_at
+                    `)
+                    .eq(
+                        "child_id",
+                        child.id
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending: false
+                        }
+                    )
+                    .limit(1)
+                    .maybeSingle();
+
+
+            if (error) {
+
+                console.error(
+                    "Fehler beim Laden der Entwicklungsbewertung:",
+                    error
+                );
+
+                continue;
+            }
+
+
+            /*
+             * Keine Bewertung vorhanden
+             */
+
+            if (!data) {
+                continue;
+            }
+
+
+            const answers =
+                data.answers || {};
+
+
+            /*
+             * Fragen für das gespeicherte Alter
+             */
+
+            const questions =
+                getQuestionsForAge(
+                    Number(data.age)
+                );
+
+
+            if (
+                !questions ||
+                questions.length === 0
+            ) {
+                continue;
+            }
+
+
+            /*
+             * Wie viele Fragen wurden bereits bewertet?
+             */
+
+            const answered =
+                questions.filter(
+                    question => {
+
+                        const value =
+                            answers[
+                                question.id
+                            ];
+
+                        return (
+                            value &&
+                            value !==
+                                "noch_nicht_bewertet"
+                        );
+
+                    }
+                ).length;
+
+
+            /*
+             * Noch gar nichts angefangen
+             */
+
+            if (answered === 0) {
+                continue;
+            }
+
+
+            /*
+             * Bearbeitungsfortschritt
+             *
+             * NICHT Entwicklungsprozent!
+             */
+
+            const percentage =
+                Math.round(
+                    (
+                        answered /
+                        questions.length
+                    ) * 100
+                );
+
+
+            entries.push({
+
+                child:
+                    child,
+
+                age:
+                    Number(data.age),
+
+                answered:
+                    answered,
+
+                total:
+                    questions.length,
+
+                percentage:
+                    percentage
+
+            });
+
+        }
+
+
+        /*
+         * Keine angefangenen Beobachtungen
+         */
+
+        if (entries.length === 0) {
+
+            container.innerHTML =
+                `
+                <div class="started-development-empty">
+                    Noch keine angefangenen Beobachtungen.
+                </div>
+                `;
+
+            return;
+        }
+
+
+        /*
+         * Karten erzeugen
+         */
+
+        entries.forEach(entry => {
+
+            const child =
+                entry.child;
+
+
+            /*
+             * Hier kannst du festlegen,
+             * welcher Name angezeigt wird.
+             *
+             * Ich verwende zuerst first_name + last_name.
+             */
+
+            const childName =
+                [
+                    child.first_name,
+                    child.last_name
+                ]
+                .filter(Boolean)
+                .join(" ")
+                ||
+                child.child_code
+                ||
+                "Kind";
+
+
+            const item =
+                document.createElement("button");
+
+
+            item.type =
+                "button";
+
+
+            item.className =
+                "started-development-card";
+
+
+            item.dataset.childId =
+                child.id;
+
+
+            item.innerHTML =
+                `
+                <div class="started-development-header">
+
+                    <strong>
+                        ${escapeHtml(childName)}
+                    </strong>
+
+                    <span>
+                        ${entry.percentage} %
+                    </span>
+
+                </div>
+
+
+                <div class="started-development-progress">
+
+                    <div
+                        class="started-development-progress-bar"
+                        style="width:${entry.percentage}%"
+                    ></div>
+
+                </div>
+
+
+                <div class="started-development-footer">
+
+                    <span>
+                        ${entry.answered}
+                        von
+                        ${entry.total}
+                        Fragen
+                    </span>
+
+                    <span>
+                        Beobachtung fortsetzen →
+                    </span>
+
+                </div>
+                `;
+
+
+            /*
+             * Klick
+             */
+
+            item.addEventListener(
+                "click",
+                async () => {
+
+                    await openStartedDevelopment(
+                        child.id
+                    );
+
+                }
+            );
+
+
+            container.appendChild(item);
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Fehler beim Laden der angefangenen Beobachtungen:",
+            error
+        );
+
+        container.innerHTML =
+            `
+            <div class="started-development-empty">
+                Angefangene Beobachtungen konnten nicht geladen werden.
+            </div>
+            `;
+
+    }
+
+}
+
+/* ============================================================
+   ANGEFANGENE BEOBACHTUNG ÖFFNEN
+   ============================================================ */
+
+async function openStartedDevelopment(childId) {
+
+    /*
+     * Entwicklungsbereich öffnen
+     */
+
+    const developmentSection =
+        document.getElementById(
+            "developmentSection"
+        );
+
+
+    /*
+     * Falls deine App mit showSection()
+     * oder einer anderen Navigation arbeitet,
+     * wird diese vorhandene Navigation benutzt.
+     */
+
+    if (
+        typeof showSection ===
+        "function"
+    ) {
+
+        showSection(
+            "developmentSection"
+        );
+
+    }
+
+    else {
+
+        /*
+         * Fallback:
+         * andere Sections verstecken
+         */
+
+        document
+            .querySelectorAll(".section")
+            .forEach(section => {
+
+                section.classList.add(
+                    "hidden"
+                );
+
+            });
+
+
+        if (developmentSection) {
+
+            developmentSection.classList.remove(
+                "hidden"
+            );
+
+        }
+
+    }
+
+
+    /*
+     * Entwicklungs-Child-Select holen
+     */
+
+    const {
+        childSelect
+    } =
+        getDevelopmentElements();
+
+
+    if (!childSelect) {
+
+        console.error(
+            "Development Child Select nicht gefunden."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Kind auswählen
+     */
+
+    childSelect.value =
+        String(childId);
+
+
+    /*
+     * Deinen bestehenden
+     * Ladeprozess verwenden.
+     */
+
+    await loadDevelopmentAssessment(
+        childId
+    );
+
+
+    /*
+     * Optional nach oben scrollen
+     */
+
+    if (developmentSection) {
+
+        developmentSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+
+}
 
 const createReportButton =
     byId(
@@ -8086,7 +8942,7 @@ async function initializeApplication() {
 
 
         await loadChildren();
-
+        await loadStartedDevelopmentObservations();
         await loadGroups();
 
 
