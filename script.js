@@ -4,37 +4,27 @@
    ============================================================ */
 
 "use strict";
-console.log(
-    "AKTUELLE SCRIPT-VERSION GELADEN: user_id-fix-2026-08-26"
-);
+console.log("AKTUELLE SCRIPT-VERSION GELADEN: user_id-fix-2026-08-26");
 
 /* ============================================================
    SUPABASE
    ============================================================ */
 
-const SUPABASE_URL =
-    "https://sjekwvalxujnfparxees.supabase.co";
+const SUPABASE_URL = "https://sjekwvalxujnfparxees.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZWt3dmFseHVqbmZwYXJ4ZWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDU5NDQsImV4cCI6MjEwMzA4MTk0NH0.xMCPzUE7BHJpYYduKoRPQ-LC6UAJJzcJWsFhik-2oZ8";
 
-if (
-    !window.supabase ||
-    typeof window.supabase.createClient !== "function"
-) {
-    console.error("Supabase JS wurde nicht geladen.");
-}
-else {
-    window.supabaseClient =
-        window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY
-        );
+if (!window.supabase || typeof window.supabase.createClient !== "function") {
+  console.error("Supabase JS wurde nicht geladen.");
+} else {
+  window.supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+  );
 }
 
-
-let supabaseClient =
-    window.supabaseClient || null;
+let supabaseClient = window.supabaseClient || null;
 
 let currentUser = null;
 let currentProfile = null;
@@ -50,7 +40,6 @@ let currentChildId = null;
 
 let developmentQuestionFilter = "offen";
 
-
 /* ============================================================
    HILFSFUNKTIONEN
    ============================================================ */
@@ -60,112 +49,67 @@ let developmentQuestionFilter = "offen";
    ============================================================ */
 
 function calculateChildAge(birthDate) {
+  if (!birthDate) {
+    return null;
+  }
 
-    if (!birthDate) {
-        return null;
-    }
+  const birth = new Date(birthDate + "T00:00:00");
 
-    const birth = new Date(
-        birthDate + "T00:00:00"
-    );
+  const today = new Date();
 
-    const today = new Date();
+  if (Number.isNaN(birth.getTime())) {
+    return null;
+  }
 
-    if (Number.isNaN(birth.getTime())) {
-        return null;
-    }
+  let years = today.getFullYear() - birth.getFullYear();
 
-    let years =
-        today.getFullYear() -
-        birth.getFullYear();
+  let months = today.getMonth() - birth.getMonth();
 
-    let months =
-        today.getMonth() -
-        birth.getMonth();
+  let days = today.getDate() - birth.getDate();
 
-    let days =
-        today.getDate() -
-        birth.getDate();
+  if (days < 0) {
+    months--;
+  }
 
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
 
-    if (days < 0) {
-
-        months--;
-
-    }
-
-
-    if (months < 0) {
-
-        years--;
-        months += 12;
-
-    }
-
-
-    return {
-        years,
-        months
-    };
-
+  return {
+    years,
+    months,
+  };
 }
-
 
 /* ============================================================
    ALTER ALS TEXT
    ============================================================ */
 
 function formatChildAge(birthDate) {
+  const age = calculateChildAge(birthDate);
 
-    const age =
-        calculateChildAge(birthDate);
+  if (!age) {
+    return "Alter unbekannt";
+  }
 
-    if (!age) {
+  if (age.years === 0 && age.months === 0) {
+    return "unter 1 Jahr";
+  }
 
-        return "Alter unbekannt";
+  if (age.years === 0) {
+    return `${age.months} Monate`;
+  }
 
-    }
+  if (age.months === 0) {
+    return age.years === 1 ? "1 Jahr" : `${age.years} Jahre`;
+  }
 
+  const yearText = age.years === 1 ? "1 Jahr" : `${age.years} Jahre`;
 
-    if (
-        age.years === 0 &&
-        age.months === 0
-    ) {
+  const monthText = age.months === 1 ? "1 Monat" : `${age.months} Monate`;
 
-        return "unter 1 Jahr";
-
-    }
-
-
-    if (age.years === 0) {
-
-        return `${age.months} Monate`;
-
-    }
-
-
-    if (age.months === 0) {
-
-        return age.years === 1
-            ? "1 Jahr"
-            : `${age.years} Jahre`;
-
-    }
-
-
-    const yearText =
-        age.years === 1
-            ? "1 Jahr"
-            : `${age.years} Jahre`;
-
-    const monthText =
-        age.months === 1
-            ? "1 Monat"
-            : `${age.months} Monate`;
-
-
-    return `${yearText}, ${monthText}`;
-
+  return `${yearText}, ${monthText}`;
 }
 
 /* ============================================================
@@ -173,233 +117,158 @@ function formatChildAge(birthDate) {
    ============================================================ */
 
 function setupChildBirthDate() {
+  const birthDateInput = document.getElementById("newChildBirthDate");
 
-    const birthDateInput =
-        document.getElementById(
-            "newChildBirthDate"
-        );
+  const ageDisplay = document.getElementById("newChildAgeDisplay");
 
-    const ageDisplay =
-        document.getElementById(
-            "newChildAgeDisplay"
-        );
+  if (!birthDateInput || !ageDisplay) {
+    return;
+  }
 
+  birthDateInput.addEventListener("change", function () {
+    const birthDate = birthDateInput.value;
 
-    if (
-        !birthDateInput ||
-        !ageDisplay
-    ) {
+    if (!birthDate) {
+      ageDisplay.textContent = "Bitte zuerst das Geburtsdatum eingeben.";
 
-        return;
-
+      return;
     }
 
-
-    birthDateInput.addEventListener(
-        "change",
-        function () {
-
-            const birthDate =
-                birthDateInput.value;
-
-
-            if (!birthDate) {
-
-                ageDisplay.textContent =
-                    "Bitte zuerst das Geburtsdatum eingeben.";
-
-                return;
-
-            }
-
-
-            ageDisplay.textContent =
-                formatChildAge(
-                    birthDate
-                );
-
-        }
-    );
-
+    ageDisplay.textContent = formatChildAge(birthDate);
+  });
 }
 
-
 function escapeHtml(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function byId(id) {
-    return document.getElementById(id);
+  return document.getElementById(id);
 }
 
 function safeText(element, text) {
-    if (element) {
-        element.textContent = text ?? "";
-    }
+  if (element) {
+    element.textContent = text ?? "";
+  }
 }
 
 /* ============================================================
    DOM
    ============================================================ */
 
-const loginSection =
-    byId("loginSection");
+const loginSection = byId("loginSection");
 
-const registerSection =
-    byId("registerSection");
+const registerSection = byId("registerSection");
 
-const appSection =
-    byId("appSection");
-
+const appSection = byId("appSection");
 
 /* ============================================================
    LOGIN / APP
    ============================================================ */
 
 function showLogin() {
+  if (loginSection) {
+    loginSection.style.display = "";
+  }
 
-    if (loginSection) {
-        loginSection.style.display = "";
-    }
+  if (registerSection) {
+    registerSection.style.display = "none";
+  }
 
-    if (registerSection) {
-        registerSection.style.display = "none";
-    }
-
-    if (appSection) {
-        appSection.style.display = "none";
-    }
-
+  if (appSection) {
+    appSection.style.display = "none";
+  }
 }
 
 function showDashboard() {
+  if (loginSection) {
+    loginSection.style.display = "none";
+  }
 
-    if (loginSection) {
-        loginSection.style.display = "none";
-    }
+  if (registerSection) {
+    registerSection.style.display = "none";
+  }
 
-    if (registerSection) {
-        registerSection.style.display = "none";
-    }
+  if (appSection) {
+    appSection.style.display = "";
 
-    if (appSection) {
+    appSection.classList.remove("hidden");
+  }
 
-        appSection.style.display = "";
-
-        appSection.classList.remove("hidden");
-
-    }
-
-    loadDashboardAppointmentCountdowns();
+  loadDashboardAppointmentCountdowns();
 }
 
 async function updateDashboardGreeting() {
+  const greeting = document.getElementById("dashboardGreeting");
 
-    const greeting =
-        document.getElementById("dashboardGreeting");
+  if (!greeting || !currentUser || !supabaseClient) {
+    return;
+  }
 
-    if (!greeting || !currentUser || !supabaseClient) {
-        return;
-    }
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("full_name")
+    .eq("id", currentUser.id)
+    .single();
 
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("profiles")
-        .select("full_name")
-        .eq("id", currentUser.id)
-        .single();
+  if (error) {
+    console.error("Name konnte nicht geladen werden:", error);
 
-    if (error) {
+    greeting.textContent = "Hallo!";
 
-        console.error(
-            "Name konnte nicht geladen werden:",
-            error
-        );
+    return;
+  }
 
-        greeting.textContent = "Hallo!";
+  const name = data?.full_name?.trim();
 
-        return;
-    }
-
-    const name =
-        data?.full_name?.trim();
-
-    greeting.textContent =
-        name
-            ? `Hallo ${name}!`
-            : "Hallo!";
+  greeting.textContent = name ? `Hallo ${name}!` : "Hallo!";
 }
-
 
 /* ============================================================
    PROFIL
    ============================================================ */
 
 async function loadUserProfile() {
+  if (!supabaseClient) {
+    return null;
+  }
 
-    if (!supabaseClient) {
-        return null;
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseClient.auth.getUser();
+
+    if (userError) {
+      console.error("Auth-Benutzer konnte nicht geladen werden:", userError);
+
+      currentProfile = null;
+
+      return null;
     }
 
-    try {
+    if (!user) {
+      currentProfile = null;
 
-        const {
-            data: {
-                user
-            },
-            error: userError
-        } =
-            await supabaseClient.auth.getUser();
+      return null;
+    }
 
+    currentUser = user;
+    await updateDashboardGreeting();
 
-        if (userError) {
-
-            console.error(
-                "Auth-Benutzer konnte nicht geladen werden:",
-                userError
-            );
-
-            currentProfile = null;
-
-            return null;
-
-        }
-
-
-        if (!user) {
-
-            currentProfile = null;
-
-            return null;
-
-        }
-
-
-        currentUser = user;
-        await updateDashboardGreeting();
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("profiles")
-                .select(`
+    const { data, error } = await supabaseClient
+      .from("profiles")
+      .select(
+        `
                     id,
                     institution_id,
                     full_name,
@@ -409,352 +278,201 @@ async function loadUserProfile() {
                     approval_status,
                     approved_by,
                     approved_at
-                `)
-                .eq("id", user.id)
-                .maybeSingle();
+                `,
+      )
+      .eq("id", user.id)
+      .maybeSingle();
 
+    if (error) {
+      console.error("Profil konnte nicht geladen werden:", error);
 
-        if (error) {
+      currentProfile = {
+        id: user.id,
 
-            console.error(
-                "Profil konnte nicht geladen werden:",
-                error
-            );
+        institution_id: null,
 
-            currentProfile = {
+        full_name: user.email || "Benutzer",
 
-                id: user.id,
+        phone: "",
 
-                institution_id: null,
+        role: "ADMIN",
 
-                full_name:
-                    user.email || "Benutzer",
+        email: user.email || "",
+      };
+    } else if (data) {
+      currentProfile = {
+        ...data,
 
-                phone: "",
+        email: user.email || "",
+      };
+    } else {
+      currentProfile = {
+        id: user.id,
 
-                role: "ADMIN",
+        institution_id: null,
 
-                email:
-                    user.email || ""
+        full_name: user.email || "Benutzer",
 
-            };
+        phone: "",
 
-        }
+        role: "ADMIN",
 
-        else if (data) {
-
-            currentProfile = {
-
-                ...data,
-
-                email:
-                    user.email || ""
-
-            };
-
-        }
-
-        else {
-
-            currentProfile = {
-
-                id: user.id,
-
-                institution_id: null,
-
-                full_name:
-                    user.email || "Benutzer",
-
-                phone: "",
-
-                role: "ADMIN",
-
-                email:
-                    user.email || ""
-
-            };
-
-        }
-
-
-        updateUserUI();
-
-        return currentProfile;
-
+        email: user.email || "",
+      };
     }
 
-    catch (error) {
+    updateUserUI();
 
-        console.error(
-            "Fehler in loadUserProfile():",
-            error
-        );
+    return currentProfile;
+  } catch (error) {
+    console.error("Fehler in loadUserProfile():", error);
 
-        currentProfile = null;
+    currentProfile = null;
 
-        return null;
-
-    }
-
+    return null;
+  }
 }
-
 
 /* ============================================================
    BENUTZER UI
    ============================================================ */
 
 function updateUserUI() {
+  if (!currentUser) {
+    showLogin();
 
-    if (!currentUser) {
+    return;
+  }
 
-        showLogin();
+  showDashboard();
 
-        return;
+  const emailElement = byId("userEmail");
 
-    }
+  const nameElement = byId("userName");
 
+  const profileName = byId("profileName");
 
-    showDashboard();
+  const profileEmail = byId("profileEmail");
 
+  const profileRole = byId("profileRole");
 
-    const emailElement =
-        byId("userEmail");
+  const institutionName = byId("institutionName");
 
-    const nameElement =
-        byId("userName");
+  const displayName =
+    currentProfile?.full_name || currentUser.email || "Benutzer";
 
-    const profileName =
-        byId("profileName");
+  safeText(emailElement, currentUser.email || "");
 
-    const profileEmail =
-        byId("profileEmail");
+  safeText(nameElement, displayName);
 
-    const profileRole =
-        byId("profileRole");
+  safeText(profileName, displayName);
 
-    const institutionName =
-        byId("institutionName");
+  safeText(profileEmail, currentUser.email || "");
 
+  safeText(profileRole, currentProfile?.role || "—");
 
-    const displayName =
-        currentProfile?.full_name ||
-        currentUser.email ||
-        "Benutzer";
+  safeText(institutionName, displayName);
 
-
-    safeText(
-        emailElement,
-        currentUser.email || ""
-    );
-
-    safeText(
-        nameElement,
-        displayName
-    );
-
-    safeText(
-        profileName,
-        displayName
-    );
-
-    safeText(
-        profileEmail,
-        currentUser.email || ""
-    );
-
-    safeText(
-        profileRole,
-        currentProfile?.role || "—"
-    );
-
-    safeText(
-        institutionName,
-        displayName
-    );
-
-
-    updateRoleUI();
-
+  updateRoleUI();
 }
-
 
 function updateRoleUI() {
+  const role = currentProfile?.role || "";
 
-    const role =
-        currentProfile?.role || "";
+  document.querySelectorAll("[data-role]").forEach((element) => {
+    const requiredRole = element.dataset.role;
 
-
-    document
-        .querySelectorAll("[data-role]")
-        .forEach(element => {
-
-            const requiredRole =
-                element.dataset.role;
-
-            element.style.display =
-                requiredRole === role
-                    ? ""
-                    : "none";
-
-        });
-
+    element.style.display = requiredRole === role ? "" : "none";
+  });
 }
-
 
 function canManageChildren() {
+  const role = currentProfile?.role;
 
-    const role =
-        currentProfile?.role;
-
-    return (
-        role === "ADMIN" ||
-        role === "ERZIEHER"
-    );
-
+  return role === "ADMIN" || role === "ERZIEHER";
 }
-
 
 /* ============================================================
    LOGOUT
    ============================================================ */
 
 async function logout() {
+  if (!supabaseClient) {
+    return;
+  }
 
-    if (!supabaseClient) {
-        return;
-    }
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (error) {
+    console.error("Logout fehlgeschlagen:", error);
+  }
 
+  currentUser = null;
+  currentProfile = null;
 
-    try {
+  currentChildren = [];
+  currentGroups = [];
 
-        await supabaseClient.auth.signOut();
+  currentQuestions = [];
+  currentAnswers = {};
 
-    }
+  currentAge = null;
+  currentChildId = null;
 
-    catch (error) {
-
-        console.error(
-            "Logout fehlgeschlagen:",
-            error
-        );
-
-    }
-
-
-    currentUser = null;
-    currentProfile = null;
-
-    currentChildren = [];
-    currentGroups = [];
-
-    currentQuestions = [];
-    currentAnswers = {};
-
-    currentAge = null;
-    currentChildId = null;
-
-    showLogin();
-
+  showLogin();
 }
-
 
 /* ============================================================
    LOGIN
    ============================================================ */
 
 async function handleLogin(event) {
+  event.preventDefault();
 
-    event.preventDefault();
+  if (!supabaseClient) {
+    return;
+  }
 
+  const emailInput = byId("loginEmail");
 
-    if (!supabaseClient) {
-        return;
-    }
+  const passwordInput = byId("loginPassword");
 
+  const message = byId("loginMessage");
 
-    const emailInput =
-        byId("loginEmail");
+  const email = emailInput?.value?.trim() || "";
 
-    const passwordInput =
-        byId("loginPassword");
+  const password = passwordInput?.value || "";
 
-    const message =
-        byId("loginMessage");
+  if (!email || !password) {
+    safeText(message, "Bitte E-Mail und Passwort eingeben.");
 
+    return;
+  }
 
-    const email =
-        emailInput?.value?.trim() || "";
+  safeText(message, "Anmeldung läuft...");
 
-    const password =
-        passwordInput?.value || "";
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password,
+  });
 
+  if (error) {
+    console.error("Login fehlgeschlagen:", error);
 
-    if (!email || !password) {
+    safeText(message, error.message);
 
-        safeText(
-            message,
-            "Bitte E-Mail und Passwort eingeben."
-        );
+    return;
+  }
 
-        return;
+  currentUser = data.user;
 
-    }
+  await loadUserProfile();
 
+  safeText(message, "");
 
-    safeText(
-        message,
-        "Anmeldung läuft..."
-    );
+  showDashboard();
 
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient.auth
-            .signInWithPassword({
-
-                email,
-                password
-
-            });
-
-
-    if (error) {
-
-        console.error(
-            "Login fehlgeschlagen:",
-            error
-        );
-
-        safeText(
-            message,
-            error.message
-        );
-
-        return;
-
-    }
-
-
-    currentUser =
-        data.user;
-
-
-    await loadUserProfile();
-
-
-    safeText(
-        message,
-        ""
-    );
-
-
-    showDashboard();
-
-
-    await initializeApplication();
-
+  await initializeApplication();
 }
 
 /* ============================================================
@@ -762,137 +480,74 @@ async function handleLogin(event) {
    ============================================================ */
 
 async function handleRegister(event) {
+  event.preventDefault();
 
-    event.preventDefault();
+  if (!supabaseClient) {
+    return;
+  }
 
+  const email = byId("registerEmail")?.value?.trim() || "";
 
-    if (!supabaseClient) {
-        return;
-    }
+  const password = byId("registerPassword")?.value || "";
 
+  const firstName = byId("registerFirstName")?.value?.trim() || "";
 
-    const email =
-        byId("registerEmail")
-            ?.value
-            ?.trim() || "";
+  const lastName = byId("registerLastName")?.value?.trim() || "";
 
-    const password =
-        byId("registerPassword")
-            ?.value || "";
+  const message = byId("registerMessage");
 
-    const firstName =
-        byId("registerFirstName")
-            ?.value
-            ?.trim() || "";
-
-    const lastName =
-        byId("registerLastName")
-            ?.value
-            ?.trim() || "";
-
-    const message =
-        byId("registerMessage");
-
-
-    if (!email || !password) {
-
-        safeText(
-            message,
-            "Bitte E-Mail und Passwort eingeben."
-        );
-
-        return;
-
-    }
-
-
-    const fullName =
-        `${firstName} ${lastName}`.trim();
-
-
-    safeText(
-        message,
-        "Registrierung läuft..."
-    );
-
-const institutionId =
-    byId("registerInstitution")
-        ?.value
-        ?.trim() || "";
-
-if (!institutionId) {
-
-    safeText(
-        message,
-        "Bitte eine Institution auswählen."
-    );
+  if (!email || !password) {
+    safeText(message, "Bitte E-Mail und Passwort eingeben.");
 
     return;
-}
-    const {
-        data,
-        error
-    } =
-        await supabaseClient.auth.signUp({
+  }
 
-            email,
+  const fullName = `${firstName} ${lastName}`.trim();
 
-            password,
+  safeText(message, "Registrierung läuft...");
 
-            options: {
+  const institutionId = byId("registerInstitution")?.value?.trim() || "";
 
-                data: {
+  if (!institutionId) {
+    safeText(message, "Bitte eine Institution auswählen.");
 
-                    full_name: fullName,
-                    institution_id: institutionId
+    return;
+  }
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
 
-                }
+    password,
 
-            }
+    options: {
+      data: {
+        full_name: fullName,
+        institution_id: institutionId,
+      },
+    },
+  });
 
-        });
+  if (error) {
+    console.error("Registrierung fehlgeschlagen:", error);
 
+    safeText(message, error.message);
 
-    if (error) {
+    return;
+  }
 
-        console.error(
-            "Registrierung fehlgeschlagen:",
-            error
-        );
+  /*
+   * WICHTIG:
+   *
+   * Der Supabase-Trigger "on_auth_user_created"
+   * erstellt automatisch den Eintrag in "profiles".
+   *
+   * Deshalb hier KEIN .insert() und KEIN .update().
+   */
 
-        safeText(
-            message,
-            error.message
-        );
+  safeText(message, "Registrierung erfolgreich. Bitte überprüfe deine E-Mail.");
 
-        return;
-
-    }
-
-
-    /*
-     * WICHTIG:
-     *
-     * Der Supabase-Trigger "on_auth_user_created"
-     * erstellt automatisch den Eintrag in "profiles".
-     *
-     * Deshalb hier KEIN .insert() und KEIN .update().
-     */
-
-
-    safeText(
-        message,
-        "Registrierung erfolgreich. Bitte überprüfe deine E-Mail."
-    );
-
-
-    if (data?.user) {
-
-        currentUser =
-            data.user;
-
-    }
-
+  if (data?.user) {
+    currentUser = data.user;
+  }
 }
 
 /* ============================================================
@@ -900,23 +555,20 @@ if (!institutionId) {
    ============================================================ */
 
 async function loadPendingUsers() {
+  if (!supabaseClient) {
+    return;
+  }
 
-    if (!supabaseClient) {
-        return;
-    }
+  const container = byId("pendingUsersList");
 
-    const container =
-        byId("pendingUsersList");
+  if (!container) {
+    return;
+  }
 
-    if (!container) {
-        return;
-    }
-
-
-    const { data, error } =
-        await supabaseClient
-            .from("profiles")
-            .select(`
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select(
+      `
                 id,
                 full_name,
                 email,
@@ -924,55 +576,35 @@ async function loadPendingUsers() {
                 institution_id,
                 created_at,
                 approval_status
-            `)
-            .eq(
-                "approval_status",
-                "pending"
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
+            `,
+    )
+    .eq("approval_status", "pending")
+    .order("created_at", {
+      ascending: false,
+    });
 
+  if (error) {
+    console.error("Offene User konnten nicht geladen werden:", error);
 
-    if (error) {
+    container.innerHTML = "<p>Fehler beim Laden der Benutzer.</p>";
 
-        console.error(
-            "Offene User konnten nicht geladen werden:",
-            error
-        );
+    return;
+  }
 
-        container.innerHTML =
-            "<p>Fehler beim Laden der Benutzer.</p>";
+  container.innerHTML = "";
 
-        return;
-    }
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>Keine offenen Freigaben.</p>";
 
+    return;
+  }
 
-    container.innerHTML = "";
+  data.forEach((user) => {
+    const userElement = document.createElement("div");
 
+    userElement.className = "pending-user";
 
-    if (!data || data.length === 0) {
-
-        container.innerHTML =
-            "<p>Keine offenen Freigaben.</p>";
-
-        return;
-    }
-
-
-    data.forEach(user => {
-
-        const userElement =
-            document.createElement("div");
-
-        userElement.className =
-            "pending-user";
-
-
-        userElement.innerHTML = `
+    userElement.innerHTML = `
     <div class="pending-user-info">
 
         <strong>
@@ -1030,13 +662,8 @@ async function loadPendingUsers() {
     </div>
 `;
 
-
-        container.appendChild(
-            userElement
-        );
-
-    });
-
+    container.appendChild(userElement);
+  });
 }
 loadPendingUsers();
 
@@ -1044,76 +671,55 @@ loadPendingUsers();
    ADMINISTRATION – USER ANNEHMEN
    ============================================================ */
 async function approveUser(userId) {
+  const roleSelect = document.getElementById(`role-${userId}`);
 
-    const roleSelect =
-        document.getElementById(`role-${userId}`);
+  if (!roleSelect) {
+    console.error("Rollen-Auswahl nicht gefunden:", userId);
+    return;
+  }
 
-    if (!roleSelect) {
-        console.error(
-            "Rollen-Auswahl nicht gefunden:",
-            userId
-        );
-        return;
-    }
+  const selectedRole = roleSelect.value;
 
-    const selectedRole =
-        roleSelect.value;
+  console.log("User wird freigegeben:", userId, "Rolle:", selectedRole);
 
-    console.log(
-        "User wird freigegeben:",
-        userId,
-        "Rolle:",
-        selectedRole
-    );
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({
+      role: selectedRole,
+      approval_status: "approved",
+      approved_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
 
-    const { error } =
-        await supabaseClient
-            .from("profiles")
-            .update({
-                role: selectedRole,
-                approval_status: "approved",
-                approved_at: new Date().toISOString()
-            })
-            .eq("id", userId);
+  if (error) {
+    console.error("Benutzer konnte nicht freigegeben werden:", error);
 
-    if (error) {
+    alert(`Fehler: ${error.message}`);
 
-        console.error(
-            "Benutzer konnte nicht freigegeben werden:",
-            error
-        );
+    return;
+  }
 
-        alert(
-            `Fehler: ${error.message}`
-        );
-
-        return;
-    }
-
-    await loadPendingUsers();
+  await loadPendingUsers();
 }
 
 async function changeUserRole(userId) {
-    const roleSelect =
-        document.getElementById(`role-${userId}`);
+  const roleSelect = document.getElementById(`role-${userId}`);
 
-    const newRole =
-        roleSelect.value;
+  const newRole = roleSelect.value;
 
-    const { error } =
-        await supabaseClient
-            .from("profiles")
-            .update({
-                role: newRole
-            })
-            .eq("id", userId);
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({
+      role: newRole,
+    })
+    .eq("id", userId);
 
-    if (error) {
-        console.error("Rolle konnte nicht geändert werden:", error);
-        return;
-    }
+  if (error) {
+    console.error("Rolle konnte nicht geändert werden:", error);
+    return;
+  }
 
-    console.log("Rolle geändert:", newRole);
+  console.log("Rolle geändert:", newRole);
 }
 
 /* ============================================================
@@ -1121,177 +727,91 @@ async function changeUserRole(userId) {
    ============================================================ */
 
 function setupNavigation() {
+  const navigationButtons = document.querySelectorAll("[data-section]");
 
-    const navigationButtons =
-        document.querySelectorAll(
-            "[data-section]"
-        );
+  navigationButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const sectionName = button.dataset.section;
 
+      if (!sectionName) {
+        return;
+      }
 
-    navigationButtons.forEach(
-        button => {
+      openSection(sectionName);
 
-            button.addEventListener(
-                "click",
-                async () => {
+      if (sectionName === "children") {
+        await loadGroups();
+        await loadChildren();
+      }
 
-                    const sectionName =
-                        button.dataset.section;
+      if (sectionName === "groups") {
+        await loadGroups();
+      }
 
+      if (sectionName === "development") {
+        await openDevelopmentSection();
+      }
 
-                    if (!sectionName) {
-                        return;
-                    }
-
-
-                    openSection(
-                        sectionName
-                    );
-
-
-                   if (sectionName === "children") {
-    await loadGroups();
-    await loadChildren();
+      if (sectionName === "dashboard") {
+        await updateDashboardCounts();
+      }
+    });
+  });
 }
-
-                    
-
-
-                    if (
-                        sectionName ===
-                        "groups"
-                    ) {
-
-                        await loadGroups();
-
-                    }
-
-
-                    if (
-                        sectionName ===
-                        "development"
-                    ) {
-
-                        await openDevelopmentSection();
-
-                    }
-
-
-                    if (
-                        sectionName ===
-                        "dashboard"
-                    ) {
-
-                        await updateDashboardCounts();
-
-                    }
-
-                }
-            );
-
-        }
-    );
-
-}
-
 
 function openSection(sectionName) {
+  document.querySelectorAll("[data-section]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.section === sectionName);
+  });
 
-    document
-        .querySelectorAll(
-            "[data-section]"
-        )
-        .forEach(button => {
+  const sections = document.querySelectorAll("[data-section-content]");
 
-            button.classList.toggle(
-                "active",
-                button.dataset.section ===
-                sectionName
-            );
+  let found = false;
 
-        });
+  sections.forEach((section) => {
+    const matches = section.dataset.sectionContent === sectionName;
 
-
-    const sections =
-        document.querySelectorAll(
-            "[data-section-content]"
-        );
-
-
-    let found = false;
-
-
-sections.forEach(section => {
-
-    const matches =
-        section.dataset.sectionContent ===
-        sectionName;
-
-    section.classList.toggle(
-        "active",
-        matches
-    );
+    section.classList.toggle("active", matches);
 
     if (matches) {
-        found = true;
+      found = true;
     }
+  });
 
-});
+  if (sectionName === "development") {
+    const development = ensureDevelopmentSection();
 
+    if (development) {
+      development.style.display = "";
 
-    if (
-        sectionName ===
-        "development"
-    ) {
-
-        const development =
-            ensureDevelopmentSection();
-
-
-        if (development) {
-
-            development.style.display =
-                "";
-
-            found = true;
-
-        }
-
+      found = true;
     }
+  }
 
-
-    if (!found) {
-
-        console.warn(
-            "Section nicht gefunden:",
-            sectionName
-        );
-
-    }
-
+  if (!found) {
+    console.warn("Section nicht gefunden:", sectionName);
+  }
 }
-
 
 /* ============================================================
    KINDER
    ============================================================ */
 
 async function loadChildren() {
-    if (!supabaseClient || !currentUser) {
-        return [];
-    }
+  if (!supabaseClient || !currentUser) {
+    return [];
+  }
 
-    const childrenList =
-        byId("childrenList");
+  const childrenList = byId("childrenList");
 
-    if (childrenList) {
-        childrenList.innerHTML =
-            "<p>Kinder werden geladen...</p>";
-    }
+  if (childrenList) {
+    childrenList.innerHTML = "<p>Kinder werden geladen...</p>";
+  }
 
-    let query = supabaseClient
-        .from("children")
-        .select(`
+  let query = supabaseClient
+    .from("children")
+    .select(
+      `
             id,
             child_code,
             birth_date,
@@ -1303,92 +823,73 @@ async function loadChildren() {
                 group_name,
                 institution_id
             )
-        `)
-        .order("child_code", {
-            ascending: true
-        });
+        `,
+    )
+    .order("child_code", {
+      ascending: true,
+    });
 
-    if (currentProfile?.institution_id) {
-        query = query.eq(
-            "institution_id",
-            currentProfile.institution_id
-        );
-    }
+  if (currentProfile?.institution_id) {
+    query = query.eq("institution_id", currentProfile.institution_id);
+  }
 
-    const {
-        data,
-        error
-    } = await query;
+  const { data, error } = await query;
 
-    if (error) {
-        console.error(
-            "Kinder konnten nicht geladen werden:",
-            error
-        );
+  if (error) {
+    console.error("Kinder konnten nicht geladen werden:", error);
 
-        if (childrenList) {
-            childrenList.innerHTML = `
+    if (childrenList) {
+      childrenList.innerHTML = `
                 <p style="color:red;">
                     Kinder konnten nicht geladen werden.<br>
                     ${escapeHtml(error.message)}
                 </p>
             `;
-        }
-
-        return [];
     }
 
-    currentChildren = data || [];
+    return [];
+  }
 
-    renderChildrenList(
-        currentChildren
-    );
+  currentChildren = data || [];
 
-    updateChildrenCount(
-        currentChildren.length
-    );
+  renderChildrenList(currentChildren);
 
-    return currentChildren;
+  updateChildrenCount(currentChildren.length);
+
+  return currentChildren;
 }
 
-
 function renderChildrenList(children) {
-    const childrenList = byId("childrenList");
+  const childrenList = byId("childrenList");
 
-    if (!childrenList) {
-        return;
-    }
+  if (!childrenList) {
+    return;
+  }
 
-    if (!children || children.length === 0) {
-        childrenList.innerHTML = `
+  if (!children || children.length === 0) {
+    childrenList.innerHTML = `
             <p>Noch keine Kinder angelegt.</p>
         `;
-        return;
-    }
+    return;
+  }
 
-    childrenList.innerHTML = "";
+  childrenList.innerHTML = "";
 
-    children.forEach(child => {
-        const item = document.createElement("div");
+  children.forEach((child) => {
+    const item = document.createElement("div");
 
-        item.className = "child-item";
+    item.className = "child-item";
 
-        const groupName =
-            child.Groups?.group_name || "Keine Gruppe";
+    const groupName = child.Groups?.group_name || "Keine Gruppe";
 
-        const birthDate =
-            child.birth_date
-                ? new Date(
-                    `${child.birth_date}T00:00:00`
-                ).toLocaleDateString("de-DE")
-                : "Kein Geburtsdatum";
+    const birthDate = child.birth_date
+      ? new Date(`${child.birth_date}T00:00:00`).toLocaleDateString("de-DE")
+      : "Kein Geburtsdatum";
 
-        item.innerHTML = `
+    item.innerHTML = `
             <div>
                 <strong class="child-code">
-                    ${escapeHtml(
-                        child.child_code || "Keine Kinder-ID"
-                    )}
+                    ${escapeHtml(child.child_code || "Keine Kinder-ID")}
                 </strong>
 
                 <br>
@@ -1441,216 +942,144 @@ function renderChildrenList(children) {
             </div>
         `;
 
-        childrenList.appendChild(item);
+    childrenList.appendChild(item);
+  });
+
+  childrenList.querySelectorAll("[data-edit-child]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openEditChildModal(button.dataset.editChild);
     });
+  });
 
-    childrenList
-        .querySelectorAll("[data-edit-child]")
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => {
-                    openEditChildModal(
-                        button.dataset.editChild
-                    );
-                }
-            );
-        });
+  childrenList.querySelectorAll("[data-delete-child]").forEach((button) => {
+    button.addEventListener("click", () => {
+      deleteChild(button.dataset.deleteChild);
+    });
+  });
 
-    childrenList
-        .querySelectorAll("[data-delete-child]")
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => {
-                    deleteChild(
-                        button.dataset.deleteChild
-                    );
-                }
-            );
-        });
-
-        childrenList
+  childrenList
     .querySelectorAll("[data-child-appointments]")
-    .forEach(button => {
-        button.addEventListener(
-            "click",
-            () => {
-                openChildAppointments(
-                    button.dataset.childAppointments
-                );
-            }
-        );
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        openChildAppointments(button.dataset.childAppointments);
+      });
     });
 }
 
 async function loadInstitutions() {
+  console.log("LOAD INSTITUTIONS GESTARTET");
 
-    console.log(
-        "LOAD INSTITUTIONS GESTARTET"
+  const select = byId("registerInstitution");
+
+  if (!select) {
+    console.error("registerInstitution wurde nicht gefunden!");
+
+    return;
+  }
+
+  if (!supabaseClient) {
+    console.error("Supabase Client fehlt!");
+
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("institutions")
+    .select("institution_id, institution_name")
+    .order("institution_name", {
+      ascending: true,
+    });
+
+  console.log("INSTITUTION DATA:", data);
+
+  console.log("INSTITUTION ERROR:", error);
+
+  if (error) {
+    console.error(
+      "Institutionen konnten nicht geladen werden:",
+      JSON.stringify(error, null, 2),
     );
 
-    const select =
-        byId("registerInstitution");
-
-    if (!select) {
-
-        console.error(
-            "registerInstitution wurde nicht gefunden!"
-        );
-
-        return;
-    }
-
-    if (!supabaseClient) {
-
-        console.error(
-            "Supabase Client fehlt!"
-        );
-
-        return;
-    }
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("institutions")
-            .select(
-                "institution_id, institution_name"
-            )
-            .order(
-                "institution_name",
-                {
-                    ascending: true
-                }
-            );
-
-    console.log(
-        "INSTITUTION DATA:",
-        data
-    );
-
-    console.log(
-        "INSTITUTION ERROR:",
-        error
-    );
-
-    if (error) {
-
-        console.error(
-    "Institutionen konnten nicht geladen werden:",
-    JSON.stringify(error, null, 2)
-);
-
-        select.innerHTML =
-            `<option value="">
+    select.innerHTML = `<option value="">
                 Fehler beim Laden der Institutionen
             </option>`;
 
-        return;
-    }
+    return;
+  }
 
-    select.innerHTML = `
+  select.innerHTML = `
         <option value="">
             Institution auswählen...
         </option>
     `;
 
-    (data || []).forEach(
-        institution => {
+  (data || []).forEach((institution) => {
+    const option = document.createElement("option");
 
-            const option =
-                document.createElement(
-                    "option"
-                );
+    option.value = institution.institution_id;
 
-            option.value =
-                institution.institution_id;
+    option.textContent = institution.institution_name;
 
-            option.textContent =
-                institution.institution_name;
+    select.appendChild(option);
+  });
 
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-    console.log(
-        "Institutionen im Dropdown:",
-        select.options.length
-    );
+  console.log("Institutionen im Dropdown:", select.options.length);
 }
 
-
-
 async function openEditChildModal(childId) {
-    const child = currentChildren.find(
-        item =>
-            String(item.id) === String(childId)
-    );
+  const child = currentChildren.find(
+    (item) => String(item.id) === String(childId),
+  );
 
-    if (!child) {
-        return;
-    }
+  if (!child) {
+    return;
+  }
 
-    const institutions =
-        await loadInstitutions();
+  const institutions = await loadInstitutions();
 
-    const modal =
-        document.createElement("div");
+  const modal = document.createElement("div");
 
-    modal.className = "modal";
-    modal.id = "editChildModal";
+  modal.className = "modal";
+  modal.id = "editChildModal";
 
-    const groupOptions =
-        currentGroups
-            .map(group => `
+  const groupOptions = currentGroups
+    .map(
+      (group) => `
                 <option
                     value="${escapeHtml(group.id)}"
                     ${
-                        String(group.id) ===
-                        String(child.group_id)
-                            ? "selected"
-                            : ""
+                      String(group.id) === String(child.group_id)
+                        ? "selected"
+                        : ""
                     }
                 >
-                    ${escapeHtml(
-                        group.group_name ||
-                        "Unbenannte Gruppe"
-                    )}
+                    ${escapeHtml(group.group_name || "Unbenannte Gruppe")}
                 </option>
-            `)
-            .join("");
+            `,
+    )
+    .join("");
 
-    const institutionOptions =
-        institutions
-            .map(institution => `
+  const institutionOptions = institutions
+    .map(
+      (institution) => `
                 <option
-                    value="${escapeHtml(
-                        institution.institution_id
-                    )}"
+                    value="${escapeHtml(institution.institution_id)}"
                     ${
-                        String(
-                            institution.institution_id
-                        ) ===
-                        String(child.institution_id)
-                            ? "selected"
-                            : ""
+                      String(institution.institution_id) ===
+                      String(child.institution_id)
+                        ? "selected"
+                        : ""
                     }
                 >
                     ${escapeHtml(
-                        institution.institution_name ||
-                        "Unbenannte Institution"
+                      institution.institution_name || "Unbenannte Institution",
                     )}
                 </option>
-            `)
-            .join("");
+            `,
+    )
+    .join("");
 
-    modal.innerHTML = `
+  modal.innerHTML = `
         <div class="modal-content">
 
             <div class="modal-header">
@@ -1673,9 +1102,7 @@ async function openEditChildModal(childId) {
                 <input
                     type="text"
                     id="editChildCode"
-                    value="${escapeHtml(
-                        child.child_code || ""
-                    )}"
+                    value="${escapeHtml(child.child_code || "")}"
                     required
                 >
             </div>
@@ -1688,9 +1115,7 @@ async function openEditChildModal(childId) {
                 <input
                     type="date"
                     id="editChildBirthDate"
-                    value="${escapeHtml(
-                        child.birth_date || ""
-                    )}"
+                    value="${escapeHtml(child.birth_date || "")}"
                     required
                 >
             </div>
@@ -1745,519 +1170,372 @@ async function openEditChildModal(childId) {
         </div>
     `;
 
-    document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-    const closeModal = () => {
-        modal.remove();
-    };
+  const closeModal = () => {
+    modal.remove();
+  };
 
-    byId("closeEditChildModal")
-        ?.addEventListener("click", closeModal);
+  byId("closeEditChildModal")?.addEventListener("click", closeModal);
 
-    byId("cancelEditChild")
-        ?.addEventListener("click", closeModal);
+  byId("cancelEditChild")?.addEventListener("click", closeModal);
 
-    byId("saveEditedChild")
-        ?.addEventListener(
-            "click",
-            () => saveEditedChild(child.id, modal)
-        );
+  byId("saveEditedChild")?.addEventListener("click", () =>
+    saveEditedChild(child.id, modal),
+  );
 }
-
 
 async function saveEditedChild(childId, modal) {
-    const childCode =
-        byId("editChildCode")
-            ?.value
-            ?.trim() || "";
+  const childCode = byId("editChildCode")?.value?.trim() || "";
 
-    const birthDate =
-        byId("editChildBirthDate")
-            ?.value || "";
+  const birthDate = byId("editChildBirthDate")?.value || "";
 
-    const groupId =
-        byId("editChildGroup")
-            ?.value || "";
+  const groupId = byId("editChildGroup")?.value || "";
 
-    const institutionId =
-        byId("editChildInstitution")
-            ?.value || null;
+  const institutionId = byId("editChildInstitution")?.value || null;
 
-    const message =
-        byId("editChildMessage");
+  const message = byId("editChildMessage");
 
-    if (!childCode || !birthDate || !groupId) {
-        safeText(
-            message,
-            "Bitte Kinder-ID, Geburtsdatum und Gruppe ausfüllen."
-        );
+  if (!childCode || !birthDate || !groupId) {
+    safeText(message, "Bitte Kinder-ID, Geburtsdatum und Gruppe ausfüllen.");
 
-        message?.classList.add("show", "error");
+    message?.classList.add("show", "error");
 
-        return;
-    }
+    return;
+  }
 
-    const saveButton =
-        byId("saveEditedChild");
+  const saveButton = byId("saveEditedChild");
+
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Wird gespeichert...";
+  }
+
+  const { error } = await supabaseClient
+    .from("children")
+    .update({
+      child_code: childCode,
+      birth_date: birthDate,
+      group_id: Number(groupId),
+      institution_id: institutionId,
+    })
+    .eq("id", childId);
+
+  if (error) {
+    console.error("Kind konnte nicht aktualisiert werden:", error);
+
+    safeText(
+      message,
+      `Kind konnte nicht aktualisiert werden: ${error.message}`,
+    );
+
+    message?.classList.add("show", "error");
 
     if (saveButton) {
-        saveButton.disabled = true;
-        saveButton.textContent = "Wird gespeichert...";
+      saveButton.disabled = false;
+      saveButton.textContent = "Änderungen speichern";
     }
 
-    const {
-        error
-    } = await supabaseClient
-        .from("children")
-        .update({
-            child_code: childCode,
-            birth_date: birthDate,
-            group_id: Number(groupId),
-            institution_id: institutionId
-        })
-        .eq("id", childId);
+    return;
+  }
 
-    if (error) {
-        console.error(
-            "Kind konnte nicht aktualisiert werden:",
-            error
-        );
+  modal.remove();
 
-        safeText(
-            message,
-            `Kind konnte nicht aktualisiert werden: ${
-                error.message
-            }`
-        );
-
-        message?.classList.add("show", "error");
-
-        if (saveButton) {
-            saveButton.disabled = false;
-            saveButton.textContent =
-                "Änderungen speichern";
-        }
-
-        return;
-    }
-
-    modal.remove();
-
-    await loadChildren();
+  await loadChildren();
 }
-
 
 async function deleteChild(childId) {
-    const child =
-        currentChildren.find(
-            item =>
-                String(item.id) === String(childId)
-        );
+  const child = currentChildren.find(
+    (item) => String(item.id) === String(childId),
+  );
 
-    const childCode =
-        child?.child_code || "dieses Kind";
+  const childCode = child?.child_code || "dieses Kind";
 
-    const confirmed =
-        window.confirm(
-            `Soll ${childCode} wirklich gelöscht werden?`
-        );
+  const confirmed = window.confirm(
+    `Soll ${childCode} wirklich gelöscht werden?`,
+  );
 
-    if (!confirmed) {
-        return;
-    }
+  if (!confirmed) {
+    return;
+  }
 
-    const {
-        error
-    } = await supabaseClient
-        .from("children")
-        .delete()
-        .eq("id", childId);
+  const { error } = await supabaseClient
+    .from("children")
+    .delete()
+    .eq("id", childId);
 
-    if (error) {
-        console.error(
-            "Kind konnte nicht gelöscht werden:",
-            error
-        );
+  if (error) {
+    console.error("Kind konnte nicht gelöscht werden:", error);
 
-        alert(
-            `Kind konnte nicht gelöscht werden: ${
-                error.message
-            }`
-        );
+    alert(`Kind konnte nicht gelöscht werden: ${error.message}`);
 
-        return;
-    }
+    return;
+  }
 
-    if (
-        String(currentChildId) === String(childId)
-    ) {
-        currentChildId = null;
-        currentAnswers = {};
-        currentQuestions = [];
-    }
+  if (String(currentChildId) === String(childId)) {
+    currentChildId = null;
+    currentAnswers = {};
+    currentQuestions = [];
+  }
 
-    await loadChildren();
+  await loadChildren();
 }
-
 
 /* ============================================================
    GRUPPEN
    ============================================================ */
 
 function populateChildGroupSelect(groups) {
-    const select = document.getElementById("newChildGroup");
+  const select = document.getElementById("newChildGroup");
 
-    if (!select) {
-        console.error(
-            "Dropdown #newChildGroup wurde nicht gefunden."
-        );
-        return;
-    }
+  if (!select) {
+    console.error("Dropdown #newChildGroup wurde nicht gefunden.");
+    return;
+  }
 
-    console.log("Gruppen für Dropdown:", groups);
+  console.log("Gruppen für Dropdown:", groups);
 
-    select.innerHTML = "";
+  select.innerHTML = "";
 
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = "Gruppe auswählen...";
-    select.appendChild(placeholder);
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Gruppe auswählen...";
+  select.appendChild(placeholder);
 
-    if (!Array.isArray(groups) || groups.length === 0) {
-        const emptyOption = document.createElement("option");
-        emptyOption.value = "";
-        emptyOption.disabled = true;
-        emptyOption.textContent = "Keine Gruppen vorhanden";
-        select.appendChild(emptyOption);
+  if (!Array.isArray(groups) || groups.length === 0) {
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.disabled = true;
+    emptyOption.textContent = "Keine Gruppen vorhanden";
+    select.appendChild(emptyOption);
 
-        return;
-    }
+    return;
+  }
 
-    groups.forEach(group => {
-        const option = document.createElement("option");
+  groups.forEach((group) => {
+    const option = document.createElement("option");
 
-        option.value = String(group.id);
+    option.value = String(group.id);
 
-        // Prüft mehrere mögliche Spaltennamen
-        option.textContent =
-            group.group_name ||
-            group.name ||
-            group.title ||
-            "Unbenannte Gruppe";
+    // Prüft mehrere mögliche Spaltennamen
+    option.textContent =
+      group.group_name || group.name || group.title || "Unbenannte Gruppe";
 
-        select.appendChild(option);
-    });
+    select.appendChild(option);
+  });
 
-    console.log(
-        "Dropdown-Optionen:",
-        select.options.length
-    );
+  console.log("Dropdown-Optionen:", select.options.length);
 }
 
-
 async function loadGroups() {
-    if (!supabaseClient || !currentUser) {
-        return [];
-    }
+  if (!supabaseClient || !currentUser) {
+    return [];
+  }
 
-    
-
-let query = supabaseClient
+  let query = supabaseClient
     .from("Groups")
-    .select(`
+    .select(
+      `
         id,
         group_name,
         description,
         institution_id
-    `)
+    `,
+    )
     .order("group_name", {
-        ascending: true
+      ascending: true,
     });
 
-    if (currentProfile?.institution_id) {
-        query = query.eq(
-            "institution_id",
-            currentProfile.institution_id
-        );
-    }
+  if (currentProfile?.institution_id) {
+    query = query.eq("institution_id", currentProfile.institution_id);
+  }
 
-    const {
-        data,
-        error
-    } = await query;
+  const { data, error } = await query;
 
+  console.log("Gruppen-Abfrage:", {
+    data,
+    error,
+    currentProfile,
+  });
 
-    console.log("Gruppen-Abfrage:", {
-        data,
-        error,
-        currentProfile
-    });
+  if (error) {
+    console.error("Gruppen konnten nicht geladen werden:", error);
 
-    if (error) {
-        console.error(
-            "Gruppen konnten nicht geladen werden:",
-            error
-        );
+    currentGroups = [];
+    populateChildGroupSelect([]);
 
-        currentGroups = [];
-        populateChildGroupSelect([]);
+    return [];
+  }
 
-        return [];
-    }
+  currentGroups = data || [];
 
-    currentGroups = data || [];
+  renderGroups(currentGroups);
+  populateChildGroupSelect(currentGroups);
+  updateGroupsCount(currentGroups.length);
 
-    renderGroups(currentGroups);
-    populateChildGroupSelect(currentGroups);
-    updateGroupsCount(currentGroups.length);
-
-    return currentGroups;
+  return currentGroups;
 }
 
 async function createGroup() {
+  const nameInput = byId("newGroupName");
 
-    const nameInput =
-        byId("newGroupName");
+  const descriptionInput = byId("newGroupDescription");
 
-    const descriptionInput =
-        byId("newGroupDescription");
+  const message = byId("groupMessage");
 
-    const message =
-        byId("groupMessage");
+  const saveButton = byId("createGroupButton");
 
-    const saveButton =
-        byId("createGroupButton");
+  const groupName = nameInput?.value?.trim() || "";
 
-    const groupName =
-        nameInput?.value?.trim() || "";
+  const description = descriptionInput?.value?.trim() || "";
 
-    const description =
-        descriptionInput?.value?.trim() || "";
+  if (!groupName) {
+    safeText(message, "Bitte einen Gruppennamen eingeben.");
 
-    if (!groupName) {
+    message?.classList.add("show", "error");
 
-        safeText(
-            message,
-            "Bitte einen Gruppennamen eingeben."
-        );
+    return;
+  }
 
-        message?.classList.add(
-            "show",
-            "error"
-        );
+  if (!currentUser) {
+    safeText(message, "Du bist nicht angemeldet.");
 
-        return;
-    }
+    message?.classList.add("show", "error");
 
-    if (!currentUser) {
+    return;
+  }
 
-        safeText(
-            message,
-            "Du bist nicht angemeldet."
-        );
+  if (!currentProfile?.institution_id) {
+    safeText(message, "Deinem Benutzer ist keine Einrichtung zugeordnet.");
 
-        message?.classList.add(
-            "show",
-            "error"
-        );
+    message?.classList.add("show", "error");
 
-        return;
-    }
+    return;
+  }
 
-    if (!currentProfile?.institution_id) {
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Wird gespeichert...";
+  }
 
-        safeText(
-            message,
-            "Deinem Benutzer ist keine Einrichtung zugeordnet."
-        );
+  const { data, error } = await supabaseClient
+    .from("Groups")
+    .insert({
+      group_name: groupName,
+      description: description || null,
+      institution_id: currentProfile.institution_id,
+    })
+    .select()
+    .single();
 
-        message?.classList.add(
-            "show",
-            "error"
-        );
-
-        return;
-    }
-
-    if (saveButton) {
-        saveButton.disabled = true;
-        saveButton.textContent =
-            "Wird gespeichert...";
-    }
-
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("Groups")
-        .insert({
-            group_name: groupName,
-            description: description || null,
-            institution_id:
-                currentProfile.institution_id
-        })
-        .select()
-        .single();
-
-    if (error) {
-
-        console.error(
-            "Gruppe konnte nicht gespeichert werden:",
-            error
-        );
-
-        safeText(
-            message,
-            `Gruppe konnte nicht gespeichert werden: ${error.message}`
-        );
-
-        message?.classList.add(
-            "show",
-            "error"
-        );
-
-        if (saveButton) {
-            saveButton.disabled = false;
-            saveButton.textContent =
-                "Gruppe speichern";
-        }
-
-        return;
-    }
-
-    console.log(
-        "Gruppe erfolgreich gespeichert:",
-        data
-    );
+  if (error) {
+    console.error("Gruppe konnte nicht gespeichert werden:", error);
 
     safeText(
-        message,
-        "Gruppe wurde erfolgreich gespeichert."
+      message,
+      `Gruppe konnte nicht gespeichert werden: ${error.message}`,
     );
 
-    message?.classList.add(
-        "show",
-        "success"
-    );
-
-    if (nameInput) {
-        nameInput.value = "";
-    }
-
-    if (descriptionInput) {
-        descriptionInput.value = "";
-    }
-
-    await loadGroups();
+    message?.classList.add("show", "error");
 
     if (saveButton) {
-        saveButton.disabled = false;
-        saveButton.textContent =
-            "Gruppe speichern";
+      saveButton.disabled = false;
+      saveButton.textContent = "Gruppe speichern";
     }
+
+    return;
+  }
+
+  console.log("Gruppe erfolgreich gespeichert:", data);
+
+  safeText(message, "Gruppe wurde erfolgreich gespeichert.");
+
+  message?.classList.add("show", "success");
+
+  if (nameInput) {
+    nameInput.value = "";
+  }
+
+  if (descriptionInput) {
+    descriptionInput.value = "";
+  }
+
+  await loadGroups();
+
+  if (saveButton) {
+    saveButton.disabled = false;
+    saveButton.textContent = "Gruppe speichern";
+  }
 }
 
 function renderGroups(groups) {
+  const container = byId("groupsList");
 
-    const container =
-        byId("groupsList");
+  if (!container) {
+    return;
+  }
 
+  if (!groups || groups.length === 0) {
+    container.innerHTML = "<p>Noch keine Gruppen vorhanden.</p>";
 
-    if (!container) {
-        return;
-    }
+    return;
+  }
 
+  container.innerHTML = "";
 
-    if (
-        !groups ||
-        groups.length === 0
-    ) {
+  groups.forEach((group) => {
+    const item = document.createElement("div");
 
-        container.innerHTML =
-            "<p>Noch keine Gruppen vorhanden.</p>";
+    item.className = "group-item";
 
-        return;
-
-    }
-
-
-    container.innerHTML = "";
-
-
-    groups.forEach(group => {
-
-        const item =
-            document.createElement("div");
-
-
-        item.className =
-            "group-item";
-
-
-        item.innerHTML =
-            `
+    item.innerHTML = `
             <strong>
-                ${escapeHtml(
-                    group.group_name
-                )}
+                ${escapeHtml(group.group_name)}
             </strong>
             `;
 
-
-        if (group.description) {
-
-            item.innerHTML +=
-                `
+    if (group.description) {
+      item.innerHTML += `
                 <p>
-                    ${escapeHtml(
-                        group.description
-                    )}
+                    ${escapeHtml(group.description)}
                 </p>
                 `;
+    }
 
-        }
-
-
-        container.appendChild(item);
-
-    });
-
+    container.appendChild(item);
+  });
 }
-
 
 /* ============================================================
    ENTWICKLUNGSKOMPASS
    ============================================================ */
 
 const DEVELOPMENT_AREAS = [
+  {
+    key: "motorik",
+    label: "Motorik",
+  },
 
-    {
-        key: "motorik",
-        label: "Motorik"
-    },
+  {
+    key: "sprache",
+    label: "Sprache & Kommunikation",
+  },
 
-    {
-        key: "sprache",
-        label: "Sprache & Kommunikation"
-    },
+  {
+    key: "sozial",
+    label: "Sozial-emotionale Entwicklung",
+  },
 
-    {
-        key: "sozial",
-        label: "Sozial-emotionale Entwicklung"
-    },
+  {
+    key: "kognition",
+    label: "Kognition & Lernen",
+  },
 
-    {
-        key: "kognition",
-        label: "Kognition & Lernen"
-    },
-
-    {
-        key: "selbststaendigkeit",
-        label: "Selbstständigkeit"
-    }
-
+  {
+    key: "selbststaendigkeit",
+    label: "Selbstständigkeit",
+  },
 ];
-
 
 /*
  * WICHTIG:
@@ -2265,1145 +1543,1029 @@ const DEVELOPMENT_AREAS = [
  */
 
 const DEVELOPMENT_OPTIONS = [
+  {
+    value: "sicher",
+    label: "",
+  },
 
-    {
-        value: "sicher",
-        label: ""
-    },
+  {
+    value: "teilweise",
+    // label: ""
+  },
 
-    {
-        value: "teilweise",
-        // label: ""
-    },
+  {
+    value: "wird_nicht_gezeigt",
+    // label: ""
+  },
 
-    {
-        value: "wird_nicht_gezeigt",
-        // label: ""
-    },
-
-    {
-        value: "noch_nicht_bewertet",
-        label: "O"
-    }
-
+  {
+    value: "noch_nicht_bewertet",
+    label: "O",
+  },
 ];
-
 
 /* ============================================================
    FRAGENKATALOG
    ============================================================ */
 
-
-
 const DEVELOPMENT_QUESTIONS = [
+  // =========================================================
+  // 1–2,5 JAHRE
+  // =========================================================
 
-    // =========================================================
-    // 1–2,5 JAHRE
-    // =========================================================
+  {
+    id: 1,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question: "1. Das Kind versteht Nomen (Hauptwörter wie Auto, Puppe).",
+  },
+  {
+    id: 2,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "2. Es versteht Verben (Tätigkeitswörter wie essen, trinken, gehen, turnen).",
+  },
+  {
+    id: 3,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "3. Es versteht Präpositionen (Lagebezeichnungen wie auf, unter, neben).",
+  },
+  {
+    id: 4,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "4. Es versteht Adjektive (Eigenschaftswörter wie groß/klein, traurig/fröhlich).",
+  },
+  {
+    id: 5,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "5. Es versteht Aufforderungen in konkreten Situationen und setzt diese um.",
+  },
 
-    {
-        id: 1,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "1. Das Kind versteht Nomen (Hauptwörter wie Auto, Puppe)."
-    },
-    {
-        id: 2,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "2. Es versteht Verben (Tätigkeitswörter wie essen, trinken, gehen, turnen)."
-    },
-    {
-        id: 3,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "3. Es versteht Präpositionen (Lagebezeichnungen wie auf, unter, neben)."
-    },
-    {
-        id: 4,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "4. Es versteht Adjektive (Eigenschaftswörter wie groß/klein, traurig/fröhlich)."
-    },
-    {
-        id: 5,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "5. Es versteht Aufforderungen in konkreten Situationen und setzt diese um."
-    },
+  {
+    id: 11,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question: "11. Das Kind spricht einzelne Wörter.",
+  },
+  {
+    id: 12,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question: "12. Es kann bis zu 50 Wörter sprechen.",
+  },
 
-    {
-        id: 11,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "11. Das Kind spricht einzelne Wörter."
-    },
-    {
-        id: 12,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "12. Es kann bis zu 50 Wörter sprechen."
-    },
+  {
+    id: 21,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question: "21. Das Kind spricht die Vokale a, e, i, o, u.",
+  },
+  {
+    id: 22,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question: "22. Es produziert die Laute m, p, d, b, n.",
+  },
 
-    {
-        id: 21,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "21. Das Kind spricht die Vokale a, e, i, o, u."
-    },
-    {
-        id: 22,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "22. Es produziert die Laute m, p, d, b, n."
-    },
+  {
+    id: 36,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question: "36. Das Kind spricht Einwortsätze.",
+  },
+  {
+    id: 37,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question: "37. Es spricht Zweiwortsätze.",
+  },
 
-    {
-        id: 36,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "36. Das Kind spricht Einwortsätze."
-    },
-    {
-        id: 37,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "37. Es spricht Zweiwortsätze."
-    },
+  {
+    id: 53,
+    area: "sprache",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "53. Das Kind variiert die Lautstärke je nach Stimmung und Situation.",
+  },
 
-    {
-        id: 53,
-        area: "sprache",
-        age_from: 1,
-        age_to: 2.5,
-        question: "53. Das Kind variiert die Lautstärke je nach Stimmung und Situation."
-    },
+  {
+    id: 57,
+    area: "sozial",
+    age_from: 1,
+    age_to: 2.5,
+    question: "57. Das Kind sucht und hält Blickkontakt.",
+  },
+  {
+    id: 58,
+    area: "sozial",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "58. Es hält Dialoge, die sich auf das unmittelbare Umfeld beziehen.",
+  },
+  {
+    id: 59,
+    area: "sozial",
+    age_from: 1,
+    age_to: 2.5,
+    question: "59. Es ist dem Sprecher zugewandt.",
+  },
+  {
+    id: 60,
+    area: "sozial",
+    age_from: 1,
+    age_to: 2.5,
+    question: "60. Es kann Wünsche äußern.",
+  },
+  {
+    id: 61,
+    area: "sozial",
+    age_from: 1,
+    age_to: 2.5,
+    question: "61. Es beginnt ein Gespräch von sich aus.",
+  },
 
-    {
-        id: 57,
-        area: "sozial",
-        age_from: 1,
-        age_to: 2.5,
-        question: "57. Das Kind sucht und hält Blickkontakt."
-    },
-    {
-        id: 58,
-        area: "sozial",
-        age_from: 1,
-        age_to: 2.5,
-        question: "58. Es hält Dialoge, die sich auf das unmittelbare Umfeld beziehen."
-    },
-    {
-        id: 59,
-        area: "sozial",
-        age_from: 1,
-        age_to: 2.5,
-        question: "59. Es ist dem Sprecher zugewandt."
-    },
-    {
-        id: 60,
-        area: "sozial",
-        age_from: 1,
-        age_to: 2.5,
-        question: "60. Es kann Wünsche äußern."
-    },
-    {
-        id: 61,
-        area: "sozial",
-        age_from: 1,
-        age_to: 2.5,
-        question: "61. Es beginnt ein Gespräch von sich aus."
-    },
+  {
+    id: 73,
+    area: "literacy",
+    age_from: 1,
+    age_to: 2.5,
+    question: "73. Das Kind ist an Büchern interessiert.",
+  },
+  {
+    id: 74,
+    area: "literacy",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "74. Es zeigt und benennt Dinge oder Tiere in Bilderbüchern oder ahmt sie nach.",
+  },
 
-    {
-        id: 73,
-        area: "literacy",
-        age_from: 1,
-        age_to: 2.5,
-        question: "73. Das Kind ist an Büchern interessiert."
-    },
-    {
-        id: 74,
-        area: "literacy",
-        age_from: 1,
-        age_to: 2.5,
-        question: "74. Es zeigt und benennt Dinge oder Tiere in Bilderbüchern oder ahmt sie nach."
-    },
+  {
+    id: 83,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "83. Das Kind reagiert auf seinen Namen.",
+  },
+  {
+    id: 84,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "84. Es zeigt emotionale Reaktionen auf ein freundliches Gesicht.",
+  },
+  {
+    id: 85,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "85. Es hat eine gute Mundmotorik.",
+  },
+  {
+    id: 86,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "86. Es reagiert auf Flüstern.",
+  },
+  {
+    id: 87,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "87. Es erkennt verschiedene Geräusche und ordnet diese zu.",
+  },
+  {
+    id: 88,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question:
+      "88. Es wendet sich einer Schallquelle zu (dreht den Kopf zum Geräusch).",
+  },
+  {
+    id: 89,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "89. Es kann eine Reihe von Wörtern nachsprechen.",
+  },
+  {
+    id: 90,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "90. Es kann Dinge in der Nähe erkennen.",
+  },
+  {
+    id: 91,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "91. Es kann Dinge in der Ferne erkennen.",
+  },
+  {
+    id: 92,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "92. Es fühlt sich bei seinen Handlungen wohl.",
+  },
+  {
+    id: 93,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "93. Es ist an seiner Umwelt interessiert.",
+  },
+  {
+    id: 94,
+    area: "grundlagen",
+    age_from: 1,
+    age_to: 2.5,
+    question: "94. Es reagiert deutlich auf Interaktionsangebote.",
+  },
 
-    {
-        id: 83,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "83. Das Kind reagiert auf seinen Namen."
-    },
-    {
-        id: 84,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "84. Es zeigt emotionale Reaktionen auf ein freundliches Gesicht."
-    },
-    {
-        id: 85,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "85. Es hat eine gute Mundmotorik."
-    },
-    {
-        id: 86,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "86. Es reagiert auf Flüstern."
-    },
-    {
-        id: 87,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "87. Es erkennt verschiedene Geräusche und ordnet diese zu."
-    },
-    {
-        id: 88,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "88. Es wendet sich einer Schallquelle zu (dreht den Kopf zum Geräusch)."
-    },
-    {
-        id: 89,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "89. Es kann eine Reihe von Wörtern nachsprechen."
-    },
-    {
-        id: 90,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "90. Es kann Dinge in der Nähe erkennen."
-    },
-    {
-        id: 91,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "91. Es kann Dinge in der Ferne erkennen."
-    },
-    {
-        id: 92,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "92. Es fühlt sich bei seinen Handlungen wohl."
-    },
-    {
-        id: 93,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "93. Es ist an seiner Umwelt interessiert."
-    },
-    {
-        id: 94,
-        area: "grundlagen",
-        age_from: 1,
-        age_to: 2.5,
-        question: "94. Es reagiert deutlich auf Interaktionsangebote."
-    },
+  // =========================================================
+  // 2,5–4,5 JAHRE
+  // =========================================================
 
+  {
+    id: 6,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "6. Es versteht einteilige situationsgebundene Aufforderungen und setzt diese um.",
+  },
+  {
+    id: 7,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "7. Es versteht mehrteilige Aufforderungen, die unabhängig von der jetzigen Situation sind, und setzt diese um.",
+  },
+  {
+    id: 8,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "8. Es versteht Zeitangaben wie heute, gestern, morgen.",
+  },
 
-    // =========================================================
-    // 2,5–4,5 JAHRE
-    // =========================================================
+  {
+    id: 13,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "13. Es verwendet Verben (Tätigkeitswörter, z.B. essen, laufen, schlafen).",
+  },
+  {
+    id: 14,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "14. Es kennt und verwendet Adjektive (Eigenschaftswörter, z.B. dick, dünn, alt, jung).",
+  },
+  {
+    id: 15,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "15. Es verwendet Präpositionen (Lagebezeichnungen, z.B. vor, auf, neben, in).",
+  },
+  {
+    id: 16,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "16. Es benennt Farben.",
+  },
 
-    {
-        id: 6,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "6. Es versteht einteilige situationsgebundene Aufforderungen und setzt diese um."
-    },
-    {
-        id: 7,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "7. Es versteht mehrteilige Aufforderungen, die unabhängig von der jetzigen Situation sind, und setzt diese um."
-    },
-    {
-        id: 8,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "8. Es versteht Zeitangaben wie heute, gestern, morgen."
-    },
+  {
+    id: 23,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "23. Es bildet Laute w, f, l, t, ng (wie Junge), k, ch2 (wie hoch), s, z, h.",
+  },
+  {
+    id: 24,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "24. Es spricht die Laute j, r, g, pf.",
+  },
+  {
+    id: 25,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "25. Es produziert Konsonantenverbindungen, z.B. kl, fl, bl, gl, br, fr, gr.",
+  },
 
-    {
-        id: 13,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "13. Es verwendet Verben (Tätigkeitswörter, z.B. essen, laufen, schlafen)."
-    },
-    {
-        id: 14,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "14. Es kennt und verwendet Adjektive (Eigenschaftswörter, z.B. dick, dünn, alt, jung)."
-    },
-    {
-        id: 15,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "15. Es verwendet Präpositionen (Lagebezeichnungen, z.B. vor, auf, neben, in)."
-    },
-    {
-        id: 16,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "16. Es benennt Farben."
-    },
+  {
+    id: 38,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "38. Es verwendet Dreiwortsätze (das Verb steht am Satzende).",
+  },
+  {
+    id: 39,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "39. Es bildet Drei- und Mehrwortsätze, wobei das Verb an der zweiten Position steht.",
+  },
+  {
+    id: 40,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "40. Es stellt W-Fragen.",
+  },
+  {
+    id: 41,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "41. Es verändert das Verb (Tätigkeitswort) entsprechend der Person (ich gehe, du gehst, wir gehen).",
+  },
+  {
+    id: 42,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "42. Es verwendet Präpositionen (Verhältniswörter wie in, auf, unter) innerhalb eines Satzes richtig.",
+  },
+  {
+    id: 43,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "43. Es verwendet Plural (Mehrzahl).",
+  },
+  {
+    id: 44,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "44. Es verwendet Artikel (Begleiter/Geschlechtswort: der, die, das, ein, eine).",
+  },
 
-    {
-        id: 23,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "23. Es bildet Laute w, f, l, t, ng (wie Junge), k, ch2 (wie hoch), s, z, h."
-    },
-    {
-        id: 24,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "24. Es spricht die Laute j, r, g, pf."
-    },
-    {
-        id: 25,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "25. Es produziert Konsonantenverbindungen, z.B. kl, fl, bl, gl, br, fr, gr."
-    },
+  {
+    id: 54,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "54. Es verändert seine Tonhöhe je nach Aussage des Satzes (Frage, Aussage etc.).",
+  },
+  {
+    id: 55,
+    area: "sprache",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "55. Es kann einzelne Wörter betonen/akzentuieren, um diesen eine besondere Bedeutung zu verleihen.",
+  },
 
-    {
-        id: 38,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "38. Es verwendet Dreiwortsätze (das Verb steht am Satzende)."
-    },
-    {
-        id: 39,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "39. Es bildet Drei- und Mehrwortsätze, wobei das Verb an der zweiten Position steht."
-    },
-    {
-        id: 40,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "40. Es stellt W-Fragen."
-    },
-    {
-        id: 41,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "41. Es verändert das Verb (Tätigkeitswort) entsprechend der Person (ich gehe, du gehst, wir gehen)."
-    },
-    {
-        id: 42,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "42. Es verwendet Präpositionen (Verhältniswörter wie in, auf, unter) innerhalb eines Satzes richtig."
-    },
-    {
-        id: 43,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "43. Es verwendet Plural (Mehrzahl)."
-    },
-    {
-        id: 44,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "44. Es verwendet Artikel (Begleiter/Geschlechtswort: der, die, das, ein, eine)."
-    },
+  {
+    id: 62,
+    area: "sozial",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "62. Es hält den Sprecher-Hörer-Wechsel ein.",
+  },
+  {
+    id: 63,
+    area: "sozial",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "63. Es verdeutlicht sein Sprechen mit Mimik und Gestik.",
+  },
+  {
+    id: 64,
+    area: "sozial",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "64. Es verwendet „ich“.",
+  },
+  {
+    id: 65,
+    area: "sozial",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "65. Es spricht situationsangemessen.",
+  },
+  {
+    id: 66,
+    area: "sozial",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "66. Es berücksichtigt den Zuhörer und passt seine Reaktion bzw. seine Kommunikation an sein Gegenüber an.",
+  },
 
-    {
-        id: 54,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "54. Es verändert seine Tonhöhe je nach Aussage des Satzes (Frage, Aussage etc.)."
-    },
-    {
-        id: 55,
-        area: "sprache",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "55. Es kann einzelne Wörter betonen/akzentuieren, um diesen eine besondere Bedeutung zu verleihen."
-    },
+  {
+    id: 75,
+    area: "literacy",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "75. Es nimmt aktiv an einer Bilderbuchbetrachtung teil.",
+  },
+  {
+    id: 76,
+    area: "literacy",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "76. Es erkennt Zusammenhänge aus Bildergeschichten und Bilderbüchern wieder.",
+  },
+  {
+    id: 77,
+    area: "literacy",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "77. Es konzentriert sich über einen längeren Zeitraum auf Geschichten und Erzählungen.",
+  },
 
-    {
-        id: 62,
-        area: "sozial",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "62. Es hält den Sprecher-Hörer-Wechsel ein."
-    },
-    {
-        id: 63,
-        area: "sozial",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "63. Es verdeutlicht sein Sprechen mit Mimik und Gestik."
-    },
-    {
-        id: 64,
-        area: "sozial",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "64. Es verwendet „ich“."
-    },
-    {
-        id: 65,
-        area: "sozial",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "65. Es spricht situationsangemessen."
-    },
-    {
-        id: 66,
-        area: "sozial",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "66. Es berücksichtigt den Zuhörer und passt seine Reaktion bzw. seine Kommunikation an sein Gegenüber an."
-    },
+  {
+    id: 95,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "95. Es nimmt Gefühle anderer wahr und verhält sich empathisch.",
+  },
+  {
+    id: 96,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "96. Es kann mit Konzentration und Ausdauer bei der Sache bleiben.",
+  },
+  {
+    id: 97,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "97. Es kann Wesentliches von Unwesentlichem unterscheiden.",
+  },
+  {
+    id: 98,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "98. Es setzt seinen Körper entsprechend seinem Alter ein.",
+  },
+  {
+    id: 99,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "99. Es zeigt eine gute Koordination bei komplexen Bewegungsabläufen.",
+  },
+  {
+    id: 100,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question:
+      "100. Es ist in Alltagshandlungen geschickt (z. B. zieht sich selbstständig an und aus).",
+  },
+  {
+    id: 101,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "101. Es zeigt soziales Verhalten in der Gruppe.",
+  },
+  {
+    id: 102,
+    area: "grundlagen",
+    age_from: 2.5,
+    age_to: 4.5,
+    question: "102. Es besitzt ein positives Selbstwertgefühl.",
+  },
 
-    {
-        id: 75,
-        area: "literacy",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "75. Es nimmt aktiv an einer Bilderbuchbetrachtung teil."
-    },
-    {
-        id: 76,
-        area: "literacy",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "76. Es erkennt Zusammenhänge aus Bildergeschichten und Bilderbüchern wieder."
-    },
-    {
-        id: 77,
-        area: "literacy",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "77. Es konzentriert sich über einen längeren Zeitraum auf Geschichten und Erzählungen."
-    },
+  // =========================================================
+  // 4,5–6 JAHRE
+  // =========================================================
 
-    {
-        id: 95,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "95. Es nimmt Gefühle anderer wahr und verhält sich empathisch."
-    },
-    {
-        id: 96,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "96. Es kann mit Konzentration und Ausdauer bei der Sache bleiben."
-    },
-    {
-        id: 97,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "97. Es kann Wesentliches von Unwesentlichem unterscheiden."
-    },
-    {
-        id: 98,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "98. Es setzt seinen Körper entsprechend seinem Alter ein."
-    },
-    {
-        id: 99,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "99. Es zeigt eine gute Koordination bei komplexen Bewegungsabläufen."
-    },
-    {
-        id: 100,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "100. Es ist in Alltagshandlungen geschickt (z. B. zieht sich selbstständig an und aus)."
-    },
-    {
-        id: 101,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "101. Es zeigt soziales Verhalten in der Gruppe."
-    },
-    {
-        id: 102,
-        area: "grundlagen",
-        age_from: 2.5,
-        age_to: 4.5,
-        question: "102. Es besitzt ein positives Selbstwertgefühl."
-    },
+  {
+    id: 9,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "9. Es versteht Beziehungen und Auswirkungen (z.B. Es wird hell, wenn die Sonne aufgeht).",
+  },
+  {
+    id: 10,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "10. Es versteht W-Fragen (das Kind antwortet richtig auf die ihm gestellten Fragen).",
+  },
 
+  {
+    id: 17,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "17. Es benennt Dinge genau und detailliert (z.B. Wimpern).",
+  },
+  {
+    id: 18,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "18. Es benennt Formen (Kreis, Dreieck, Viereck).",
+  },
+  {
+    id: 19,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "19. Es kann Oberbegriffe benennen und richtig zuordnen (Apfel = Obst).",
+  },
+  {
+    id: 20,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "20. Es kann sich differenziert ausdrücken (z.B. Abläufe genau erklären oder beschreiben).",
+  },
 
-    // =========================================================
-    // 4,5–6 JAHRE
-    // =========================================================
+  {
+    id: 26,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "26. Es produziert Laute ch1 (wie in ich) und sch.",
+  },
+  {
+    id: 27,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "27. Es produziert auch schwierige Konsonantenverbindungen z.B. dr-, tr, kr, kn, sch-Verbindungen (z. B. Schmetterling, Straße, Schnecke etc.).",
+  },
+  {
+    id: 28,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "28. Es spricht in Eins-zu-eins-Situationen deutlich, sodass es gut verstanden wird.",
+  },
+  {
+    id: 29,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "29. Es spricht im Gruppengeschehen deutlich.",
+  },
+  {
+    id: 30,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "30. Es erkennt Rhythmen und kann diese mitklatschen.",
+  },
+  {
+    id: 31,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "31. Es kann Wörter in Silben zerlegen/klatschen.",
+  },
+  {
+    id: 32,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "32. Es erkennt Reimwörter.",
+  },
+  {
+    id: 33,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "33. Es kann Reimwörter ergänzen.",
+  },
+  {
+    id: 34,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "34. Es unterscheidet ähnlich klingende Wörter.",
+  },
+  {
+    id: 35,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "35. Es erkennt Anlaute.",
+  },
 
-    {
-        id: 9,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "9. Es versteht Beziehungen und Auswirkungen (z.B. Es wird hell, wenn die Sonne aufgeht)."
-    },
-    {
-        id: 10,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "10. Es versteht W-Fragen (das Kind antwortet richtig auf die ihm gestellten Fragen)."
-    },
+  {
+    id: 45,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "45. Es verwendet Adjektive (Eigenschaftswörter) im Satz richtig.",
+  },
+  {
+    id: 46,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "46. Es antwortet korrekt auf W-Fragen (Satzbau und Wortbildung sind korrekt).",
+  },
+  {
+    id: 47,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "47. Es bildet Nebensätze, wobei das Verb im Nebensatz am Satzende steht.",
+  },
+  {
+    id: 48,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "48. Es gibt Situationen oder Ereignisse in richtiger zeitlicher Abfolge wieder.",
+  },
+  {
+    id: 49,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "49. Es bildet die vollendete Vergangenheit (Perfekt) richtig („Ich habe den Hund gestreichelt.“).",
+  },
+  {
+    id: 50,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "50. Es bildet die Vergangenheitsform Präteritum (Imperfekt) richtig („Der Junge sagte zum Mädchen ...“).",
+  },
+  {
+    id: 51,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "51. Es verwendet den Kasus Akkusativ korrekt (Wen- oder Was-Fall: „Das Mädchen isst den Apfel.“).",
+  },
 
-    {
-        id: 17,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "17. Es benennt Dinge genau und detailliert (z.B. Wimpern)."
-    },
-    {
-        id: 18,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "18. Es benennt Formen (Kreis, Dreieck, Viereck)."
-    },
-    {
-        id: 19,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "19. Es kann Oberbegriffe benennen und richtig zuordnen (Apfel = Obst)."
-    },
-    {
-        id: 20,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "20. Es kann sich differenziert ausdrücken (z.B. Abläufe genau erklären oder beschreiben)."
-    },
+  {
+    id: 56,
+    area: "sprache",
+    age_from: 4.5,
+    age_to: 6,
+    question: "56. Es ist in der Lage, einen sinnvollen Rhythmus einzuhalten.",
+  },
 
-    {
-        id: 26,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "26. Es produziert Laute ch1 (wie in ich) und sch."
-    },
-    {
-        id: 27,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "27. Es produziert auch schwierige Konsonantenverbindungen z.B. dr-, tr, kr, kn, sch-Verbindungen (z. B. Schmetterling, Straße, Schnecke etc.)."
-    },
-    {
-        id: 28,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "28. Es spricht in Eins-zu-eins-Situationen deutlich, sodass es gut verstanden wird."
-    },
-    {
-        id: 29,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "29. Es spricht im Gruppengeschehen deutlich."
-    },
-    {
-        id: 30,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "30. Es erkennt Rhythmen und kann diese mitklatschen."
-    },
-    {
-        id: 31,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "31. Es kann Wörter in Silben zerlegen/klatschen."
-    },
-    {
-        id: 32,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "32. Es erkennt Reimwörter."
-    },
-    {
-        id: 33,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "33. Es kann Reimwörter ergänzen."
-    },
-    {
-        id: 34,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "34. Es unterscheidet ähnlich klingende Wörter."
-    },
-    {
-        id: 35,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "35. Es erkennt Anlaute."
-    },
+  {
+    id: 67,
+    area: "sozial",
+    age_from: 4.5,
+    age_to: 6,
+    question: "67. Es bezieht nicht situatives Wissen mit ein.",
+  },
+  {
+    id: 68,
+    area: "sozial",
+    age_from: 4.5,
+    age_to: 6,
+    question: "68. Es fragt nach.",
+  },
+  {
+    id: 69,
+    area: "sozial",
+    age_from: 4.5,
+    age_to: 6,
+    question: "69. Es antwortet sinngemäß auf Fragen.",
+  },
+  {
+    id: 70,
+    area: "sozial",
+    age_from: 4.5,
+    age_to: 6,
+    question: "70. Es hört aufmerksam zu.",
+  },
+  {
+    id: 71,
+    area: "sozial",
+    age_from: 4.5,
+    age_to: 6,
+    question: "71. Es kann eine kurze Geschichte sinnvoll nacherzählen.",
+  },
+  {
+    id: 72,
+    area: "sozial",
+    age_from: 4.5,
+    age_to: 6,
+    question: "72. Es beschreibt etwas Besonderes.",
+  },
 
-    {
-        id: 45,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "45. Es verwendet Adjektive (Eigenschaftswörter) im Satz richtig."
-    },
-    {
-        id: 46,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "46. Es antwortet korrekt auf W-Fragen (Satzbau und Wortbildung sind korrekt)."
-    },
-    {
-        id: 47,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "47. Es bildet Nebensätze, wobei das Verb im Nebensatz am Satzende steht."
-    },
-    {
-        id: 48,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "48. Es gibt Situationen oder Ereignisse in richtiger zeitlicher Abfolge wieder."
-    },
-    {
-        id: 49,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "49. Es bildet die vollendete Vergangenheit (Perfekt) richtig („Ich habe den Hund gestreichelt.“)."
-    },
-    {
-        id: 50,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "50. Es bildet die Vergangenheitsform Präteritum (Imperfekt) richtig („Der Junge sagte zum Mädchen ...“)."
-    },
-    {
-        id: 51,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "51. Es verwendet den Kasus Akkusativ korrekt (Wen- oder Was-Fall: „Das Mädchen isst den Apfel.“)."
-    },
-
-    {
-        id: 56,
-        area: "sprache",
-        age_from: 4.5,
-        age_to: 6,
-        question: "56. Es ist in der Lage, einen sinnvollen Rhythmus einzuhalten."
-    },
-
-    {
-        id: 67,
-        area: "sozial",
-        age_from: 4.5,
-        age_to: 6,
-        question: "67. Es bezieht nicht situatives Wissen mit ein."
-    },
-    {
-        id: 68,
-        area: "sozial",
-        age_from: 4.5,
-        age_to: 6,
-        question: "68. Es fragt nach."
-    },
-    {
-        id: 69,
-        area: "sozial",
-        age_from: 4.5,
-        age_to: 6,
-        question: "69. Es antwortet sinngemäß auf Fragen."
-    },
-    {
-        id: 70,
-        area: "sozial",
-        age_from: 4.5,
-        age_to: 6,
-        question: "70. Es hört aufmerksam zu."
-    },
-    {
-        id: 71,
-        area: "sozial",
-        age_from: 4.5,
-        age_to: 6,
-        question: "71. Es kann eine kurze Geschichte sinnvoll nacherzählen."
-    },
-    {
-        id: 72,
-        area: "sozial",
-        age_from: 4.5,
-        age_to: 6,
-        question: "72. Es beschreibt etwas Besonderes."
-    },
-
-    {
-        id: 78,
-        area: "literacy",
-        age_from: 4.5,
-        age_to: 6,
-        question: "78. Es kann Geschichten in logischer Reihenfolge wiedergeben."
-    },
-    {
-        id: 79,
-        area: "literacy",
-        age_from: 4.5,
-        age_to: 6,
-        question: "79. Es versucht zu „schreiben“."
-    },
-    {
-        id: 80,
-        area: "literacy",
-        age_from: 4.5,
-        age_to: 6,
-        question: "80. Es interessiert sich für Schrift und versucht, Buchstaben zu schreiben."
-    },
-    {
-        id: 81,
-        area: "literacy",
-        age_from: 4.5,
-        age_to: 6,
-        question: "81. Es erkennt Bilder, Symbole und Piktogramme wieder, die häufig im Kindergarten verwendet werden."
-    },
-    {
-        id: 82,
-        area: "literacy",
-        age_from: 4.5,
-        age_to: 6,
-        question: "82. Es erkennt einzelne Buchstaben wieder."
-    }
+  {
+    id: 78,
+    area: "literacy",
+    age_from: 4.5,
+    age_to: 6,
+    question: "78. Es kann Geschichten in logischer Reihenfolge wiedergeben.",
+  },
+  {
+    id: 79,
+    area: "literacy",
+    age_from: 4.5,
+    age_to: 6,
+    question: "79. Es versucht zu „schreiben“.",
+  },
+  {
+    id: 80,
+    area: "literacy",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "80. Es interessiert sich für Schrift und versucht, Buchstaben zu schreiben.",
+  },
+  {
+    id: 81,
+    area: "literacy",
+    age_from: 4.5,
+    age_to: 6,
+    question:
+      "81. Es erkennt Bilder, Symbole und Piktogramme wieder, die häufig im Kindergarten verwendet werden.",
+  },
+  {
+    id: 82,
+    area: "literacy",
+    age_from: 4.5,
+    age_to: 6,
+    question: "82. Es erkennt einzelne Buchstaben wieder.",
+  },
 ];
-
 
 /* ============================================================
    ENTWICKLUNGSBEREICH
    ============================================================ */
 
 function ensureDevelopmentSection() {
+  let section = document.querySelector('[data-section-content="development"]');
 
-    let section =
-        document.querySelector(
-            '[data-section-content="development"]'
-        );
-
-
-    if (section) {
-
-        ensureDevelopmentMarkup(section);
-
-        return section;
-
-    }
-
-
-    const main =
-        document.querySelector("main");
-
-
-    if (!main) {
-
-        console.error(
-            "Kein <main>-Element gefunden."
-        );
-
-        return null;
-
-    }
-
-
-    section =
-        document.createElement("section");
-
-
-    section.className =
-        "section";
-
-
-    section.dataset.sectionContent =
-        "development";
-
-
-    section.style.display =
-        "none";
-
-
-    main.appendChild(section);
-
-
+  if (section) {
     ensureDevelopmentMarkup(section);
 
-
     return section;
+  }
 
+  const main = document.querySelector("main");
+
+  if (!main) {
+    console.error("Kein <main>-Element gefunden.");
+
+    return null;
+  }
+
+  section = document.createElement("section");
+
+  section.className = "section";
+
+  section.dataset.sectionContent = "development";
+
+  section.style.display = "none";
+
+  main.appendChild(section);
+
+  ensureDevelopmentMarkup(section);
+
+  return section;
 }
-
 
 /* ============================================================
    ENTWICKLUNGS HTML
    ============================================================ */
 
 function ensureDevelopmentMarkup(section) {
-
-    if (
-        section.querySelector(
-            "#developmentChild"
-        )
-    ) {
-
-        return;
-
-    }
-
+  if (section.querySelector("#developmentChild")) {
+    return;
+  }
 }
 /* ============================================================
    ENTWICKLUNGS ELEMENTE
    ============================================================ */
 
 function getDevelopmentElements() {
+  return {
+    section:
+      byId("developmentSection") ||
+      document.querySelector('[data-section-content="development"]'),
 
-    return {
+    childSelect: byId("developmentChild"),
 
-        section:
-            byId("developmentSection") ||
-            document.querySelector(
-                '[data-section-content="development"]'
-            ),
+    ageSelect: byId("developmentAge"),
 
-        childSelect:
-            byId("developmentChild"),
+    questionsContainer: byId("questionsContainer"),
 
-        ageSelect:
-            byId("developmentAge"),
+    questionsMessage: byId("questionsMessage"),
 
-        questionsContainer:
-            byId("questionsContainer"),
+    resultContainer: byId("developmentResult"),
 
-        questionsMessage:
-            byId("questionsMessage"),
-
-        resultContainer:
-            byId("developmentResult"),
-
-        saveButton:
-            byId("saveDevelopmentButton")
-
-    };
-
+    saveButton: byId("saveDevelopmentButton"),
+  };
 }
-
 
 /* ============================================================
    KINDER FÜR ENTWICKLUNG
    ============================================================ */
 
 async function loadChildrenForDevelopment() {
+  const { childSelect } = getDevelopmentElements();
 
-    const {
-        childSelect
-    } =
-        getDevelopmentElements();
+  if (!childSelect) {
+    console.error("developmentChild wurde nicht gefunden.");
 
+    return;
+  }
 
-    if (!childSelect) {
-
-        console.error(
-            "developmentChild wurde nicht gefunden."
-        );
-
-        return;
-
-    }
-
-
-    childSelect.innerHTML =
-        `
+  childSelect.innerHTML = `
         <option value="">
             Kinder werden geladen...
         </option>
         `;
 
+  if (!currentChildren || currentChildren.length === 0) {
+    await loadChildren();
+  }
 
-    if (
-        !currentChildren ||
-        currentChildren.length === 0
-    ) {
-
-        await loadChildren();
-
-    }
-
-
-    childSelect.innerHTML =
-        `
+  childSelect.innerHTML = `
         <option value="">
             Kind auswählen...
         </option>
         `;
 
-
-    if (
-        !currentChildren ||
-        currentChildren.length === 0
-    ) {
-
-        childSelect.innerHTML =
-            `
+  if (!currentChildren || currentChildren.length === 0) {
+    childSelect.innerHTML = `
             <option value="">
                 Noch keine Kinder vorhanden
             </option>
             `;
 
-        return;
+    return;
+  }
 
-    }
+  currentChildren.forEach((child) => {
+    const option = document.createElement("option");
 
+    /*
+     * UUID unbedingt als String verwenden.
+     */
 
-    currentChildren.forEach(child => {
+    option.value = String(child.id);
 
-        const option =
-            document.createElement("option");
+    const groupName = child.Groups?.group_name || "Keine Gruppe";
 
+    option.textContent = `${child.child_code || "Kind"} – ${groupName}`;
 
-        /*
-         * UUID unbedingt als String verwenden.
-         */
-
-        option.value =
-            String(child.id);
-
-
-        const groupName =
-            child.Groups?.group_name ||
-            "Keine Gruppe";
-
-
-        option.textContent =
-            `${child.child_code || "Kind"} – ${groupName}`;
-
-
-        childSelect.appendChild(option);
-
-    });
-
+    childSelect.appendChild(option);
+  });
 }
-
 
 /* ============================================================
    ALTER
    ============================================================ */
 
 function populateDevelopmentAge() {
+  const { ageSelect } = getDevelopmentElements();
 
-    const {
-        ageSelect
-    } =
-        getDevelopmentElements();
+  if (!ageSelect) {
+    return;
+  }
 
-
-    if (!ageSelect) {
-        return;
-    }
-
-
-    ageSelect.innerHTML =
-        `
+  ageSelect.innerHTML = `
         <option value="">
             Alter auswählen...
         </option>
         `;
 
+  for (let age = 1; age <= 7; age++) {
+    const option = document.createElement("option");
 
-    for (
-        let age = 1;
-        age <= 7;
-        age++
-    ) {
+    option.value = String(age);
 
-        const option =
-            document.createElement("option");
+    option.textContent = age === 1 ? "1 Jahr" : `${age} Jahre`;
 
-
-        option.value =
-            String(age);
-
-
-        option.textContent =
-            age === 1
-                ? "1 Jahr"
-                : `${age} Jahre`;
-
-
-        ageSelect.appendChild(option);
-
-    }
-
+    ageSelect.appendChild(option);
+  }
 }
-
 
 /* ============================================================
    FRAGEN NACH ALTER
    ============================================================ */
 
 function getQuestionsForAge(age) {
+  const numericAge = Number(age);
 
-    const numericAge =
-        Number(age);
+  if (!Number.isFinite(numericAge)) {
+    return [];
+  }
 
-
-    if (
-        !Number.isFinite(numericAge)
-    ) {
-
-        return [];
-
-    }
-
-
-    return DEVELOPMENT_QUESTIONS.filter(
-        question => {
-
-            return (
-                numericAge >= question.age_from &&
-                numericAge <= question.age_to
-            );
-
-        }
-    );
-
+  return DEVELOPMENT_QUESTIONS.filter((question) => {
+    return numericAge >= question.age_from && numericAge <= question.age_to;
+  });
 }
 
 const DEVELOPMENT_AREA_COLORS = {
-    sprache: "#0091ff",
-    sozial: "#10fe04",
-    literacy: "#6906f5",
-    grundlagen: "#fa7509",
+  sprache: "#0091ff",
+  sozial: "#10fe04",
+  literacy: "#6906f5",
+  grundlagen: "#fa7509",
 
-    // falls später Fragen dazukommen:
-    motorik: "#ef0707",
-    kognition: "#f7af07",
-    selbststaendigkeit: "#05fd81"
+  // falls später Fragen dazukommen:
+  motorik: "#ef0707",
+  kognition: "#f7af07",
+  selbststaendigkeit: "#05fd81",
 };
 /* ============================================================
    FRAGEN RENDERN
    ============================================================ */
 
 function renderDevelopmentQuestions(questions) {
+  const { questionsContainer } = getDevelopmentElements();
 
-    const {
-        questionsContainer
-    } =
-        getDevelopmentElements();
+  if (!questionsContainer) {
+    return;
+  }
 
+  questionsContainer.innerHTML = "";
 
-    if (!questionsContainer) {
-        return;
-    }
+  currentQuestions = questions || [];
 
+  let filteredQuestions = currentQuestions;
 
-    questionsContainer.innerHTML = "";
+  if (developmentQuestionFilter === "offen") {
+    filteredQuestions = currentQuestions.filter((question) => {
+      const value = currentAnswers[question.id] || "noch_nicht_bewertet";
 
-    currentQuestions =
-        questions || [];
+      return value === "noch_nicht_bewertet";
+    });
+  } else if (developmentQuestionFilter !== "alle") {
+    filteredQuestions = currentQuestions.filter(
+      (question) => question.area === developmentQuestionFilter,
+    );
+  }
 
-        let filteredQuestions = currentQuestions;
-
-if (developmentQuestionFilter === "offen") {
-
-    filteredQuestions =
-        currentQuestions.filter(question => {
-
-            const value =
-                currentAnswers[question.id] ||
-                "noch_nicht_bewertet";
-
-            return value === "noch_nicht_bewertet";
-        });
-
-} else if (
-    developmentQuestionFilter !== "alle"
-) {
-
-    filteredQuestions =
-        currentQuestions.filter(question =>
-            question.area ===
-            developmentQuestionFilter
-        );
-}
-
-    if (
-        currentQuestions.length === 0
-    ) {
-
-        questionsContainer.innerHTML =
-            `
+  if (currentQuestions.length === 0) {
+    questionsContainer.innerHTML = `
             <div class="card">
                 <p>
                     Für dieses Alter sind derzeit keine Fragen hinterlegt.
@@ -3411,125 +2573,84 @@ if (developmentQuestionFilter === "offen") {
             </div>
             `;
 
-        return;
-    }
+    return;
+  }
 
+  filteredQuestions.forEach((question, index) => {
+    const card = document.createElement("div");
 
-filteredQuestions.forEach(
-            (question, index) => {
+    /*
+     * Kategorie
+     */
 
-            const card =
-                document.createElement("div");
+    const area = DEVELOPMENT_AREAS.find((item) => item.key === question.area);
 
+    const areaLabel = area?.label || question.area;
 
-            /*
-             * Kategorie
-             */
+    /*
+     * Farbe der Kategorie
+     */
 
-            const area =
-                DEVELOPMENT_AREAS.find(
-                    item =>
-                        item.key ===
-                        question.area
-                );
+    const areaColor = DEVELOPMENT_AREA_COLORS[question.area] || "#D9EAF7";
 
+    card.style.setProperty("--question-color", areaColor);
 
-            const areaLabel =
-                area?.label ||
-                question.area;
+    /*
+     * Aktueller Bewertungsstand
+     */
 
+    const currentValue = currentAnswers[question.id] || "noch_nicht_bewertet";
 
-            /*
-             * Farbe der Kategorie
-             */
+    /*
+     * Farbe der Bewertung
+     */
 
-            const areaColor =
-                DEVELOPMENT_AREA_COLORS[
-                    question.area
-                ] ||
-                "#D9EAF7";
- 
-            card.style.setProperty(
-                "--question-color",
-                areaColor
-            );
+    let ratingClass;
 
-            /*
-             * Aktueller Bewertungsstand
-             */
-
-            const currentValue =
-                currentAnswers[question.id] ||
-            "noch_nicht_bewertet";
-
-            /*
-             * Farbe der Bewertung
-             */
-
- let ratingClass;
-
-switch (currentValue) {
-
-    case "sicher":
+    switch (currentValue) {
+      case "sicher":
         ratingClass = "rating-full";
         break;
 
-    case "teilweise":
+      case "teilweise":
         ratingClass = "rating-half";
         break;
 
-    case "wird_nicht_gezeigt":
+      case "wird_nicht_gezeigt":
         ratingClass = "rating-minimal";
         break;
 
-    case "noch_nicht_bewertet":
-    default:
+      case "noch_nicht_bewertet":
+      default:
         ratingClass = "rating-empty";
         break;
-}
+    }
 
+    /*
+     * Karte
+     */
 
-            /*
-             * Karte
-             */
+    card.className = `card development-question`;
 
-            card.className =
-                `card development-question`;
+    card.style.setProperty("--question-color", areaColor);
 
+    /*
+     * Bewertungsoption
+     */
 
-            card.style.setProperty(
-                "--question-color",
-                areaColor
-            );
+    const currentOption = DEVELOPMENT_OPTIONS.find(
+      (option) => option.value === currentValue,
+    );
 
+    const currentLabel = currentOption?.label || "Noch nicht";
 
-            /*
-             * Bewertungsoption
-             */
+    const stateClass = `development-state-${currentValue}`;
 
-            const currentOption =
-                DEVELOPMENT_OPTIONS.find(
-                    option =>
-                        option.value ===
-                        currentValue
-                );
+    /*
+     * HTML der Frage
+     */
 
-
-            const currentLabel =
-                currentOption?.label ||
-                "Noch nicht";
-
-
-            const stateClass =
-                `development-state-${currentValue}`;
-
-
-            /*
-             * HTML der Frage
-             */
-
-            card.innerHTML =
-                `
+    card.innerHTML = `
                 <div class="development-question-number">
                     Frage ${index + 1}
                 </div>
@@ -3568,345 +2689,171 @@ switch (currentValue) {
                 </div>
                 `;
 
+    questionsContainer.appendChild(card);
+  });
 
-            questionsContainer.appendChild(card);
+  /*
+   * Klick auf Bewertung
+   */
 
+  questionsContainer
+    .querySelectorAll(".development-rating-box")
+    .forEach((box) => {
+      box.addEventListener("click", () => {
+        const questionId = Number(box.dataset.questionId);
+
+        const currentValue = currentAnswers[questionId] || "noch_nicht";
+
+        let nextValue;
+
+        /*
+         * 1. Klick
+         * noch nicht → sicher
+         */
+
+        if (currentValue === "noch_nicht_bewertet") {
+          nextValue = "sicher";
+        } else if (currentValue === "sicher") {
+          nextValue = "teilweise";
+        } else if (currentValue === "teilweise") {
+          nextValue = "wird_nicht_gezeigt";
+        } else if (currentValue === "wird_nicht_gezeigt") {
+          nextValue = "noch_nicht_bewertet";
+        } else {
+          nextValue = "noch_nicht_bewertet";
         }
-    );
 
+        /*
+         * Bewertung speichern
+         */
 
-    /*
-     * Klick auf Bewertung
-     */
+        currentAnswers[questionId] = nextValue;
 
-    questionsContainer
-        .querySelectorAll(
-            ".development-rating-box"
-        )
-        .forEach(box => {
+        /*
+         * Anzeige aktualisieren
+         */
 
-            box.addEventListener(
-                "click",
-                () => {
+        updateDevelopmentRatingBox(box, nextValue);
 
-                    const questionId =
-                        Number(
-                            box.dataset.questionId
-                        );
+        /*
+         * Kartenfarbe aktualisieren
+         */
 
+        const card = box.closest(".development-question");
 
-                    const currentValue =
-                        currentAnswers[
-                            questionId
-                        ] ||
-                        "noch_nicht";
+        if (card) {
+          box.classList.remove(
+            "rating-full",
+            "rating-half",
+            "rating-minimal",
+            "rating-empty",
+          );
 
-
-                    let nextValue;
-
-
-                    /*
-                     * 1. Klick
-                     * noch nicht → sicher
-                     */
-
-                    if (
-    currentValue ===
-    "noch_nicht_bewertet"
-) {
-
-    nextValue =
-        "sicher";
-
-}
-
-else if (
-    currentValue ===
-    "sicher"
-) {
-
-    nextValue =
-        "teilweise";
-
-}
-
-else if (
-    currentValue ===
-    "teilweise"
-) {
-
-    nextValue =
-        "wird_nicht_gezeigt";
-
-}
-
-else if (
-    currentValue ===
-    "wird_nicht_gezeigt"
-) {
-
-    nextValue =
-        "noch_nicht_bewertet";
-
-}
-
-else {
-
-    nextValue =
-        "noch_nicht_bewertet";
-
-}
-
-
-                    /*
-                     * Bewertung speichern
-                     */
-
-                    currentAnswers[
-                        questionId
-                    ] =
-                        nextValue;
-
-
-                    /*
-                     * Anzeige aktualisieren
-                     */
-
-                    updateDevelopmentRatingBox(
-                        box,
-                        nextValue
-                    );
-
-
-                    /*
-                     * Kartenfarbe aktualisieren
-                     */
-
-                    const card =
-                        box.closest(
-                            ".development-question"
-                        );
-
-
-                    if (card) {
-
-                        box.classList.remove(
-    "rating-full",
-    "rating-half",
-    "rating-minimal",
-    "rating-empty"
-);
-
-if (nextValue === "sicher") {
-
-    box.classList.add("rating-full");
-
-} else if (nextValue === "teilweise") {
-
-    box.classList.add("rating-half");
-
-} else if (nextValue === "wird_nicht_gezeigt") {
-
-    box.classList.add("rating-minimal");
-
-} else {
-
-    box.classList.add("rating-empty");
-}   
-
-                    }
-
-                }
-            );
-
-        });
-
+          if (nextValue === "sicher") {
+            box.classList.add("rating-full");
+          } else if (nextValue === "teilweise") {
+            box.classList.add("rating-half");
+          } else if (nextValue === "wird_nicht_gezeigt") {
+            box.classList.add("rating-minimal");
+          } else {
+            box.classList.add("rating-empty");
+          }
+        }
+      });
+    });
 }
 function setupDevelopmentFilters() {
+  document.querySelectorAll(".development-filter").forEach((button) => {
+    button.addEventListener("click", () => {
+      developmentQuestionFilter = button.dataset.filter;
 
-    document
-        .querySelectorAll(".development-filter")
-        .forEach(button => {
+      document.querySelectorAll(".development-filter").forEach((btn) => {
+        btn.classList.remove("active");
+      });
 
-            button.addEventListener(
-                "click",
-                () => {
+      button.classList.add("active");
 
-                    developmentQuestionFilter =
-                        button.dataset.filter;
-
-                    document
-                        .querySelectorAll(
-                            ".development-filter"
-                        )
-                        .forEach(btn => {
-
-                            btn.classList.remove(
-                                "active"
-                            );
-
-                        });
-
-                    button.classList.add(
-                        "active"
-                    );
-
-                    renderDevelopmentQuestions(
-                        currentQuestions
-                    );
-
-                }
-            );
-
-        });
-
+      renderDevelopmentQuestions(currentQuestions);
+    });
+  });
 }
 
 /* ============================================================
    BEWERTUNGSKASTEN
    ============================================================ */
-function updateDevelopmentRatingBox(
-    box,
-    value
-) {
+function updateDevelopmentRatingBox(box, value) {
+  if (!box) {
+    return;
+  }
 
-    if (!box) {
-        return;
-    }
+  box.dataset.value = value;
 
+  const option = DEVELOPMENT_OPTIONS.find((item) => item.value === value);
 
-    box.dataset.value =
-        value;
+  const label = option?.label || "";
 
+  const labelElement = box.querySelector(".development-rating-label");
 
-    const option =
-        DEVELOPMENT_OPTIONS.find(
-            item =>
-                item.value === value
-        );
+  if (labelElement) {
+    labelElement.textContent = label;
+  }
 
+  /*
+   * Nur die Bewertungsbox
+   * bekommt die Bewertungs-Klasse.
+   */
 
-    const label =
-        option?.label ||
-        "";
+  box.classList.remove(
+    "rating-full",
+    "rating-half",
+    "rating-minimal",
+    "rating-empty",
+  );
 
+  if (value === "sicher") {
+    box.classList.add("rating-full");
+  } else if (value === "teilweise") {
+    box.classList.add("rating-half");
+  } else if (value === "wird_nicht_gezeigt") {
+    box.classList.add("rating-minimal");
+  } else {
+    box.classList.add("rating-empty");
+  }
 
-    const labelElement =
-        box.querySelector(
-            ".development-rating-label"
-        );
+  /*
+   * State-Klasse aktualisieren
+   */
 
+  box.classList.remove(
+    "development-state-noch_nicht",
+    "development-state-noch_nicht_bewertet",
+    "development-state-sicher",
+    "development-state-teilweise",
+    "development-state-wird_nicht_gezeigt",
+    "development-state-nicht_beobachtet",
+  );
 
-    if (labelElement) {
+  box.classList.add(`development-state-${value}`);
 
-        labelElement.textContent =
-            label;
+  box.setAttribute("aria-label", `Bewertung: ${label}`);
 
-    }
-
-
-    /*
-     * Nur die Bewertungsbox
-     * bekommt die Bewertungs-Klasse.
-     */
-
-    box.classList.remove(
-        "rating-full",
-        "rating-half",
-        "rating-minimal",
-        "rating-empty"
-    );
-
-
-    if (value === "sicher") {
-
-        box.classList.add(
-            "rating-full"
-        );
-
-    }
-
-    else if (value === "teilweise") {
-
-        box.classList.add(
-            "rating-half"
-        );
-
-    }
-
-    else if (
-        value === "wird_nicht_gezeigt"
-    ) {
-
-        box.classList.add(
-            "rating-minimal"
-        );
-
-    }
-
-    else {
-
-        box.classList.add(
-            "rating-empty"
-        );
-
-    }
-
-
-    /*
-     * State-Klasse aktualisieren
-     */
-
-    box.classList.remove(
-        "development-state-noch_nicht",
-        "development-state-noch_nicht_bewertet",
-        "development-state-sicher",
-        "development-state-teilweise",
-        "development-state-wird_nicht_gezeigt",
-        "development-state-nicht_beobachtet"
-    );
-
-
-    box.classList.add(
-        `development-state-${value}`
-    );
-
-
-    box.setAttribute(
-        "aria-label",
-        `Bewertung: ${label}`
-    );
-
-
-    box.setAttribute(
-        "title",
-        label
-    );
-
+  box.setAttribute("title", label);
 }
-
 
 /* ============================================================
    CSS FÜR DIE BEWERTUNGSBOX
    ============================================================ */
 
 function ensureDevelopmentRatingStyles() {
+  if (document.getElementById("developmentRatingStyles")) {
+    return;
+  }
 
-    if (
-        document.getElementById(
-            "developmentRatingStyles"
-        )
-    ) {
-        return;
-    }
+  const style = document.createElement("style");
 
-    const style =
-        document.createElement("style");
+  style.id = "developmentRatingStyles";
 
-    style.id =
-        "developmentRatingStyles";
-
-    style.textContent = `
+  style.textContent = `
 
         /* =====================================================
            FRAGEN-CONTAINER
@@ -4351,7 +3298,7 @@ function ensureDevelopmentRatingStyles() {
 
     `;
 
-    document.head.appendChild(style);
+  document.head.appendChild(style);
 }
 
 /* ============================================================
@@ -4359,432 +3306,229 @@ function ensureDevelopmentRatingStyles() {
    ============================================================ */
 
 async function handleDevelopmentChildChange(event) {
-    currentChildId =
-        event.target.value || null;
+  currentChildId = event.target.value || null;
 
-    currentAnswers = {};
-    currentQuestions = [];
-    currentAge = null;
+  currentAnswers = {};
+  currentQuestions = [];
+  currentAge = null;
 
-    const {
-        questionsContainer,
-        questionsMessage,
-        ageSelect,
-        resultContainer
-    } = getDevelopmentElements();
+  const { questionsContainer, questionsMessage, ageSelect, resultContainer } =
+    getDevelopmentElements();
 
-    if (resultContainer) {
-        resultContainer.style.display = "none";
-        resultContainer.innerHTML = "";
+  if (resultContainer) {
+    resultContainer.style.display = "none";
+    resultContainer.innerHTML = "";
+  }
+
+  if (!currentChildId) {
+    if (ageSelect) {
+      ageSelect.value = "";
     }
 
-    if (!currentChildId) {
-        if (ageSelect) {
-            ageSelect.value = "";
-        }
-
-        if (questionsContainer) {
-            questionsContainer.innerHTML = `
+    if (questionsContainer) {
+      questionsContainer.innerHTML = `
                 <p>
                     Bitte zuerst ein Kind auswählen.
                 </p>
             `;
-        }
-
-        return;
     }
 
-    const selectedChild =
-        currentChildren.find(
-            child =>
-                String(child.id) ===
-                String(currentChildId)
-        );
+    return;
+  }
 
-    const calculatedAge =
-        calculateChildAge(
-            selectedChild?.birth_date
-        );
+  const selectedChild = currentChildren.find(
+    (child) => String(child.id) === String(currentChildId),
+  );
 
-    if (calculatedAge && ageSelect) {
-        const ageValue = Math.min(
-            7,
-            Math.max(1, calculatedAge.years)
-        );
+  const calculatedAge = calculateChildAge(selectedChild?.birth_date);
 
-        currentAge = ageValue;
-        ageSelect.value = String(ageValue);
+  if (calculatedAge && ageSelect) {
+    const ageValue = Math.min(7, Math.max(1, calculatedAge.years));
 
-        const selectedOption =
-            ageSelect.options[
-                ageSelect.selectedIndex
-            ];
+    currentAge = ageValue;
+    ageSelect.value = String(ageValue);
 
-        if (selectedOption) {
-            selectedOption.textContent =
-                formatChildAge(
-                    selectedChild.birth_date
-                );
-        }
+    const selectedOption = ageSelect.options[ageSelect.selectedIndex];
 
-        currentQuestions =
-            getQuestionsForAge(currentAge);
-
-        renderDevelopmentQuestions(
-            currentQuestions
-        );
+    if (selectedOption) {
+      selectedOption.textContent = formatChildAge(selectedChild.birth_date);
     }
-    else {
-        if (ageSelect) {
-            ageSelect.value = "";
-        }
 
-        if (questionsContainer) {
-            questionsContainer.innerHTML = `
+    currentQuestions = getQuestionsForAge(currentAge);
+
+    renderDevelopmentQuestions(currentQuestions);
+  } else {
+    if (ageSelect) {
+      ageSelect.value = "";
+    }
+
+    if (questionsContainer) {
+      questionsContainer.innerHTML = `
                 <p>
                     Für dieses Kind ist kein gültiges
                     Geburtsdatum vorhanden.
                 </p>
             `;
-        }
     }
-await loadSavedDevelopmentReports();
-enableDevelopmentReportActions();
+  }
+  await loadSavedDevelopmentReports();
+  enableDevelopmentReportActions();
 
-    /*
-     * Gespeicherte Auswertung laden.
-     * Falls vorhanden, überschreibt deren Alter
-     * die automatisch berechnete Anzeige.
-     */
-    const savedAssessment =
-        await loadDevelopmentAssessment(
-            currentChildId
-        );
+  /*
+   * Gespeicherte Auswertung laden.
+   * Falls vorhanden, überschreibt deren Alter
+   * die automatisch berechnete Anzeige.
+   */
+  const savedAssessment = await loadDevelopmentAssessment(currentChildId);
 
-    if (savedAssessment) {
-        safeText(
-            questionsMessage,
-            "Gespeicherte Auswertung wurde geladen."
-        );
+  if (savedAssessment) {
+    safeText(questionsMessage, "Gespeicherte Auswertung wurde geladen.");
 
-        if (questionsMessage) {
-            questionsMessage.classList.add(
-                "show",
-                "success"
-            );
-        }
-
-        return;
+    if (questionsMessage) {
+      questionsMessage.classList.add("show", "success");
     }
 
-    safeText(
-        questionsMessage,
-        ""
-    );
+    return;
+  }
+
+  safeText(questionsMessage, "");
 }
-    
+
 /* ============================================================
    ALTER GEÄNDERT
    ============================================================ */
 
 function handleDevelopmentAgeChange(event) {
+  const age = Number(event.target.value);
 
-    const age =
-        Number(
-            event.target.value
-        );
+  currentAge = Number.isFinite(age) && age > 0 ? age : null;
 
+  currentAnswers = {};
 
-    currentAge =
-        Number.isFinite(age) &&
-        age > 0
-            ? age
-            : null;
+  const { questionsContainer, questionsMessage } = getDevelopmentElements();
 
-
-    currentAnswers = {};
-
-
-    const {
-        questionsContainer,
-        questionsMessage
-    } =
-        getDevelopmentElements();
-
-
-    if (!currentAge) {
-
-        if (questionsContainer) {
-
-            questionsContainer.innerHTML =
-                `
+  if (!currentAge) {
+    if (questionsContainer) {
+      questionsContainer.innerHTML = `
                 <p>
                     Bitte ein Alter auswählen.
                 </p>
                 `;
-
-        }
-
-        return;
-
     }
 
+    return;
+  }
 
-    if (!currentChildId) {
+  if (!currentChildId) {
+    safeText(questionsMessage, "Bitte zuerst ein Kind auswählen.");
 
-        safeText(
-            questionsMessage,
-            "Bitte zuerst ein Kind auswählen."
-        );
+    event.target.value = "";
 
+    currentAge = null;
 
-        event.target.value = "";
+    return;
+  }
 
-        currentAge = null;
+  const questions = getQuestionsForAge(currentAge);
 
-        return;
-
-    }
-
-
-    const questions =
-        getQuestionsForAge(
-            currentAge
-        );
-
-
-    renderDevelopmentQuestions(
-        questions
-    );
-
+  renderDevelopmentQuestions(questions);
 }
-
 
 /* ============================================================
    EVENTS ENTWICKLUNG
    ============================================================ */
 
 function setupDevelopmentEvents() {
-
-
-if (currentChildId) {
+  if (currentChildId) {
     loadSavedDevelopmentReports();
-}
+  }
 
-   
-    ensureDevelopmentRatingStyles();
+  ensureDevelopmentRatingStyles();
 
+  const { childSelect, ageSelect, saveButton } = getDevelopmentElements();
 
-   const {
-    childSelect,
-    ageSelect,
-    saveButton
-} =
-    getDevelopmentElements();
+  const reportButton = byId("createDevelopmentReportButton");
 
+  const saveReportButton = byId("saveDevelopmentReportButton");
 
-const reportButton =
-    byId(
-        "createDevelopmentReportButton"
-    );
+  const printReportButton = byId("printDevelopmentReportButton");
 
+  if (childSelect && !childSelect.dataset.eventsReady) {
+    childSelect.dataset.eventsReady = "true";
 
-const saveReportButton =
-    byId(
-        "saveDevelopmentReportButton"
-    );
+    childSelect.addEventListener("change", handleDevelopmentChildChange);
+  }
 
+  if (ageSelect && !ageSelect.dataset.eventsReady) {
+    ageSelect.dataset.eventsReady = "true";
 
-const printReportButton =
-    byId(
-        "printDevelopmentReportButton"
-    );
+    ageSelect.addEventListener("change", handleDevelopmentAgeChange);
+    if (reportButton && !reportButton.dataset.eventsReady) {
+      reportButton.dataset.eventsReady = "true";
 
-
-    if (
-        childSelect &&
-        !childSelect.dataset.eventsReady
-    ) {
-
-        childSelect.dataset.eventsReady =
-            "true";
-
-
-        childSelect.addEventListener(
-            "change",
-            handleDevelopmentChildChange
-        );
-
+      reportButton.addEventListener("click", handleCreateDevelopmentReport);
     }
 
+    if (saveReportButton && !saveReportButton.dataset.eventsReady) {
+      saveReportButton.dataset.eventsReady = "true";
 
-    if (
-        ageSelect &&
-        !ageSelect.dataset.eventsReady
-    ) {
-
-        ageSelect.dataset.eventsReady =
-            "true";
-
-
-        ageSelect.addEventListener(
-            "change",
-            handleDevelopmentAgeChange
-        );
-if (
-    reportButton &&
-    !reportButton.dataset.eventsReady
-) {
-
-    reportButton.dataset.eventsReady =
-        "true";
-
-
-    reportButton.addEventListener(
-        "click",
-        handleCreateDevelopmentReport
-    );
-
-}
-
-
-if (
-    saveReportButton &&
-    !saveReportButton.dataset.eventsReady
-) {
-
-    saveReportButton.dataset.eventsReady =
-        "true";
-
-
-    saveReportButton.addEventListener(
-        "click",
-        handleSaveDevelopmentReport
-    );
-
-}
-
-
-if (
-    printReportButton &&
-    !printReportButton.dataset.eventsReady
-) {
-
-    printReportButton.dataset.eventsReady =
-        "true";
-
-
-    printReportButton.addEventListener(
-        "click",
-        printDevelopmentReport
-    );
-
-}
+      saveReportButton.addEventListener("click", handleSaveDevelopmentReport);
     }
 
+    if (printReportButton && !printReportButton.dataset.eventsReady) {
+      printReportButton.dataset.eventsReady = "true";
 
-   function handleCreateDevelopmentReport() {
+      printReportButton.addEventListener("click", printDevelopmentReport);
+    }
+  }
 
-    const validation =
-        validateDevelopment();
-
+  function handleCreateDevelopmentReport() {
+    const validation = validateDevelopment();
 
     if (!validation.valid) {
+      const { questionsMessage } = getDevelopmentElements();
 
-        const {
-            questionsMessage
-        } =
-            getDevelopmentElements();
+      safeText(questionsMessage, validation.message);
 
+      if (questionsMessage) {
+        questionsMessage.style.color = "red";
+      }
 
-        safeText(
-            questionsMessage,
-            validation.message
-        );
-
-
-        if (questionsMessage) {
-
-            questionsMessage.style.color =
-                "red";
-
-        }
-
-
-        return;
-
+      return;
     }
 
+    const result = calculateDevelopmentResult();
 
-    const result =
-        calculateDevelopmentResult();
+    const report = generateDevelopmentReport(result);
 
-
-    const report =
-        generateDevelopmentReport(
-            result
-        );
-
-
-    const form =
-        byId(
-            "developmentReportForm"
-        );
-
+    const form = byId("developmentReportForm");
 
     if (form) {
-
-        form.style.display =
-            "";
-
+      form.style.display = "";
     }
 
+    showDevelopmentReport(report);
+  }
 
-    showDevelopmentReport(
-        report
-    );
-
-}
-
-   function printDevelopmentReport() {
-
-    const report =
-        byId(
-            "developmentReportDocument"
-        );
-
+  function printDevelopmentReport() {
+    const report = byId("developmentReportDocument");
 
     if (!report) {
+      alert("Bitte zuerst ein Gutachten erstellen.");
 
-        alert(
-            "Bitte zuerst ein Gutachten erstellen."
-        );
-
-        return;
-
+      return;
     }
 
-
-    const printWindow =
-        window.open(
-            "",
-            "_blank"
-        );
-
+    const printWindow = window.open("", "_blank");
 
     if (!printWindow) {
+      alert("Das Druckfenster konnte nicht geöffnet werden.");
 
-        alert(
-            "Das Druckfenster konnte nicht geöffnet werden."
-        );
-
-        return;
-
+      return;
     }
 
-
     printWindow.document.write(
-        `
+      `
         <!DOCTYPE html>
 
         <html lang="de">
@@ -4950,518 +3694,314 @@ if (
         </body>
 
         </html>
-        `
+        `,
     );
-
 
     printWindow.document.close();
 
-
     printWindow.focus();
 
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+  }
 
-    setTimeout(
-        () => {
+  if (saveButton && !saveButton.dataset.eventsReady) {
+    saveButton.dataset.eventsReady = "true";
 
-            printWindow.print();
-
-        },
-        500
-    );
-
+    saveButton.addEventListener("click", handleDevelopmentSave);
+  }
 }
-
-    if (
-        saveButton &&
-        !saveButton.dataset.eventsReady
-    ) {
-
-        saveButton.dataset.eventsReady =
-            "true";
-
-
-        saveButton.addEventListener(
-            "click",
-            handleDevelopmentSave
-        );
-
-    }
-
-}
-
 
 /* ============================================================
    VALIDIEREN
    ============================================================ */
 
 function validateDevelopment() {
-
-    if (!currentChildId) {
-
-        return {
-
-            valid:false,
-
-            message:
-                "Bitte zuerst ein Kind auswählen."
-
-        };
-
-    }
-
-
-    if (!currentAge) {
-
-        return {
-
-            valid:false,
-
-            message:
-                "Bitte zuerst das Alter auswählen."
-
-        };
-
-    }
-
-
-    if (
-        !currentQuestions ||
-    filteredQuestions.length === 0
-    ) {
-
-        return {
-
-            valid:false,
-
-            message:
-                "Für dieses Alter sind keine Fragen vorhanden."
-
-        };
-
-    }
-
-
-    const unanswered =
-        currentQuestions.filter(
-            question =>
-                !currentAnswers[
-                    question.id
-                ]
-        );
-
-
-    if (
-        unanswered.length > 0
-    ) {
-
-        return {
-
-            valid:false,
-
-            message:
-                `Bitte beantworte noch ${unanswered.length} Frage(n).`
-
-        };
-
-    }
-
-
+  if (!currentChildId) {
     return {
+      valid: false,
 
-        valid:true,
-
-        message:""
-
+      message: "Bitte zuerst ein Kind auswählen.",
     };
+  }
 
+  if (!currentAge) {
+    return {
+      valid: false,
+
+      message: "Bitte zuerst das Alter auswählen.",
+    };
+  }
+
+  if (!currentQuestions || filteredQuestions.length === 0) {
+    return {
+      valid: false,
+
+      message: "Für dieses Alter sind keine Fragen vorhanden.",
+    };
+  }
+
+  const unanswered = currentQuestions.filter(
+    (question) => !currentAnswers[question.id],
+  );
+
+  if (unanswered.length > 0) {
+    return {
+      valid: false,
+
+      message: `Bitte beantworte noch ${unanswered.length} Frage(n).`,
+    };
+  }
+
+  return {
+    valid: true,
+
+    message: "",
+  };
 }
-
 
 /* ============================================================
    AUSWERTUNG
    ============================================================ */
 
 function calculateDevelopmentResult() {
+  const result = {
+    total: 0,
 
-    const result = {
+    noch_nicht: 0,
+
+    teilweise: 0,
+
+    sicher: 0,
+
+    nicht_beobachtet: 0,
+
+    percentage: 0,
+
+    areas: {},
+  };
+
+  /*
+   * Gesamtwerte vorbereiten
+   */
+
+  currentQuestions.forEach((question) => {
+    if (!result.areas[question.area]) {
+      const area = DEVELOPMENT_AREAS.find((item) => item.key === question.area);
+
+      result.areas[question.area] = {
+        key: question.area,
+
+        label: area?.label || question.area,
 
         total: 0,
 
-        noch_nicht: 0,
+        sicher: 0,
 
         teilweise: 0,
 
-        sicher: 0,
+        noch_nicht: 0,
 
         nicht_beobachtet: 0,
 
         percentage: 0,
+      };
+    }
+  });
 
-        areas: {}
+  /*
+   * Antworten auswerten
+   */
 
-    };
+  currentQuestions.forEach((question) => {
+    const answer = currentAnswers[question.id];
 
-
-    /*
-     * Gesamtwerte vorbereiten
-     */
-
-    currentQuestions.forEach(question => {
-
-        if (!result.areas[question.area]) {
-
-            const area =
-                DEVELOPMENT_AREAS.find(
-                    item =>
-                        item.key === question.area
-                );
-
-            result.areas[question.area] = {
-
-                key: question.area,
-
-                label:
-                    area?.label ||
-                    question.area,
-
-                total: 0,
-
-                sicher: 0,
-
-                teilweise: 0,
-
-                noch_nicht: 0,
-
-                nicht_beobachtet: 0,
-
-                percentage: 0
-
-            };
-
-        }
-
-    });
-
-
-    /*
-     * Antworten auswerten
-     */
-
-    currentQuestions.forEach(question => {
-
-        const answer =
-            currentAnswers[question.id];
-
-        if (!answer) {
-            return;
-        }
-
-
-        result.total++;
-
-
-        if (
-            Object.prototype.hasOwnProperty.call(
-                result,
-                answer
-            )
-        ) {
-
-            result[answer]++;
-
-        }
-
-
-        const area =
-            result.areas[question.area];
-
-
-        if (!area) {
-            return;
-        }
-
-
-        area.total++;
-
-
-        if (
-            Object.prototype.hasOwnProperty.call(
-                area,
-                answer
-            )
-        ) {
-
-            area[answer]++;
-
-        }
-
-    });
-
-
-    /*
-     * Gesamtprozent berechnen
-     *
-     * "Nicht beobachtet" wird ignoriert.
-     */
-
-    const observable =
-        result.total -
-        result.nicht_beobachtet;
-
-
-    if (observable > 0) {
-
-        result.percentage =
-            Math.round(
-                (
-                    result.sicher +
-                    (result.teilweise * 0.5)
-                ) /
-                observable *
-                100
-            );
-
+    if (!answer) {
+      return;
     }
 
+    result.total++;
 
-    /*
-     * Prozent je Entwicklungsbereich
-     */
+    if (Object.prototype.hasOwnProperty.call(result, answer)) {
+      result[answer]++;
+    }
 
-    Object.values(result.areas)
-        .forEach(area => {
+    const area = result.areas[question.area];
 
-            const areaObservable =
-                area.total -
-                area.nicht_beobachtet;
+    if (!area) {
+      return;
+    }
 
+    area.total++;
 
-            if (areaObservable > 0) {
+    if (Object.prototype.hasOwnProperty.call(area, answer)) {
+      area[answer]++;
+    }
+  });
 
-                area.percentage =
-                    Math.round(
-                        (
-                            area.sicher +
-                            (area.teilweise * 0.5)
-                        ) /
-                        areaObservable *
-                        100
-                    );
+  /*
+   * Gesamtprozent berechnen
+   *
+   * "Nicht beobachtet" wird ignoriert.
+   */
 
-            }
+  const observable = result.total - result.nicht_beobachtet;
 
-        });
+  if (observable > 0) {
+    result.percentage = Math.round(
+      ((result.sicher + result.teilweise * 0.5) / observable) * 100,
+    );
+  }
 
+  /*
+   * Prozent je Entwicklungsbereich
+   */
 
-    return result;
+  Object.values(result.areas).forEach((area) => {
+    const areaObservable = area.total - area.nicht_beobachtet;
 
+    if (areaObservable > 0) {
+      area.percentage = Math.round(
+        ((area.sicher + area.teilweise * 0.5) / areaObservable) * 100,
+      );
+    }
+  });
+
+  return result;
 }
 
-    
 /* ============================================================
    ANGEFANGENE ENTWICKLUNGSBEOBACHTUNGEN
    ============================================================ */
 
 async function loadStartedDevelopmentObservations() {
+  const container = byId("startedDevelopmentObservations");
 
-    const container =
-        byId("startedDevelopmentObservations");
+  if (!container) {
+    return;
+  }
 
-    if (!container) {
-        return;
-    }
+  if (!supabaseClient) {
+    container.innerHTML = "";
+    return;
+  }
 
-    if (!supabaseClient) {
-        container.innerHTML = "";
-        return;
-    }
+  if (!currentChildren || currentChildren.length === 0) {
+    container.innerHTML = "";
+    return;
+  }
 
-    if (
-        !currentChildren ||
-        currentChildren.length === 0
-    ) {
-        container.innerHTML = "";
-        return;
-    }
+  try {
+    /*
+     * Für jedes Kind prüfen,
+     * ob bereits eine Bewertung begonnen wurde.
+     */
 
-    try {
+    const entries = [];
 
-        /*
-         * Für jedes Kind prüfen,
-         * ob bereits eine Bewertung begonnen wurde.
-         */
+    for (const child of currentChildren) {
+      const questions = getQuestionsForAge(
+        Math.min(
+          7,
+          Math.max(1, calculateChildAge(child.birth_date)?.years || 1),
+        ),
+      );
 
-        const entries = [];
+      if (!questions || questions.length === 0) {
+        continue;
+      }
 
-        for (const child of currentChildren) {
+      const { data, error } = await supabaseClient
+        .from("development_assessments")
+        .select("*")
+        .eq("child_id", child.id)
+        .order("created_at", {
+          ascending: false,
+        })
+        .limit(1)
+        .maybeSingle();
 
-            const questions =
-                getQuestionsForAge(
-                    Math.min(
-                        7,
-                        Math.max(
-                            1,
-                            calculateChildAge(
-                                child.birth_date
-                            )?.years || 1
-                        )
-                    )
-                );
+      if (error) {
+        console.error("Bewertung konnte nicht geladen werden:", error);
+        continue;
+      }
 
-            if (
-                !questions ||
-                questions.length === 0
-            ) {
-                continue;
-            }
+      if (!data) {
+        continue;
+      }
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "development_assessments"
-                    )
-                    .select("*")
-                    .eq(
-                        "child_id",
-                        child.id
-                    )
-                    .order(
-                        "created_at",
-                        {
-                            ascending: false
-                        }
-                    )
-                    .limit(1)
-                    .maybeSingle();
+      /*
+       * Antworten aus gespeicherter Bewertung holen.
+       */
 
-            if (error) {
-                console.error(
-                    "Bewertung konnte nicht geladen werden:",
-                    error
-                );
-                continue;
-            }
+      let answers = {};
 
-            if (!data) {
-                continue;
-            }
-
-            /*
-             * Antworten aus gespeicherter Bewertung holen.
-             */
-
-            let answers = {};
-
-            if (data.answers) {
-
-                if (
-                    typeof data.answers ===
-                    "string"
-                ) {
-
-                    try {
-
-                        answers =
-                            JSON.parse(
-                                data.answers
-                            );
-
-                    } catch {
-
-                        answers = {};
-
-                    }
-
-                }
-
-                else {
-
-                    answers =
-                        data.answers;
-
-                }
-
-            }
-
-            /*
-             * Anzahl beantworteter Fragen.
-             */
-
-            const answered =
-                questions.filter(
-                    question =>
-                        answers[
-                            question.id
-                        ]
-                ).length;
-
-            if (answered === 0) {
-                continue;
-            }
-
-            const percentage =
-                Math.round(
-                    answered /
-                    questions.length *
-                    100
-                );
-
-            entries.push({
-
-                child,
-
-                answered,
-
-                total:
-                    questions.length,
-
-                percentage
-
-            });
-
+      if (data.answers) {
+        if (typeof data.answers === "string") {
+          try {
+            answers = JSON.parse(data.answers);
+          } catch {
+            answers = {};
+          }
+        } else {
+          answers = data.answers;
         }
+      }
 
+      /*
+       * Anzahl beantworteter Fragen.
+       */
 
-        /*
-         * Nichts angefangen
-         */
+      const answered = questions.filter(
+        (question) => answers[question.id],
+      ).length;
 
-        if (entries.length === 0) {
+      if (answered === 0) {
+        continue;
+      }
 
-            container.innerHTML =
-                `
+      const percentage = Math.round((answered / questions.length) * 100);
+
+      entries.push({
+        child,
+
+        answered,
+
+        total: questions.length,
+
+        percentage,
+      });
+    }
+
+    /*
+     * Nichts angefangen
+     */
+
+    if (entries.length === 0) {
+      container.innerHTML = `
                 <div class="started-development-empty">
                     Noch keine angefangenen Beobachtungen.
                 </div>
                 `;
 
-            return;
+      return;
+    }
 
-        }
+    /*
+     * Karten rendern
+     */
 
+    container.innerHTML = entries
+      .map((entry) => {
+        const childName = entry.child.child_code || "Kind";
 
-        /*
-         * Karten rendern
-         */
-
-        container.innerHTML =
-        
-            entries
-                .map(entry => {
-
-                    const childName =
-                        entry.child.child_code ||
-                        "Kind";
-
-                    return `
+        return `
                         <button
                             type="button"
                             class="started-development-card"
                             data-development-child-id="${escapeHtml(
-                                entry.child.id
+                              entry.child.id,
                             )}"
                         >
 
@@ -5525,61 +4065,37 @@ async function loadStartedDevelopmentObservations() {
 
                         </button>
                     `;
+      })
+      .join("");
+    /*
+     * Klick auf angefangene Beobachtung
+     */
 
-                })
-                .join("");
-                /*
-                * Klick auf angefangene Beobachtung
-                */
+    container
+      .querySelectorAll("[data-development-child-id]")
+      .forEach((button) => {
+        button.addEventListener("click", async () => {
+          const childId = button.dataset.developmentChildId;
 
-                container
-                    .querySelectorAll(
-                        "[data-development-child-id]"
-                    )
-                    .forEach(button => {
+          await openDevelopmentForChild(childId);
+        });
+      });
 
-                        button.addEventListener(
-                            "click",
-                            async () => {
-
-                                const childId =
-                                    button.dataset
-                                        .developmentChildId;
-
-                                await openDevelopmentForChild(
-                                    childId
-                                );
-
-                            }
-                        );
-
-                    }
-                );
-
-                /* ============================================================
+    /* ============================================================
    ANGEFANGENE BEOBACHTUNG – KLICK
    ============================================================ */
+  } catch (error) {
+    console.error(
+      "Angefangene Beobachtungen konnten nicht geladen werden:",
+      error,
+    );
 
-
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Angefangene Beobachtungen konnten nicht geladen werden:",
-                    error
-                );
-
-                container.innerHTML =
-                    `
+    container.innerHTML = `
                     <div class="started-development-empty">
                         Angefangene Beobachtungen konnten nicht geladen werden.
                     </div>
                     `;
-
-            }
-
+  }
 }
 
 /* ============================================================
@@ -5591,350 +4107,186 @@ async function loadStartedDevelopmentObservations() {
    ============================================================ */
 
 async function openDevelopmentForChild(childId) {
+  if (!childId) {
+    console.error("openDevelopmentForChild: Keine childId.");
 
-    if (!childId) {
+    return;
+  }
 
-        console.error(
-            "openDevelopmentForChild: Keine childId."
-        );
+  /*
+   * Aktuelles Kind sofort setzen
+   */
 
-        return;
+  currentChildId = String(childId);
 
-    }
+  /*
+   * Entwicklungs-Reiter öffnen
+   */
 
+  openSection("development");
 
-    /*
-     * Aktuelles Kind sofort setzen
-     */
+  /*
+   * Elemente holen
+   */
 
-    currentChildId =
-        String(childId);
+  const { childSelect, section } = getDevelopmentElements();
 
+  if (!childSelect) {
+    console.error("Development Child Select nicht gefunden.");
 
-    /*
-     * Entwicklungs-Reiter öffnen
-     */
+    return;
+  }
 
-    openSection(
-        "development"
-    );
+  /*
+   * WICHTIG:
+   * Sicherstellen, dass die Kinder bereits
+   * im Select vorhanden sind.
+   */
 
+  if (!currentChildren || currentChildren.length === 0) {
+    await loadChildren();
+  }
 
-    /*
-     * Elemente holen
-     */
+  /*
+   * Select neu befüllen.
+   *
+   * Dadurch ist garantiert, dass das
+   * gewünschte Kind als <option> existiert.
+   */
 
-    const {
-        childSelect,
-        section
-    } =
-        getDevelopmentElements();
+  await loadChildrenForDevelopment();
 
+  /*
+   * Jetzt das richtige Kind auswählen.
+   */
 
-    if (!childSelect) {
+  childSelect.value = String(childId);
 
-        console.error(
-            "Development Child Select nicht gefunden."
-        );
+  /*
+   * Kontrolle
+   */
 
-        return;
+  console.log("Entwicklung geöffnet für:", {
+    childId: childId,
 
-    }
+    selectValue: childSelect.value,
 
+    selectedText: childSelect.options[childSelect.selectedIndex]?.textContent,
+  });
 
-    /*
-     * WICHTIG:
-     * Sicherstellen, dass die Kinder bereits
-     * im Select vorhanden sind.
-     */
+  /*
+   * Bestehenden Change-Handler ausführen.
+   *
+   * Dadurch werden:
+   * - currentChildId
+   * - Alter
+   * - Fragen
+   * - Antworten
+   * - gespeicherte Bewertung
+   *
+   * korrekt geladen.
+   */
 
-    if (
-        !currentChildren ||
-        currentChildren.length === 0
-    ) {
+  await handleDevelopmentChildChange({
+    target: childSelect,
+  });
 
-        await loadChildren();
+  /*
+   * Zum Entwicklungsbereich scrollen
+   */
 
-    }
+  if (section) {
+    section.scrollIntoView({
+      behavior: "smooth",
 
-
-    /*
-     * Select neu befüllen.
-     *
-     * Dadurch ist garantiert, dass das
-     * gewünschte Kind als <option> existiert.
-     */
-
-    await loadChildrenForDevelopment();
-
-
-    /*
-     * Jetzt das richtige Kind auswählen.
-     */
-
-    childSelect.value =
-        String(childId);
-
-
-    /*
-     * Kontrolle
-     */
-
-    console.log(
-        "Entwicklung geöffnet für:",
-        {
-            childId:
-                childId,
-
-            selectValue:
-                childSelect.value,
-
-            selectedText:
-                childSelect
-                    .options[
-                        childSelect.selectedIndex
-                    ]
-                    ?.textContent
-        }
-    );
-
-
-    /*
-     * Bestehenden Change-Handler ausführen.
-     *
-     * Dadurch werden:
-     * - currentChildId
-     * - Alter
-     * - Fragen
-     * - Antworten
-     * - gespeicherte Bewertung
-     *
-     * korrekt geladen.
-     */
-
-    await handleDevelopmentChildChange({
-        target:
-            childSelect
+      block: "start",
     });
-
-
-    /*
-     * Zum Entwicklungsbereich scrollen
-     */
-
-    if (section) {
-
-        section.scrollIntoView({
-            behavior:
-                "smooth",
-
-            block:
-                "start"
-
-        });
-
-    }
-
+  }
 }
-
 /* ============================================================
    AUSWERTUNG ANZEIGEN
    ============================================================ */
 
 function showDevelopmentResult(result) {
+  console.log("1. showDevelopmentResult gestartet mit:", result);
 
-    const {
-        resultContainer
-    } =
-        getDevelopmentElements();
+  const elements = getDevelopmentElements();
+  console.log("2. Gefundene Elemente:", elements);
 
+  if (!elements || !elements.resultContainer) {
+    console.error("FEHLER: resultContainer wurde nicht gefunden!");
+    return;
+  }
 
-    if (!resultContainer) {
-        return;
+  const { resultContainer } = getDevelopmentElements();
+
+  if (!resultContainer) {
+    return;
+  }
+
+  const areaEntries = Object.values(result.areas);
+
+  let areasHtml = "";
+
+  areaEntries.forEach((area) => {
+    let status = "Beobachtungsbedarf";
+
+    if (area.percentage >= 80) {
+      status = "Sehr sicher";
+    } else if (area.percentage >= 60) {
+      status = "Überwiegend sicher";
+    } else if (area.percentage >= 40) {
+      status = "Teilweise entwickelt";
     }
 
-
-    const areaEntries =
-        Object.values(result.areas);
-
-
-    let areasHtml = "";
-
-
-    areaEntries.forEach(area => {
-
-        let status = "Beobachtungsbedarf";
-
-
-        if (area.percentage >= 80) {
-
-            status = "Sehr sicher";
-
-        }
-
-        else if (area.percentage >= 60) {
-
-            status = "Überwiegend sicher";
-
-        }
-
-        else if (area.percentage >= 40) {
-
-            status = "Teilweise entwickelt";
-
-        }
-
-
-        areasHtml +=
-            `
+    areasHtml += `
             <div class="development-result-area">
-
                 <div class="development-result-area-header">
-
-                    <strong>
-                        ${escapeHtml(area.label)}
-                    </strong>
-
-                    <span>
-                        ${area.percentage} %
-                    </span>
-
+                    <strong>${escapeHtml(area.label)}</strong>
+                    <span>${area.percentage} %</span>
                 </div>
-
-
                 <div class="development-result-progress">
-
-                    <div
-                        class="development-result-progress-bar"
-                        style="width:${area.percentage}%"
-                    ></div>
-
+                    <div class="development-result-progress-bar" style="width:${area.percentage}%"></div>
                 </div>
-
-
                 <div class="development-result-area-status">
-
                     ${escapeHtml(status)}
-
                 </div>
-
-
                 <div class="development-result-area-details">
-
-                    <span>
-                        Voll: ${area.sicher}
-                    </span>
-
-                    <span>
-                        Teilweise: ${area.teilweise}
-                    </span>
-
-                    <span>
-                        Noch nicht gewertet: ${area.noch_nicht}
-                    </span>
-
-                    <span>
-                        Nicht sichtbar: ${area.nicht_beobachtet}
-                    </span>
-
+                    <span>Voll: ${area.sicher}</span>
+                    <span>Teilweise: ${area.teilweise}</span>
+                    <span>Noch nicht gewertet: ${area.noch_nicht}</span>
+                    <span>Nicht sichtbar: ${area.nicht_beobachtet}</span>
                 </div>
-
             </div>
-            `;
-
-    });
-
-
-    resultContainer.innerHTML =
-        `
-        <div class="development-result-card">
-
-            <h2>
-                Auswertung
-            </h2>
-
-
-            <div class="development-result-overview">
-
-                <div class="development-result-main-score">
-
-                    <span>
-                        Gesamtentwicklung
-                    </span>
-
-                    <strong>
-                        ${result.percentage} %
-                    </strong>
-
-                </div>
-
-
-                <div class="development-result-summary">
-
-                    <div>
-                        <span>Sicher</span>
-                        <strong>${result.sicher}</strong>
-                    </div>
-
-                    <div>
-                        <span>Teilweise</span>
-                        <strong>${result.teilweise}</strong>
-                    </div>
-
-                    <div>
-                        <span>Noch nicht</span>
-                        <strong>${result.noch_nicht}</strong>
-                    </div>
-
-                    <div>
-                        <span>Nicht beobachtet</span>
-                        <strong>${result.nicht_beobachtet}</strong>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <h3>
-                Entwicklungsbereiche
-            </h3>
-
-
-            <div class="development-result-areas">
-
-                ${areasHtml}
-
-            </div>
-
-        </div>
         `;
+  });
 
+  resultContainer.innerHTML = `
+        <div class="development-result-card">
+            <h2>Auswertung</h2>
+            <div class="development-result-total">
+                <span>Gesamtergebnis</span>
+                <strong>${result.percentage} %</strong>
+            </div>
+            <div class="development-result-areas">
+                ${areasHtml}
+            </div>
+        </div>
+    `;
 
-    resultContainer.style.display = "";
-
+  resultContainer.style.display = "block";
 }
 
 function ensureDevelopmentResultStyles() {
+  if (document.getElementById("developmentResultStyles")) {
+    return;
+  }
 
-    if (
-        document.getElementById(
-            "developmentResultStyles"
-        )
-    ) {
-        return;
-    }
+  const style = document.createElement("style");
 
+  style.id = "developmentResultStyles";
 
-    const style =
-        document.createElement("style");
-
-
-    style.id =
-        "developmentResultStyles";
-
-
-    style.textContent = `
+  style.textContent = `
 
         .development-result-card {
 
@@ -6163,386 +4515,240 @@ function ensureDevelopmentResultStyles() {
 
     `;
 
-
-    document.head.appendChild(style);
-
+  document.head.appendChild(style);
 }
 
 /* ============================================================
    AUSWERTUNG ERSTELLEN
    ============================================================ */
 async function saveDevelopmentAssessment(result) {
-    if (!supabaseClient) {
-        throw new Error("Supabase Client ist nicht verfügbar.");
-    }
+  if (!supabaseClient) {
+    throw new Error("Supabase Client ist nicht verfügbar.");
+  }
 
-    const {
-        data: {
-            user
-        },
-        error: userError
-    } = await supabaseClient.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabaseClient.auth.getUser();
 
-    if (userError) {
-        throw userError;
-    }
+  if (userError) {
+    throw userError;
+  }
 
-    if (!user?.id) {
-        throw new Error(
-            "Kein authentifizierter Benutzer gefunden."
-        );
-    }
+  if (!user?.id) {
+    throw new Error("Kein authentifizierter Benutzer gefunden.");
+  }
 
-    if (!currentChildId) {
-        throw new Error("Kein Kind ausgewählt.");
-    }
+  if (!currentChildId) {
+    throw new Error("Kein Kind ausgewählt.");
+  }
 
-    if (!currentAge) {
-        throw new Error("Kein Alter ausgewählt.");
-    }
+  if (!currentAge) {
+    throw new Error("Kein Alter ausgewählt.");
+  }
 
-    const payload = {
-        child_id: currentChildId,
-        user_id: user.id,
-        age: currentAge,
-        answers: currentAnswers,
-        result,
-        updated_at: new Date().toISOString()
-    };
+  const payload = {
+    child_id: currentChildId,
+    user_id: user.id,
+    age: currentAge,
+    answers: currentAnswers,
+    result,
+    updated_at: new Date().toISOString(),
+  };
 
-    console.log(
-        "Payload vor dem Speichern:",
-        payload
+  console.log("Payload vor dem Speichern:", payload);
+
+  const { data, error } = await supabaseClient
+    .from("development_assessments")
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(
+      "Entwicklungsauswertung konnte nicht gespeichert werden:",
+      error,
     );
 
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("development_assessments")
-        .insert(payload)
-        .select()
-        .single();
+    throw error;
+  }
 
-    if (error) {
-        console.error(
-            "Entwicklungsauswertung konnte nicht gespeichert werden:",
-            error
-        );
-
-        throw error;
-    }
-
-    return data;
+  return data;
 }
 
 async function loadDevelopmentAssessment(childId) {
+  if (!supabaseClient || !childId) {
+    return null;
+  }
 
-    if (!supabaseClient || !childId) {
-        return null;
-    }
-
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("development_assessments")
-            .select(`
+  const { data, error } = await supabaseClient
+    .from("development_assessments")
+    .select(
+      `
                 id,
                 child_id,
                 age,
                 answers,
                 result,
                 created_at
-            `)
-            .eq(
-                "child_id",
-                childId
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            )
-            .limit(1)
-            .maybeSingle();
+            `,
+    )
+    .eq("child_id", childId)
+    .order("created_at", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle();
 
-
-    if (error) {
-
-        console.error(
-            "Gespeicherte Auswertung konnte nicht geladen werden:",
-            error
-        );
-
-        return null;
-
-    }
-
-
-    if (!data) {
-        return null;
-    }
-
-
-    /*
-     * Gespeicherte Daten übernehmen
-     */
-
-    currentAnswers =
-        data.answers || {};
-
-
-    currentAge =
-        Number(data.age) || null;
-
-
-    /*
-     * Alter auswählen
-     */
-
-    const {
-        ageSelect
-    } =
-        getDevelopmentElements();
-
-
-    if (ageSelect && currentAge) {
-
-        ageSelect.value =
-            String(currentAge);
-
-    }
-
-
-    /*
-     * Fragen für das gespeicherte Alter laden
-     */
-
-    if (currentAge) {
-
-        currentQuestions =
-            getQuestionsForAge(
-                currentAge
-            );
-
-
-        renderDevelopmentQuestions(
-            currentQuestions
-        );
-
-    }
-
-
-    /*
-     * Gespeicherte Auswertung anzeigen
-     */
-
-    if (data.result) {
-
-        showDevelopmentResult(
-            data.result
-        );
-
-    }
-
-
-    console.log(
-        "Gespeicherte Auswertung geladen:",
-        data
+  if (error) {
+    console.error(
+      "Gespeicherte Auswertung konnte nicht geladen werden:",
+      error,
     );
 
+    return null;
+  }
 
-    return data;
+  if (!data) {
+    return null;
+  }
 
+  /*
+   * Gespeicherte Daten übernehmen
+   */
+
+  currentAnswers = data.answers || {};
+
+  currentAge = Number(data.age) || null;
+
+  /*
+   * Alter auswählen
+   */
+
+  const { ageSelect } = getDevelopmentElements();
+
+  if (ageSelect && currentAge) {
+    ageSelect.value = String(currentAge);
+  }
+
+  /*
+   * Fragen für das gespeicherte Alter laden
+   */
+
+  if (currentAge) {
+    currentQuestions = getQuestionsForAge(currentAge);
+
+    renderDevelopmentQuestions(currentQuestions);
+  }
+
+  /*
+   * Gespeicherte Auswertung anzeigen
+   */
+
+  if (data.result) {
+    showDevelopmentResult(data.result);
+  }
+
+  console.log("Gespeicherte Auswertung geladen:", data);
+
+  return data;
 }
 
 function getCurrentDevelopmentChild() {
-
-    return currentChildren.find(
-        child =>
-            String(child.id) ===
-            String(currentChildId)
-    ) || null;
-
+  return (
+    currentChildren.find(
+      (child) => String(child.id) === String(currentChildId),
+    ) || null
+  );
 }
 
 function generateDevelopmentReport(result) {
+  const child = getCurrentDevelopmentChild();
 
-    const child =
-        getCurrentDevelopmentChild();
+  const childCode = child?.child_code || "Unbekanntes Kind";
 
+  const today = new Date().toLocaleDateString("de-DE");
 
-    const childCode =
-        child?.child_code ||
-        "Unbekanntes Kind";
+  const strongAreas = Object.values(result.areas).filter(
+    (area) => area.percentage >= 60,
+  );
 
+  const supportAreas = Object.values(result.areas).filter(
+    (area) => area.percentage < 60,
+  );
 
-    const today =
-        new Date().toLocaleDateString(
-            "de-DE"
-        );
+  let strengthsText =
+    strongAreas.length > 0
+      ? strongAreas
+          .map((area) => `${area.label} (${area.percentage} %)`)
+          .join(", ")
+      : "Es konnten derzeit keine deutlich ausgeprägten Stärken anhand der Auswertung hervorgehoben werden.";
 
+  let supportText =
+    supportAreas.length > 0
+      ? supportAreas
+          .map((area) => `${area.label} (${area.percentage} %)`)
+          .join(", ")
+      : "Es zeigen sich derzeit keine ausgeprägten Unterstützungsbedarfe.";
 
-    const strongAreas =
-        Object.values(result.areas)
-            .filter(
-                area =>
-                    area.percentage >= 60
-            );
+  const observations = byId("reportObservations")?.value?.trim() || "";
 
+  const strengths = byId("reportStrengths")?.value?.trim() || strengthsText;
 
-    const supportAreas =
-        Object.values(result.areas)
-            .filter(
-                area =>
-                    area.percentage < 60
-            );
+  const supportNeeds = byId("reportSupportNeeds")?.value?.trim() || supportText;
 
+  const recommendations =
+    byId("reportRecommendations")?.value?.trim() ||
+    "Die weitere Entwicklung sollte im pädagogischen Alltag regelmäßig beobachtet und dokumentiert werden. Entwicklungsfortschritte sollten gemeinsam mit dem Kind und den Bezugspersonen reflektiert werden.";
 
-    let strengthsText =
-        strongAreas.length > 0
-            ? strongAreas
-                .map(
-                    area =>
-                        `${area.label} (${area.percentage} %)`
-                )
-                .join(", ")
-            : "Es konnten derzeit keine deutlich ausgeprägten Stärken anhand der Auswertung hervorgehoben werden.";
+  return {
+    childCode,
 
+    age: currentAge,
 
-    let supportText =
-        supportAreas.length > 0
-            ? supportAreas
-                .map(
-                    area =>
-                        `${area.label} (${area.percentage} %)`
-                )
-                .join(", ")
-            : "Es zeigen sich derzeit keine ausgeprägten Unterstützungsbedarfe.";
+    date: today,
 
+    observations,
 
-    const observations =
-        byId(
-            "reportObservations"
-        )?.value?.trim() || "";
+    strengths,
 
+    supportNeeds,
 
-    const strengths =
-        byId(
-            "reportStrengths"
-        )?.value?.trim() ||
-        strengthsText;
+    recommendations,
 
-
-    const supportNeeds =
-        byId(
-            "reportSupportNeeds"
-        )?.value?.trim() ||
-        supportText;
-
-
-    const recommendations =
-        byId(
-            "reportRecommendations"
-        )?.value?.trim() ||
-        "Die weitere Entwicklung sollte im pädagogischen Alltag regelmäßig beobachtet und dokumentiert werden. Entwicklungsfortschritte sollten gemeinsam mit dem Kind und den Bezugspersonen reflektiert werden.";
-
-
-    return {
-
-        childCode,
-
-        age:
-            currentAge,
-
-        date:
-            today,
-
-        observations,
-
-        strengths,
-
-        supportNeeds,
-
-        recommendations,
-
-        result
-
-    };
-
+    result,
+  };
 }
 
 function showDevelopmentReport(report) {
+  const container = byId("developmentReport");
 
-    const container =
-        byId(
-            "developmentReport"
-        );
+  if (!container) {
+    return;
+  }
 
+  const areaEntries = Object.values(report.result.areas);
 
-    if (!container) {
-        return;
+  let areasHtml = "";
+
+  areaEntries.forEach((area) => {
+    let status = "Beobachtungsbedarf";
+
+    if (area.percentage >= 80) {
+      status = "Sehr sicher";
+    } else if (area.percentage >= 60) {
+      status = "Überwiegend sicher";
+    } else if (area.percentage >= 40) {
+      status = "Teilweise entwickelt";
     }
 
-
-    const areaEntries =
-        Object.values(
-            report.result.areas
-        );
-
-
-    let areasHtml = "";
-
-
-    areaEntries.forEach(
-        area => {
-
-            let status =
-                "Beobachtungsbedarf";
-
-
-            if (
-                area.percentage >= 80
-            ) {
-
-                status =
-                    "Sehr sicher";
-
-            }
-
-            else if (
-                area.percentage >= 60
-            ) {
-
-                status =
-                    "Überwiegend sicher";
-
-            }
-
-            else if (
-                area.percentage >= 40
-            ) {
-
-                status =
-                    "Teilweise entwickelt";
-
-            }
-
-
-            areasHtml +=
-                `
+    areasHtml += `
                 <div class="report-area">
 
                     <div class="report-area-header">
 
                         <strong>
-                            ${escapeHtml(
-                                area.label
-                            )}
+                            ${escapeHtml(area.label)}
                         </strong>
 
                         <span>
@@ -6570,13 +4776,9 @@ function showDevelopmentReport(report) {
 
                 </div>
                 `;
+  });
 
-        }
-    );
-
-
-    container.innerHTML =
-        `
+  container.innerHTML = `
         <article
             class="development-report-document"
             id="developmentReportDocument"
@@ -6607,9 +4809,7 @@ function showDevelopmentReport(report) {
 
                 <p>
                     <strong>Kind:</strong>
-                    ${escapeHtml(
-                        report.childCode
-                    )}
+                    ${escapeHtml(report.childCode)}
                 </p>
 
                 <p>
@@ -6619,9 +4819,7 @@ function showDevelopmentReport(report) {
 
                 <p>
                     <strong>Erstellt am:</strong>
-                    ${escapeHtml(
-                        report.date
-                    )}
+                    ${escapeHtml(report.date)}
                 </p>
 
             </section>
@@ -6669,12 +4867,9 @@ function showDevelopmentReport(report) {
 
                 <p class="report-text">
                     ${escapeHtml(
-                        report.observations ||
-                        "Keine zusätzlichen Beobachtungen dokumentiert."
-                    ).replace(
-                        /\n/g,
-                        "<br>"
-                    )}
+                      report.observations ||
+                        "Keine zusätzlichen Beobachtungen dokumentiert.",
+                    ).replace(/\n/g, "<br>")}
                 </p>
 
             </section>
@@ -6687,12 +4882,7 @@ function showDevelopmentReport(report) {
                 </h2>
 
                 <p class="report-text">
-                    ${escapeHtml(
-                        report.strengths
-                    ).replace(
-                        /\n/g,
-                        "<br>"
-                    )}
+                    ${escapeHtml(report.strengths).replace(/\n/g, "<br>")}
                 </p>
 
             </section>
@@ -6705,12 +4895,7 @@ function showDevelopmentReport(report) {
                 </h2>
 
                 <p class="report-text">
-                    ${escapeHtml(
-                        report.supportNeeds
-                    ).replace(
-                        /\n/g,
-                        "<br>"
-                    )}
+                    ${escapeHtml(report.supportNeeds).replace(/\n/g, "<br>")}
                 </p>
 
             </section>
@@ -6723,12 +4908,7 @@ function showDevelopmentReport(report) {
                 </h2>
 
                 <p class="report-text">
-                    ${escapeHtml(
-                        report.recommendations
-                    ).replace(
-                        /\n/g,
-                        "<br>"
-                    )}
+                    ${escapeHtml(report.recommendations).replace(/\n/g, "<br>")}
                 </p>
 
             </section>
@@ -6760,254 +4940,162 @@ function showDevelopmentReport(report) {
         </article>
         `;
 
-
-    container.style.display =
-        "";
-
+  container.style.display = "";
 }
 
 async function saveDevelopmentReport(report) {
-
-/* ============================================================
+  /* ============================================================
    ANGEFANGENE ENTWICKLUNGSBEOBACHTUNGEN AUF DEM DASHBOARD
    ============================================================ */
 
-async function loadStartedDevelopmentObservations() {
-
-    const container =
-        document.getElementById(
-            "startedDevelopmentObservations"
-        );
+  async function loadStartedDevelopmentObservations() {
+    const container = document.getElementById("startedDevelopmentObservations");
 
     if (!container) {
-        return;
+      return;
     }
 
     container.innerHTML = "";
 
-    if (
-        !supabaseClient ||
-        !currentChildren ||
-        currentChildren.length === 0
-    ) {
-        return;
+    if (!supabaseClient || !currentChildren || currentChildren.length === 0) {
+      return;
     }
 
     try {
+      const entries = [];
 
-        const entries = [];
+      /*
+       * Für jedes Kind die letzte gespeicherte
+       * Entwicklungsbewertung laden.
+       */
 
-        /*
-         * Für jedes Kind die letzte gespeicherte
-         * Entwicklungsbewertung laden.
-         */
-
-        for (const child of currentChildren) {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from("development_assessments")
-                    .select(`
+      for (const child of currentChildren) {
+        const { data, error } = await supabaseClient
+          .from("development_assessments")
+          .select(
+            `
                         id,
                         child_id,
                         age,
                         answers,
                         result,
                         created_at
-                    `)
-                    .eq(
-                        "child_id",
-                        child.id
-                    )
-                    .order(
-                        "created_at",
-                        {
-                            ascending: false
-                        }
-                    )
-                    .limit(1)
-                    .maybeSingle();
+                    `,
+          )
+          .eq("child_id", child.id)
+          .order("created_at", {
+            ascending: false,
+          })
+          .limit(1)
+          .maybeSingle();
 
+        if (error) {
+          console.error("Fehler beim Laden der Entwicklungsbewertung:", error);
 
-            if (error) {
-
-                console.error(
-                    "Fehler beim Laden der Entwicklungsbewertung:",
-                    error
-                );
-
-                continue;
-            }
-
-
-            /*
-             * Keine Bewertung vorhanden
-             */
-
-            if (!data) {
-                continue;
-            }
-
-
-            const answers =
-                data.answers || {};
-
-
-            /*
-             * Fragen für das gespeicherte Alter
-             */
-
-            const questions =
-                getQuestionsForAge(
-                    Number(data.age)
-                );
-
-
-            if (
-                !questions ||
-                questions.length === 0
-            ) {
-                continue;
-            }
-
-
-            /*
-             * Wie viele Fragen wurden bereits bewertet?
-             */
-
-            const answered =
-                questions.filter(
-                    question => {
-
-                        const value =
-                            answers[
-                                question.id
-                            ];
-
-                        return (
-                            value &&
-                            value !==
-                                "noch_nicht_bewertet"
-                        );
-
-                    }
-                ).length;
-
-
-            /*
-             * Noch gar nichts angefangen
-             */
-
-            if (answered === 0) {
-                continue;
-            }
-
-
-            /*
-             * Bearbeitungsfortschritt
-             *
-             * NICHT Entwicklungsprozent!
-             */
-
-            const percentage =
-                Math.round(
-                    (
-                        answered /
-                        questions.length
-                    ) * 100
-                );
-
-
-            entries.push({
-
-                child:
-                    child,
-
-                age:
-                    Number(data.age),
-
-                answered:
-                    answered,
-
-                total:
-                    questions.length,
-
-                percentage:
-                    percentage
-
-            });
-
+          continue;
         }
 
-
         /*
-         * Keine angefangenen Beobachtungen
+         * Keine Bewertung vorhanden
          */
 
-        if (entries.length === 0) {
+        if (!data) {
+          continue;
+        }
 
-            container.innerHTML =
-                `
+        const answers = data.answers || {};
+
+        /*
+         * Fragen für das gespeicherte Alter
+         */
+
+        const questions = getQuestionsForAge(Number(data.age));
+
+        if (!questions || questions.length === 0) {
+          continue;
+        }
+
+        /*
+         * Wie viele Fragen wurden bereits bewertet?
+         */
+
+        const answered = questions.filter((question) => {
+          const value = answers[question.id];
+
+          return value && value !== "noch_nicht_bewertet";
+        }).length;
+
+        /*
+         * Noch gar nichts angefangen
+         */
+
+        if (answered === 0) {
+          continue;
+        }
+
+        /*
+         * Bearbeitungsfortschritt
+         *
+         * NICHT Entwicklungsprozent!
+         */
+
+        const percentage = Math.round((answered / questions.length) * 100);
+
+        entries.push({
+          child: child,
+
+          age: Number(data.age),
+
+          answered: answered,
+
+          total: questions.length,
+
+          percentage: percentage,
+        });
+      }
+
+      /*
+       * Keine angefangenen Beobachtungen
+       */
+
+      if (entries.length === 0) {
+        container.innerHTML = `
                 <div class="started-development-empty">
                     Noch keine angefangenen Beobachtungen.
                 </div>
                 `;
 
-            return;
-        }
+        return;
+      }
 
+      /*
+       * Karten erzeugen
+       */
+
+      entries.forEach((entry) => {
+        const child = entry.child;
 
         /*
-         * Karten erzeugen
+         * Hier kannst du festlegen,
+         * welcher Name angezeigt wird.
+         *
+         * Ich verwende zuerst first_name + last_name.
          */
 
-        entries.forEach(entry => {
+        const childName =
+          [child.first_name, child.last_name].filter(Boolean).join(" ") ||
+          child.child_code ||
+          "Kind";
 
-            const child =
-                entry.child;
+        const item = document.createElement("button");
 
+        item.type = "button";
 
-            /*
-             * Hier kannst du festlegen,
-             * welcher Name angezeigt wird.
-             *
-             * Ich verwende zuerst first_name + last_name.
-             */
+        item.className = "started-development-card";
 
-            const childName =
-                [
-                    child.first_name,
-                    child.last_name
-                ]
-                .filter(Boolean)
-                .join(" ")
-                ||
-                child.child_code
-                ||
-                "Kind";
+        item.dataset.childId = child.id;
 
-
-            const item =
-                document.createElement("button");
-
-
-            item.type =
-                "button";
-
-
-            item.className =
-                "started-development-card";
-
-
-            item.dataset.childId =
-                child.id;
-
-
-            item.innerHTML =
-                `
+        item.innerHTML = `
                 <div class="started-development-header">
 
                     <strong>
@@ -7047,62 +5135,37 @@ async function loadStartedDevelopmentObservations() {
                 </div>
                 `;
 
+        /*
+         * Klick
+         */
 
-            /*
-             * Klick
-             */
-
-            item.addEventListener(
-                "click",
-                async () => {
-
-                    await openStartedDevelopment(
-                        child.id
-                    );
-
-                }
-            );
-
-
-            container.appendChild(item);
-
+        item.addEventListener("click", async () => {
+          await openStartedDevelopment(child.id);
         });
 
-    }
+        container.appendChild(item);
+      });
+    } catch (error) {
+      console.error("Fehler beim Laden der angefangenen Beobachtungen:", error);
 
-    catch (error) {
-
-        console.error(
-            "Fehler beim Laden der angefangenen Beobachtungen:",
-            error
-        );
-
-        container.innerHTML =
-            `
+      container.innerHTML = `
             <div class="started-development-empty">
                 Angefangene Beobachtungen konnten nicht geladen werden.
             </div>
             `;
-
     }
+  }
 
-}
-
-/* ============================================================
+  /* ============================================================
    ANGEFANGENE BEOBACHTUNG ÖFFNEN
    ============================================================ */
 
-async function openStartedDevelopment(childId) {
-
+  async function openStartedDevelopment(childId) {
     /*
      * Entwicklungsbereich öffnen
      */
 
-    const developmentSection =
-        document.getElementById(
-            "developmentSection"
-        );
-
+    const developmentSection = document.getElementById("developmentSection");
 
     /*
      * Falls deine App mit showSection()
@@ -7110,491 +5173,275 @@ async function openStartedDevelopment(childId) {
      * wird diese vorhandene Navigation benutzt.
      */
 
-    if (
-        typeof showSection ===
-        "function"
-    ) {
+    if (typeof showSection === "function") {
+      showSection("developmentSection");
+    } else {
+      /*
+       * Fallback:
+       * andere Sections verstecken
+       */
 
-        showSection(
-            "developmentSection"
-        );
+      document.querySelectorAll(".section").forEach((section) => {
+        section.classList.add("hidden");
+      });
 
+      if (developmentSection) {
+        developmentSection.classList.remove("hidden");
+      }
     }
-
-    else {
-
-        /*
-         * Fallback:
-         * andere Sections verstecken
-         */
-
-        document
-            .querySelectorAll(".section")
-            .forEach(section => {
-
-                section.classList.add(
-                    "hidden"
-                );
-
-            });
-
-
-        if (developmentSection) {
-
-            developmentSection.classList.remove(
-                "hidden"
-            );
-
-        }
-
-    }
-
 
     /*
      * Entwicklungs-Child-Select holen
      */
 
-    const {
-        childSelect
-    } =
-        getDevelopmentElements();
-
+    const { childSelect } = getDevelopmentElements();
 
     if (!childSelect) {
+      console.error("Development Child Select nicht gefunden.");
 
-        console.error(
-            "Development Child Select nicht gefunden."
-        );
-
-        return;
-
+      return;
     }
-
 
     /*
      * Kind auswählen
      */
 
-    childSelect.value =
-        String(childId);
-
+    childSelect.value = String(childId);
 
     /*
      * Deinen bestehenden
      * Ladeprozess verwenden.
      */
 
-    await loadDevelopmentAssessment(
-        childId
-    );
-
+    await loadDevelopmentAssessment(childId);
 
     /*
      * Optional nach oben scrollen
      */
 
     if (developmentSection) {
-
-        developmentSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-
+      developmentSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
+  }
 
-}
+  const createReportButton = byId("createDevelopmentReportButton");
 
-const createReportButton =
-    byId(
-        "createDevelopmentReportButton"
-    );
+  if (createReportButton && !createReportButton.dataset.eventsReady) {
+    createReportButton.dataset.eventsReady = "true";
 
-if (
-    createReportButton &&
-    !createReportButton.dataset.eventsReady
-) {
+    createReportButton.addEventListener("click", handleCreateDevelopmentReport);
+  }
 
-    createReportButton.dataset.eventsReady =
-        "true";
+  const saveReportButton = byId("saveDevelopmentReportButton");
 
-    createReportButton.addEventListener(
-        "click",
-        handleCreateDevelopmentReport
-    );
+  if (saveReportButton && !saveReportButton.dataset.eventsReady) {
+    saveReportButton.dataset.eventsReady = "true";
 
-}
+    saveReportButton.addEventListener("click", handleSaveDevelopmentReport);
+  }
 
+  const printReportButton = byId("printDevelopmentReportButton");
 
-const saveReportButton =
-    byId(
-        "saveDevelopmentReportButton"
-    );
+  if (printReportButton && !printReportButton.dataset.eventsReady) {
+    printReportButton.dataset.eventsReady = "true";
 
-if (
-    saveReportButton &&
-    !saveReportButton.dataset.eventsReady
-) {
+    printReportButton.addEventListener("click", printDevelopmentReport);
+  }
 
-    saveReportButton.dataset.eventsReady =
-        "true";
+  if (!supabaseClient) {
+    throw new Error("Supabase Client ist nicht verfügbar.");
+  }
 
-    saveReportButton.addEventListener(
-        "click",
-        handleSaveDevelopmentReport
-    );
+  if (!currentChildId) {
+    throw new Error("Kein Kind ausgewählt.");
+  }
 
-}
+  const { data: assessment } = await supabaseClient
+    .from("development_assessments")
+    .select("id")
+    .eq("child_id", currentChildId)
+    .order("created_at", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle();
 
+  const { data, error } = await supabaseClient
+    .from("development_reports")
+    .insert({
+      child_id: currentChildId,
 
-const printReportButton =
-    byId(
-        "printDevelopmentReportButton"
-    );
+      assessment_id: assessment?.id || null,
 
-if (
-    printReportButton &&
-    !printReportButton.dataset.eventsReady
-) {
+      age: currentAge,
 
-    printReportButton.dataset.eventsReady =
-        "true";
+      report_title: "Entwicklungsgutachten",
 
-    printReportButton.addEventListener(
-        "click",
-        printDevelopmentReport
-    );
+      observations: report.observations,
 
-}
-   
-    if (!supabaseClient) {
+      strengths: report.strengths,
 
-        throw new Error(
-            "Supabase Client ist nicht verfügbar."
-        );
+      support_needs: report.supportNeeds,
 
-    }
+      recommendations: report.recommendations,
 
+      report_text: JSON.stringify(report),
 
-    if (!currentChildId) {
+      result: report.result,
 
-        throw new Error(
-            "Kein Kind ausgewählt."
-        );
+      created_by: currentUser?.id || null,
+    })
+    .select()
+    .single();
 
-    }
+  if (error) {
+    console.error("Gutachten konnte nicht gespeichert werden:", error);
 
+    throw error;
+  }
 
-    const {
-        data: assessment
-    } =
-        await supabaseClient
-            .from(
-                "development_assessments"
-            )
-            .select(
-                "id"
-            )
-            .eq(
-                "child_id",
-                currentChildId
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            )
-            .limit(1)
-            .maybeSingle();
-
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from(
-                "development_reports"
-            )
-            .insert({
-
-                child_id:
-                    currentChildId,
-
-                assessment_id:
-                    assessment?.id ||
-                    null,
-
-                age:
-                    currentAge,
-
-                report_title:
-                    "Entwicklungsgutachten",
-
-                observations:
-                    report.observations,
-
-                strengths:
-                    report.strengths,
-
-                support_needs:
-                    report.supportNeeds,
-
-                recommendations:
-                    report.recommendations,
-
-                report_text:
-                    JSON.stringify(
-                        report
-                    ),
-
-                result:
-                    report.result,
-
-                created_by:
-                    currentUser?.id ||
-                    null
-
-            })
-            .select()
-            .single();
-
-
-    if (error) {
-
-        console.error(
-            "Gutachten konnte nicht gespeichert werden:",
-            error
-        );
-
-        throw error;
-
-    }
-
-
-    return data;
-
+  return data;
 }
 let currentDevelopmentReport = null;
-
 
 /* ============================================================
    ENTWICKLUNGSGUTACHTEN ERSTELLEN
    ============================================================ */
 
 async function handleCreateDevelopmentReport() {
+  const message = byId("developmentReportMessage");
 
-    const message =
-        byId("developmentReportMessage");
+  if (!currentChildId) {
+    safeText(message, "Bitte zuerst ein Kind auswählen.");
 
-    if (!currentChildId) {
+    return;
+  }
 
-        safeText(
-            message,
-            "Bitte zuerst ein Kind auswählen."
-        );
+  try {
+    safeText(message, "Entwicklungsgutachten wird erstellt...");
 
-        return;
+    /*
+     * Aktuelle Auswertung berechnen
+     */
+    const result = calculateDevelopmentResult();
+
+    /*
+     * Gutachten auf Basis der Auswertung erstellen
+     */
+    const report = generateDevelopmentReport(result);
+
+    currentDevelopmentReport = report;
+
+    /*
+     * Gutachten anzeigen
+     */
+    showDevelopmentReport(report);
+
+    /*
+     * Buttons aktivieren
+     */
+    const saveButton = byId("saveDevelopmentReportButton");
+
+    const printButton = byId("printDevelopmentReportButton");
+
+    if (saveButton) {
+      saveButton.disabled = false;
     }
 
-    try {
-
-        safeText(
-            message,
-            "Entwicklungsgutachten wird erstellt..."
-        );
-
-        /*
-         * Aktuelle Auswertung berechnen
-         */
-        const result =
-            calculateDevelopmentResult();
-
-        /*
-         * Gutachten auf Basis der Auswertung erstellen
-         */
-        const report =
-            generateDevelopmentReport(result);
-
-
-        currentDevelopmentReport =
-            report;
-
-        /*
-         * Gutachten anzeigen
-         */
-        showDevelopmentReport(report);
-
-        /*
-         * Buttons aktivieren
-         */
-        const saveButton =
-            byId(
-                "saveDevelopmentReportButton"
-            );
-
-        const printButton =
-            byId(
-                "printDevelopmentReportButton"
-            );
-
-        if (saveButton) {
-            saveButton.disabled = false;
-        }
-
-        if (printButton) {
-            printButton.disabled = false;
-        }
-
-        safeText(
-            message,
-            "Entwicklungsgutachten wurde erstellt."
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "Fehler beim Erstellen des Gutachtens:",
-            error
-        );
-
-        safeText(
-            message,
-            "Das Entwicklungsgutachten konnte nicht erstellt werden."
-        );
-
+    if (printButton) {
+      printButton.disabled = false;
     }
 
+    safeText(message, "Entwicklungsgutachten wurde erstellt.");
+  } catch (error) {
+    console.error("Fehler beim Erstellen des Gutachtens:", error);
+
+    safeText(
+      message,
+      "Das Entwicklungsgutachten konnte nicht erstellt werden.",
+    );
+  }
 }
-
 
 /* ============================================================
    GUTACHTEN SPEICHERN
    ============================================================ */
 
 async function handleSaveDevelopmentReport() {
+  const message = byId("developmentReportMessage");
 
-    const message =
-        byId("developmentReportMessage");
+  if (!currentDevelopmentReport) {
+    safeText(message, "Bitte zuerst ein Gutachten erstellen.");
 
-    if (!currentDevelopmentReport) {
+    return;
+  }
 
-        safeText(
-            message,
-            "Bitte zuerst ein Gutachten erstellen."
-        );
+  if (!currentChildId) {
+    safeText(message, "Kein Kind ausgewählt.");
 
-        return;
+    return;
+  }
+
+  const button = byId("saveDevelopmentReportButton");
+
+  try {
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Wird gespeichert...";
     }
 
-    if (!currentChildId) {
+    await saveDevelopmentReport(currentDevelopmentReport);
 
-        safeText(
-            message,
-            "Kein Kind ausgewählt."
-        );
+    safeText(message, "Gutachten wurde erfolgreich gespeichert.");
 
-        return;
-    }
-
-    const button =
-        byId(
-            "saveDevelopmentReportButton"
-        );
-
-    try {
-
-        if (button) {
-
-            button.disabled = true;
-            button.textContent =
-                "Wird gespeichert...";
-
-        }
-
-        await saveDevelopmentReport(
-            currentDevelopmentReport
-        );
-
-        safeText(
-            message,
-            "Gutachten wurde erfolgreich gespeichert."
-        );
-
-        await loadSavedDevelopmentReports();
-
-    }
-    catch (error) {
-
-        console.error(
-            "Fehler beim Speichern des Gutachtens:",
-            error
-        );
+    await loadSavedDevelopmentReports();
+  } catch (error) {
+    console.error("Fehler beim Speichern des Gutachtens:", error);
 
     safeText(
-        message,
-        `Speichern fehlgeschlagen: ${
-            error?.message || "Unbekannter Datenbankfehler"
-        }`
+      message,
+      `Speichern fehlgeschlagen: ${
+        error?.message || "Unbekannter Datenbankfehler"
+      }`,
     );
-
-
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Gutachten speichern";
     }
-    finally {
-
-        if (button) {
-
-            button.disabled = false;
-            button.textContent =
-                "Gutachten speichern";
-
-        }
-
-    }
-
+  }
 }
-
 
 /* ============================================================
    GESPEICHERTE GUTACHTEN LADEN
    ============================================================ */
 
 async function loadSavedDevelopmentReports() {
+  const container = byId("savedDevelopmentReportsList");
 
-    const container =
-        byId(
-            "savedDevelopmentReportsList"
-        );
+  if (!container || !currentChildId) {
+    return;
+  }
 
-    if (!container || !currentChildId) {
-        return;
-    }
+  if (!supabaseClient) {
+    container.innerHTML = "<p>Keine Verbindung zur Datenbank.</p>";
+    return;
+  }
 
-if (!supabaseClient) {
-        container.innerHTML =
-            "<p>Keine Verbindung zur Datenbank.</p>";
-        return;
-    }
-
-    container.innerHTML =
-        `
+  container.innerHTML = `
         <div class="card">
             <p>Gutachten werden geladen...</p>
         </div>
         `;
 
-    try {
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from(
-                    "development_reports"
-                )
-                .select(`
+  try {
+    const { data, error } = await supabaseClient
+      .from("development_reports")
+      .select(
+        `
                     id,
                     child_id,
                     age,
@@ -7606,26 +5453,19 @@ if (!supabaseClient) {
                     report_text,
                     result,
                     created_at
-                `)
-                .eq(
-                    "child_id",
-                    currentChildId
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
+                `,
+      )
+      .eq("child_id", currentChildId)
+      .order("created_at", {
+        ascending: false,
+      });
 
-        if (error) {
-            throw error;
-        }
+    if (error) {
+      throw error;
+    }
 
-        if (!data || data.length === 0) {
-
-            container.innerHTML =
-                `
+    if (!data || data.length === 0) {
+      container.innerHTML = `
                 <div class="card">
                     <p>
                         Für dieses Kind wurden noch keine
@@ -7634,34 +5474,24 @@ if (!supabaseClient) {
                 </div>
                 `;
 
-            return;
-        }
+      return;
+    }
 
-        container.innerHTML =
-            data
-                .map(
-                    report => {
+    container.innerHTML = data
+      .map((report) => {
+        const date = new Date(report.created_at).toLocaleString("de-DE");
 
-                        const date =
-                            new Date(
-                                report.created_at
-                            ).toLocaleString(
-                                "de-DE"
-                            );
-
-                        return `
+        return `
                         <div
                             class="saved-report-card"
-                            data-report-id="${escapeHtml(
-                                report.id
-                            )}"
+                            data-report-id="${escapeHtml(report.id)}"
                         >
 
                             <div>
                                 <strong>
                                     ${escapeHtml(
-                                        report.report_title ||
-                                        "Entwicklungsgutachten"
+                                      report.report_title ||
+                                        "Entwicklungsgutachten",
                                     )}
                                 </strong>
 
@@ -7690,305 +5520,176 @@ if (!supabaseClient) {
                             </div>
                         </div>
                         `;
-                    }
-                )
-                .join("");
+      })
+      .join("");
 
-        container
-        .querySelectorAll("[data-open-report]")
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => loadDevelopmentReport(
-                    button.dataset.openReport
-                )
-            );
-        });
+    container.querySelectorAll("[data-open-report]").forEach((button) => {
+      button.addEventListener("click", () =>
+        loadDevelopmentReport(button.dataset.openReport),
+      );
+    });
 
-    container
-        .querySelectorAll("[data-delete-report]")
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => deleteDevelopmentReport(
-                    button.dataset.deleteReport
-                )
-            );
-        });
-}
-    catch (error) {
+    container.querySelectorAll("[data-delete-report]").forEach((button) => {
+      button.addEventListener("click", () =>
+        deleteDevelopmentReport(button.dataset.deleteReport),
+      );
+    });
+  } catch (error) {
+    console.error(
+      "Gespeicherte Gutachten konnten nicht geladen werden:",
+      error,
+    );
 
-        console.error(
-            "Gespeicherte Gutachten konnten nicht geladen werden:",
-            error
-        );
-
-        container.innerHTML =
-            `
+    container.innerHTML = `
             <div class="card">
                 <p>
                     Gespeicherte Gutachten konnten nicht geladen werden.
                 </p>
             </div>
             `;
-
-    }
-
+  }
 }
-
 
 /* ============================================================
    GUTACHTEN ÖFFNEN
    ============================================================ */
 
-async function loadDevelopmentReport(
-    reportId
-) {
+async function loadDevelopmentReport(reportId) {
+  try {
+    const { data, error } = await supabaseClient
+      .from("development_reports")
+      .select("*")
+      .eq("id", reportId)
+      .eq("child_id", currentChildId)
+      .single();
 
-    try {
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from(
-                    "development_reports"
-                )
-                .select("*")
-                .eq(
-                    "id",
-                    reportId
-                )
-                .eq(
-                    "child_id",
-                    currentChildId
-                )
-                .single();
-
-        if (error) {
-            throw error;
-        }
-
-        let report =
-            null;
-
-        if (data.report_text) {
-
-            try {
-
-                report =
-                    JSON.parse(
-                        data.report_text
-                    );
-
-            }
-            catch {
-                report = null;
-            }
-
-        }
-
-        /*
-         * Falls report_text nicht mehr geparst werden kann,
-         * aus den gespeicherten Feldern wieder aufbauen.
-         */
-        if (!report) {
-
-            report = {
-
-                childCode:
-                    currentChildId,
-
-                age:
-                    data.age,
-
-                date:
-                    new Date(
-                        data.created_at
-                    ).toLocaleDateString(
-                        "de-DE"
-                    ),
-
-                observations:
-                    data.observations || "",
-
-                strengths:
-                    data.strengths || "",
-
-                supportNeeds:
-                    data.support_needs || "",
-
-                recommendations:
-                    data.recommendations || "",
-
-                result:
-                    data.result || {
-                        percentage: 0,
-                        areas: {}
-                    }
-
-            };
-
-        }
-
-        currentDevelopmentReport =
-            report;
-
-        showDevelopmentReport(
-            report
-        );
-
-        const saveButton =
-            byId(
-                "saveDevelopmentReportButton"
-            );
-
-        const printButton =
-            byId(
-                "printDevelopmentReportButton"
-            );
-
-        if (saveButton) {
-            saveButton.disabled = false;
-        }
-
-        if (printButton) {
-            printButton.disabled = false;
-        }
-
-        safeText(
-            byId(
-                "developmentReportMessage"
-            ),
-            "Gespeichertes Gutachten wurde geladen."
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "Gutachten konnte nicht geladen werden:",
-            error
-        );
-
-        safeText(
-            byId(
-                "developmentReportMessage"
-            ),
-            "Das Gutachten konnte nicht geladen werden."
-        );
-
+    if (error) {
+      throw error;
     }
 
+    let report = null;
+
+    if (data.report_text) {
+      try {
+        report = JSON.parse(data.report_text);
+      } catch {
+        report = null;
+      }
+    }
+
+    /*
+     * Falls report_text nicht mehr geparst werden kann,
+     * aus den gespeicherten Feldern wieder aufbauen.
+     */
+    if (!report) {
+      report = {
+        childCode: currentChildId,
+
+        age: data.age,
+
+        date: new Date(data.created_at).toLocaleDateString("de-DE"),
+
+        observations: data.observations || "",
+
+        strengths: data.strengths || "",
+
+        supportNeeds: data.support_needs || "",
+
+        recommendations: data.recommendations || "",
+
+        result: data.result || {
+          percentage: 0,
+          areas: {},
+        },
+      };
+    }
+
+    currentDevelopmentReport = report;
+
+    showDevelopmentReport(report);
+
+    const saveButton = byId("saveDevelopmentReportButton");
+
+    const printButton = byId("printDevelopmentReportButton");
+
+    if (saveButton) {
+      saveButton.disabled = false;
+    }
+
+    if (printButton) {
+      printButton.disabled = false;
+    }
+
+    safeText(
+      byId("developmentReportMessage"),
+      "Gespeichertes Gutachten wurde geladen.",
+    );
+  } catch (error) {
+    console.error("Gutachten konnte nicht geladen werden:", error);
+
+    safeText(
+      byId("developmentReportMessage"),
+      "Das Gutachten konnte nicht geladen werden.",
+    );
+  }
 }
-
 
 /* ============================================================
    GUTACHTEN LÖSCHEN
    ============================================================ */
 
-async function deleteDevelopmentReport(
-    reportId
-) {
+async function deleteDevelopmentReport(reportId) {
+  if (!confirm("Soll dieses Gutachten wirklich gelöscht werden?")) {
+    return;
+  }
 
-    if (
-        !confirm(
-            "Soll dieses Gutachten wirklich gelöscht werden?"
-        )
-    ) {
-        return;
+  try {
+    const { error } = await supabaseClient
+      .from("development_reports")
+      .delete()
+      .eq("id", reportId)
+      .eq("child_id", currentChildId);
+
+    if (error) {
+      throw error;
     }
 
-    try {
+    await loadSavedDevelopmentReports();
 
-        const {
-            error
-        } =
-            await supabaseClient
-                .from(
-                    "development_reports"
-                )
-                .delete()
-                .eq(
-                    "id",
-                    reportId
-                )
-                .eq(
-                    "child_id",
-                    currentChildId
-                );
+    safeText(byId("developmentReportMessage"), "Gutachten wurde gelöscht.");
+  } catch (error) {
+    console.error("Gutachten konnte nicht gelöscht werden:", error);
 
-        if (error) {
-            throw error;
-        }
-
-        await loadSavedDevelopmentReports();
-
-        safeText(
-            byId(
-                "developmentReportMessage"
-            ),
-            "Gutachten wurde gelöscht."
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "Gutachten konnte nicht gelöscht werden:",
-            error
-        );
-
-        safeText(
-            byId(
-                "developmentReportMessage"
-            ),
-            "Das Gutachten konnte nicht gelöscht werden."
-        );
-
-    }
-
+    safeText(
+      byId("developmentReportMessage"),
+      "Das Gutachten konnte nicht gelöscht werden.",
+    );
+  }
 }
-
 
 /* ============================================================
    GUTACHTEN DRUCKEN / PDF
    ============================================================ */
 
 function printDevelopmentReport() {
+  const report = byId("developmentReportDocument");
 
-    const report =
-        byId(
-            "developmentReportDocument"
-        );
+  if (!report) {
+    alert("Bitte zuerst ein Gutachten erstellen.");
 
-    if (!report) {
+    return;
+  }
 
-        alert(
-            "Bitte zuerst ein Gutachten erstellen."
-        );
+  const printWindow = window.open("", "_blank");
 
-        return;
-    }
+  if (!printWindow) {
+    alert("Das Druckfenster konnte nicht geöffnet werden.");
 
-    const printWindow =
-        window.open(
-            "",
-            "_blank"
-        );
+    return;
+  }
 
-    if (!printWindow) {
-
-        alert(
-            "Das Druckfenster konnte nicht geöffnet werden."
-        );
-
-        return;
-    }
-
-    printWindow.document.write(
-        `
+  printWindow.document.write(
+    `
         <!DOCTYPE html>
 
         <html lang="de">
@@ -8072,220 +5773,123 @@ function printDevelopmentReport() {
         </body>
 
         </html>
-        `
-    );
+        `,
+  );
 
-    printWindow.document.close();
+  printWindow.document.close();
 
-    printWindow.focus();
+  printWindow.focus();
 
-    setTimeout(
-        () => {
-
-            printWindow.print();
-
-        },
-        300
-    );
-
+  setTimeout(() => {
+    printWindow.print();
+  }, 300);
 }
 async function handleDevelopmentSave() {
+  const { saveButton, questionsMessage } = getDevelopmentElements();
 
-    const {
-        saveButton,
-        questionsMessage
-    } =
-        getDevelopmentElements();
+  const validation = validateDevelopment();
 
+  if (!validation.valid) {
+    safeText(questionsMessage, validation.message);
 
-    const validation =
-        validateDevelopment();
-
-
-    if (!validation.valid) {
-
-        safeText(
-            questionsMessage,
-            validation.message
-        );
-
-
-        if (questionsMessage) {
-
-            questionsMessage.style.color =
-                "red";
-
-        }
-
-        return;
-
+    if (questionsMessage) {
+      questionsMessage.style.color = "red";
     }
 
+    return;
+  }
 
+  if (saveButton) {
+    saveButton.disabled = true;
+
+    saveButton.textContent = "Wird gespeichert...";
+  }
+
+  try {
+    /*
+     * 1. Auswertung berechnen
+     */
+
+    const result = calculateDevelopmentResult();
+
+    /*
+     * 2. Auswertung anzeigen
+     */
+
+    showDevelopmentResult(result);
+
+    /*
+     * 3. Auswertung in Supabase speichern
+     */
+
+    await saveDevelopmentAssessment(result);
+
+    /*
+     * 4. Erfolgsmeldung
+     */
+
+    safeText(
+      questionsMessage,
+      "Auswertung wurde erfolgreich erstellt und gespeichert.",
+    );
+
+    if (questionsMessage) {
+      questionsMessage.style.color = "green";
+    }
+
+    console.log("Entwicklungsbewertung:", {
+      child_id: currentChildId,
+
+      age: currentAge,
+
+      answers: currentAnswers,
+
+      result: result,
+    });
+  } catch (error) {
+    console.error("Fehler bei der Entwicklungsauswertung:", error);
+
+    safeText(
+      questionsMessage,
+      "Die Auswertung konnte nicht gespeichert werden.",
+    );
+
+    if (questionsMessage) {
+      questionsMessage.style.color = "red";
+    }
+  } finally {
     if (saveButton) {
+      saveButton.disabled = false;
 
-        saveButton.disabled =
-            true;
-
-        saveButton.textContent =
-            "Wird gespeichert...";
-
+      saveButton.textContent = "Auswertung speichern";
     }
-
-
-    try {
-
-        /*
-         * 1. Auswertung berechnen
-         */
-
-        const result =
-            calculateDevelopmentResult();
-
-
-        /*
-         * 2. Auswertung anzeigen
-         */
-
-        showDevelopmentResult(
-            result
-        );
-
-
-        /*
-         * 3. Auswertung in Supabase speichern
-         */
-
-        await saveDevelopmentAssessment(
-            result
-        );
-
-
-        /*
-         * 4. Erfolgsmeldung
-         */
-
-        safeText(
-            questionsMessage,
-            "Auswertung wurde erfolgreich erstellt und gespeichert."
-        );
-
-
-        if (questionsMessage) {
-
-            questionsMessage.style.color =
-                "green";
-
-        }
-
-
-        console.log(
-            "Entwicklungsbewertung:",
-            {
-
-                child_id:
-                    currentChildId,
-
-                age:
-                    currentAge,
-
-                answers:
-                    currentAnswers,
-
-                result:
-                    result
-
-            }
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Fehler bei der Entwicklungsauswertung:",
-            error
-        );
-
-
-        safeText(
-            questionsMessage,
-            "Die Auswertung konnte nicht gespeichert werden."
-        );
-
-
-        if (questionsMessage) {
-
-            questionsMessage.style.color =
-                "red";
-
-        }
-
-    }
-
-    finally {
-
-        if (saveButton) {
-
-            saveButton.disabled =
-                false;
-
-            saveButton.textContent =
-                "Auswertung speichern";
-
-        }
-
-    }
-
-
-
-
+  }
 }
-
 
 /* ============================================================
    ENTWICKLUNG ÖFFNEN
    ============================================================ */
 
 async function openDevelopmentSection() {
+  try {
+    const section = ensureDevelopmentSection();
 
-    try {
+    if (!section) {
+      return;
+    }
 
-        const section =
-            ensureDevelopmentSection();
+    section.style.display = "";
 
+    setupDevelopmentEvents();
 
-        if (!section) {
-            return;
-        }
+    populateDevelopmentAge();
 
+    await loadChildrenForDevelopment();
 
-        section.style.display = "";
+    const { questionsContainer, questionsMessage } = getDevelopmentElements();
 
-
-        setupDevelopmentEvents();
-
-
-        populateDevelopmentAge();
-
-
-        await loadChildrenForDevelopment();
-
-
-        const {
-            questionsContainer,
-            questionsMessage
-        } =
-            getDevelopmentElements();
-
-
-        if (
-            questionsContainer &&
-            !currentChildId
-        ) {
-
-            questionsContainer.innerHTML =
-                `
+    if (questionsContainer && !currentChildId) {
+      questionsContainer.innerHTML = `
                 <div class="card">
                     <p>
                         Bitte ein Kind auswählen und anschließend
@@ -8293,162 +5897,93 @@ async function openDevelopmentSection() {
                     </p>
                 </div>
                 `;
-
-        }
-
-
-        safeText(
-            questionsMessage,
-            ""
-        );
-
     }
 
-    catch (error) {
-
-        console.error(
-            "Fehler beim Öffnen des Entwicklungskompasses:",
-            error
-        );
-
-    }
-
+    safeText(questionsMessage, "");
+  } catch (error) {
+    console.error("Fehler beim Öffnen des Entwicklungskompasses:", error);
+  }
 }
-
 
 /* ============================================================
    DASHBOARD
    ============================================================ */
 
 function updateChildrenCount(count) {
+  const element = byId("childrenCount");
 
-    const element =
-        byId("childrenCount");
-
-
-    if (element) {
-
-        element.textContent =
-            String(count || 0);
-
-    }
-
+  if (element) {
+    element.textContent = String(count || 0);
+  }
 }
-
 
 function updateGroupsCount(count) {
+  const element = byId("groupsCount");
 
-    const element =
-        byId("groupsCount");
-
-
-    if (element) {
-
-        element.textContent =
-            String(count || 0);
-
-    }
-
+  if (element) {
+    element.textContent = String(count || 0);
+  }
 }
-
 
 async function updateDashboardCounts() {
+  try {
+    await loadChildren();
 
-    try {
-
-        await loadChildren();
-
-        await loadGroups();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Dashboard Counts konnten nicht geladen werden:",
-            error
-        );
-
-    }
-
+    await loadGroups();
+  } catch (error) {
+    console.error("Dashboard Counts konnten nicht geladen werden:", error);
+  }
 }
 
-
 async function handleCreateChild() {
+  const childCode = document.getElementById("newChildCode")?.value?.trim();
 
-    
-    const childCode = document
-        .getElementById("newChildCode")
-        ?.value
-        ?.trim();
+  const birthDate = document.getElementById("newChildBirthDate")?.value;
 
-    const birthDate = document
-        .getElementById("newChildBirthDate")
-        ?.value;
+  const groupId = document.getElementById("newChildGroup")?.value || null;
 
-    const groupId = document
-        .getElementById("newChildGroup")
-        ?.value || null;
-    
-    const message = document.getElementById("childMessage");
+  const message = document.getElementById("childMessage");
 
-    if (!childCode || !birthDate) {
-        safeText(
-            message,
-            "Bitte Kinder-ID und Geburtsdatum eingeben."
-        );
-        return;
-    }
+  if (!childCode || !birthDate) {
+    safeText(message, "Bitte Kinder-ID und Geburtsdatum eingeben.");
+    return;
+  }
 
-    if (!currentUser) {
-        safeText(message, "Du bist nicht angemeldet.");
-        return;
-    }
+  if (!currentUser) {
+    safeText(message, "Du bist nicht angemeldet.");
+    return;
+  }
 
-    if (!groupId) {
-            safeText(
-                message,
-                "Bitte eine Gruppe auswählen."
-            );
+  if (!groupId) {
+    safeText(message, "Bitte eine Gruppe auswählen.");
 
-            message?.classList.add(
-                "show",
-                "error"
-            );
+    message?.classList.add("show", "error");
 
-            return;
-        }
+    return;
+  }
 
-    const { error } = await supabaseClient
-        .from("children")
-        .insert({
-            child_code: childCode,
-            birth_date: birthDate,
-            group_id: groupId,
-            institution_id: currentProfile?.institution_id || null
-        });
+  const { error } = await supabaseClient.from("children").insert({
+    child_code: childCode,
+    birth_date: birthDate,
+    group_id: groupId,
+    institution_id: currentProfile?.institution_id || null,
+  });
 
-    
+  if (error) {
+    console.error("Kind konnte nicht gespeichert werden:", error);
 
+    safeText(message, `Kind konnte nicht gespeichert werden: ${error.message}`);
 
-    if (error) {
-        console.error("Kind konnte nicht gespeichert werden:", error);
+    return;
+  }
 
-        safeText(
-            message,
-            `Kind konnte nicht gespeichert werden: ${error.message}`
-        );
+  safeText(message, "Kind wurde erfolgreich angelegt.");
 
-        return;
-    }
+  document.getElementById("newChildCode").value = "";
+  document.getElementById("newChildBirthDate").value = "";
+  document.getElementById("newChildGroup").value = "";
 
-    safeText(message, "Kind wurde erfolgreich angelegt.");
-
-    document.getElementById("newChildCode").value = "";
-    document.getElementById("newChildBirthDate").value = "";
-    document.getElementById("newChildGroup").value = "";
-
-    await loadChildren();
+  await loadChildren();
 }
 
 /* ============================================================
@@ -8456,831 +5991,525 @@ async function handleCreateChild() {
    ============================================================ */
 
 function setupMainEvents() {
+  const cancelCreateGroupButton = byId("cancelCreateGroupButton");
 
-const cancelCreateGroupButton =
-    byId("cancelCreateGroupButton");
-
-if (
-    cancelCreateGroupButton &&
-    !cancelCreateGroupButton.dataset.eventsReady
-) {
+  if (cancelCreateGroupButton && !cancelCreateGroupButton.dataset.eventsReady) {
     cancelCreateGroupButton.dataset.eventsReady = "true";
 
-    cancelCreateGroupButton.addEventListener(
-        "click",
-        () => {
+    cancelCreateGroupButton.addEventListener("click", () => {
+      const section = byId("createGroupSection");
 
-            const section =
-                byId("createGroupSection");
+      if (section) {
+        section.style.display = "none";
+      }
 
-            if (section) {
-                section.style.display = "none";
-            }
+      byId("newGroupName").value = "";
+      byId("newGroupDescription").value = "";
 
-            byId("newGroupName").value = "";
-            byId("newGroupDescription").value = "";
+      safeText(byId("groupMessage"), "");
+    });
+  }
 
-            safeText(
-                byId("groupMessage"),
-                ""
-            );
-        }
-    );
-}
+  const loginForm = byId("loginForm");
 
-    const loginForm =
-        byId("loginForm");
+  if (loginForm && !loginForm.dataset.eventsReady) {
+    loginForm.dataset.eventsReady = "true";
 
+    loginForm.addEventListener("submit", handleLogin);
+  }
 
-    if (
-        loginForm &&
-        !loginForm.dataset.eventsReady
-    ) {
+  const createChildButton = document.getElementById("createChildButton");
 
-        loginForm.dataset.eventsReady =
-            "true";
-
-        loginForm.addEventListener(
-            "submit",
-            handleLogin
-        );
-
-    }
-
-
-const createChildButton =
-    document.getElementById("createChildButton");
-
-if (
-    createChildButton &&
-    !createChildButton.dataset.eventsReady
-) {
+  if (createChildButton && !createChildButton.dataset.eventsReady) {
     createChildButton.dataset.eventsReady = "true";
 
-    createChildButton.addEventListener(
-        "click",
-        handleCreateChild
-    );
-}
+    createChildButton.addEventListener("click", handleCreateChild);
+  }
 
-const createGroupButton =
-    document.getElementById("createGroupButton");
+  const createGroupButton = document.getElementById("createGroupButton");
 
-if (
-    createGroupButton &&
-    !createGroupButton.dataset.eventsReady
-) {
+  if (createGroupButton && !createGroupButton.dataset.eventsReady) {
     createGroupButton.dataset.eventsReady = "true";
 
-    createGroupButton.addEventListener(
-        "click",
-        createGroup
-    );
-}
+    createGroupButton.addEventListener("click", createGroup);
+  }
 
-const openCreateGroupButton =
-    byId("openCreateGroupButton");
+  const openCreateGroupButton = byId("openCreateGroupButton");
 
-if (
-    openCreateGroupButton &&
-    !openCreateGroupButton.dataset.eventsReady
-) {
+  if (openCreateGroupButton && !openCreateGroupButton.dataset.eventsReady) {
     openCreateGroupButton.dataset.eventsReady = "true";
 
-    openCreateGroupButton.addEventListener(
-        "click",
-        () => {
-            const modal =
-                byId("createGroupModal");
+    openCreateGroupButton.addEventListener("click", () => {
+      const modal = byId("createGroupModal");
 
-            if (modal) {
-                modal.style.display = "flex";
-            }
-        }
-    );
-}
+      if (modal) {
+        modal.style.display = "flex";
+      }
+    });
+  }
 
+  const closeCreateGroupModal = byId("closeCreateGroupModal");
 
-const closeCreateGroupModal =
-    byId("closeCreateGroupModal");
-
-if (
-    closeCreateGroupModal &&
-    !closeCreateGroupModal.dataset.eventsReady
-) {
+  if (closeCreateGroupModal && !closeCreateGroupModal.dataset.eventsReady) {
     closeCreateGroupModal.dataset.eventsReady = "true";
 
-    closeCreateGroupModal.addEventListener(
-        "click",
-        () => {
-            const modal =
-                byId("createGroupModal");
+    closeCreateGroupModal.addEventListener("click", () => {
+      const modal = byId("createGroupModal");
 
-            if (modal) {
-                modal.style.display = "none";
-            }
-        }
-    );
+      if (modal) {
+        modal.style.display = "none";
+      }
+    });
+  }
+
+  const registerForm = byId("registerForm");
+
+  if (registerForm && !registerForm.dataset.eventsReady) {
+    registerForm.dataset.eventsReady = "true";
+
+    registerForm.addEventListener("submit", handleRegister);
+  }
+
+  const logoutButton = byId("logoutButton");
+
+  if (logoutButton && !logoutButton.dataset.eventsReady) {
+    logoutButton.dataset.eventsReady = "true";
+
+    logoutButton.addEventListener("click", logout);
+  }
+
+  const showRegisterButton = byId("showRegisterButton");
+
+  if (showRegisterButton && !showRegisterButton.dataset.eventsReady) {
+    showRegisterButton.dataset.eventsReady = "true";
+
+    showRegisterButton.addEventListener("click", () => {
+      if (loginSection) {
+        loginSection.style.display = "none";
+      }
+
+      if (registerSection) {
+        registerSection.style.display = "";
+      }
+    });
+  }
+
+  const showLoginButton = byId("showLoginButton");
+
+  if (showLoginButton && !showLoginButton.dataset.eventsReady) {
+    showLoginButton.dataset.eventsReady = "true";
+
+    showLoginButton.addEventListener("click", showLogin);
+  }
+
+  const openCreateChildButton = byId("openCreateChildButton");
+
+  if (openCreateChildButton && !openCreateChildButton.dataset.eventsReady) {
+    openCreateChildButton.dataset.eventsReady = "true";
+
+    openCreateChildButton.addEventListener("click", () => {
+      const section = byId("createChildSection");
+
+      if (section) {
+        section.style.display = "";
+      }
+    });
+  }
+
+  const cancelCreateChildButton = byId("cancelCreateChildButton");
+
+  if (cancelCreateChildButton && !cancelCreateChildButton.dataset.eventsReady) {
+    cancelCreateChildButton.dataset.eventsReady = "true";
+
+    cancelCreateChildButton.addEventListener("click", () => {
+      const section = byId("createChildSection");
+
+      if (section) {
+        section.style.display = "none";
+      }
+
+      const childCode = byId("newChildCode");
+
+      const birthDate = byId("newChildBirthDate");
+
+      const groupSelect = byId("newChildGroup");
+
+      const ageDisplay = byId("newChildAgeDisplay");
+
+      const message = byId("childMessage");
+
+      if (childCode) {
+        childCode.value = "";
+      }
+
+      if (birthDate) {
+        birthDate.value = "";
+      }
+
+      if (groupSelect) {
+        groupSelect.value = "";
+      }
+
+      if (ageDisplay) {
+        ageDisplay.textContent = "Bitte zuerst das Geburtsdatum eingeben.";
+      }
+
+      if (message) {
+        message.textContent = "";
+        message.className = "message";
+      }
+    });
+  }
+
+  setupNavigation();
 }
-
-
-    const registerForm =
-        byId("registerForm");
-
-
-    if (
-        registerForm &&
-        !registerForm.dataset.eventsReady
-    ) {
-
-        registerForm.dataset.eventsReady =
-            "true";
-
-        registerForm.addEventListener(
-            "submit",
-            handleRegister
-        );
-
-    }
-
-
-    const logoutButton =
-        byId("logoutButton");
-
-
-    if (
-        logoutButton &&
-        !logoutButton.dataset.eventsReady
-    ) {
-
-        logoutButton.dataset.eventsReady =
-            "true";
-
-        logoutButton.addEventListener(
-            "click",
-            logout
-        );
-
-    }
-
-
-    const showRegisterButton =
-        byId("showRegisterButton");
-
-
-    if (
-        showRegisterButton &&
-        !showRegisterButton.dataset.eventsReady
-    ) {
-
-        showRegisterButton.dataset.eventsReady =
-            "true";
-
-        showRegisterButton.addEventListener(
-            "click",
-            () => {
-
-                if (loginSection) {
-                    loginSection.style.display =
-                        "none";
-                }
-
-                if (registerSection) {
-                    registerSection.style.display =
-                        "";
-                }
-
-            }
-        );
-
-    }
-
-
-    const showLoginButton =
-        byId("showLoginButton");
-
-
-    if (
-        showLoginButton &&
-        !showLoginButton.dataset.eventsReady
-    ) {
-
-        showLoginButton.dataset.eventsReady =
-            "true";
-
-        showLoginButton.addEventListener(
-            "click",
-            showLogin
-        );
-
-    }
-
-
-
-const openCreateChildButton =
-    byId("openCreateChildButton");
-
-if (
-    openCreateChildButton &&
-    !openCreateChildButton.dataset.eventsReady
-) {
-    openCreateChildButton.dataset.eventsReady =
-        "true";
-
-    openCreateChildButton.addEventListener(
-        "click",
-        () => {
-            const section =
-                byId("createChildSection");
-
-            if (section) {
-                section.style.display = "";
-            }
-        }
-    );
-}
-
-const cancelCreateChildButton =
-    byId("cancelCreateChildButton");
-
-if (
-    cancelCreateChildButton &&
-    !cancelCreateChildButton.dataset.eventsReady
-) {
-    cancelCreateChildButton.dataset.eventsReady =
-        "true";
-
-    cancelCreateChildButton.addEventListener(
-        "click",
-        () => {
-            const section =
-                byId("createChildSection");
-
-            if (section) {
-                section.style.display = "none";
-            }
-
-            const childCode =
-                byId("newChildCode");
-
-            const birthDate =
-                byId("newChildBirthDate");
-
-            const groupSelect =
-                byId("newChildGroup");
-
-            const ageDisplay =
-                byId("newChildAgeDisplay");
-
-            const message =
-                byId("childMessage");
-
-            if (childCode) {
-                childCode.value = "";
-            }
-
-            if (birthDate) {
-                birthDate.value = "";
-            }
-
-            if (groupSelect) {
-                groupSelect.value = "";
-            }
-
-            if (ageDisplay) {
-                ageDisplay.textContent =
-                    "Bitte zuerst das Geburtsdatum eingeben.";
-            }
-
-            if (message) {
-                message.textContent = "";
-                message.className = "message";
-            }
-        }
-    );
-}
-
-
-    setupNavigation();
-
-}
-
 
 /* ============================================================
    AUTH
    ============================================================ */
 
 function setupAuthListener() {
+  if (!supabaseClient) {
+    return;
+  }
 
-    if (!supabaseClient) {
-        return;
-    }
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log("Auth Event:", event);
 
+    if (session?.user) {
+      currentUser = session.user;
 
-    supabaseClient.auth.onAuthStateChange(
-        (
-            event,
-            session
-        ) => {
+      setTimeout(async () => {
+        try {
+          await loadUserProfile();
 
-            console.log(
-                "Auth Event:",
-                event
-            );
-
-
-            if (session?.user) {
-
-                currentUser =
-                    session.user;
-
-
-                setTimeout(
-                    async () => {
-
-                        try {
-
-                            await loadUserProfile();
-
-                            await initializeApplication();
-
-                        }
-
-                        catch (error) {
-
-                            console.error(
-                                "Auth Initialisierung:",
-                                error
-                            );
-
-                        }
-
-                    },
-                    0
-                );
-
-            }
-
-            else {
-
-                currentUser = null;
-                currentProfile = null;
-
-                currentChildren = [];
-                currentGroups = [];
-
-                showLogin();
-
-            }
-
+          await initializeApplication();
+        } catch (error) {
+          console.error("Auth Initialisierung:", error);
         }
-    );
+      }, 0);
+    } else {
+      currentUser = null;
+      currentProfile = null;
 
+      currentChildren = [];
+      currentGroups = [];
+
+      showLogin();
+    }
+  });
 }
-
 
 /* ============================================================
    LOGIN PRÜFEN
    ============================================================ */
 
 async function checkLogin() {
+  if (!supabaseClient) {
+    showLogin();
 
-    if (!supabaseClient) {
+    return;
+  }
 
-        showLogin();
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
 
-        return;
+    if (error) {
+      console.error("Session konnte nicht geladen werden:", error);
 
+      showLogin();
+
+      return;
     }
 
+    if (!data?.session) {
+      currentUser = null;
+      currentProfile = null;
 
-    try {
+      showLogin();
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth.getSession();
-
-
-        if (error) {
-
-            console.error(
-                "Session konnte nicht geladen werden:",
-                error
-            );
-
-            showLogin();
-
-            return;
-
-        }
-
-
-        if (!data?.session) {
-
-            currentUser = null;
-            currentProfile = null;
-
-            showLogin();
-
-            return;
-
-        }
-
-
-        currentUser =
-            data.session.user;
-
-
-        await loadUserProfile();
-
-
-        showDashboard();
-
-
-        await initializeApplication();
-
+      return;
     }
 
-    catch (error) {
+    currentUser = data.session.user;
 
-        console.error(
-            "Fehler bei checkLogin():",
-            error
-        );
+    await loadUserProfile();
 
-        showLogin();
+    showDashboard();
 
-    }
+    await initializeApplication();
+  } catch (error) {
+    console.error("Fehler bei checkLogin():", error);
 
+    showLogin();
+  }
 }
-
 
 /* ============================================================
    INITIALISIERUNG
    ============================================================ */
 
-let applicationInitialized =
-    false;
-
+let applicationInitialized = false;
 
 async function initializeApplication() {
+  if (applicationInitialized) {
+    showDashboard();
 
-    if (applicationInitialized) {
+    return;
+  }
 
-        showDashboard();
+  applicationInitialized = true;
 
-        return;
+  try {
+    showDashboard();
 
-    }
+    setupMainEvents();
 
+    /*
+     * Entwicklungskompass vorbereiten.
+     */
 
-    applicationInitialized =
-        true;
+    ensureDevelopmentSection();
 
+    ensureDevelopmentResultStyles();
 
-    try {
+    ensureDevelopmentRatingStyles();
 
-        showDashboard();
+    setupDevelopmentEvents();
 
+    populateDevelopmentAge();
 
-        setupMainEvents();
+    await loadChildren();
+    await loadStartedDevelopmentObservations();
+    await loadGroups();
 
+    updateChildrenCount(currentChildren.length);
 
-        /*
-         * Entwicklungskompass vorbereiten.
-         */
+    updateGroupsCount(currentGroups.length);
 
-        ensureDevelopmentSection();
-       
-        ensureDevelopmentResultStyles();
-        
-        ensureDevelopmentRatingStyles();
+    console.log("Anwendung vollständig initialisiert.");
+  } catch (error) {
+    console.error("Fehler bei initializeApplication():", error);
 
-        setupDevelopmentEvents();
-
-        populateDevelopmentAge();
-
-
-        await loadChildren();
-        await loadStartedDevelopmentObservations();
-        await loadGroups();
-
-
-        updateChildrenCount(
-            currentChildren.length
-        );
-
-        updateGroupsCount(
-            currentGroups.length
-        );
-
-
-        console.log(
-            "Anwendung vollständig initialisiert."
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Fehler bei initializeApplication():",
-            error
-        );
-
-        showDashboard();
-
-    }
-
+    showDashboard();
+  }
 }
-
 
 /* ============================================================
    DOM READY
    ============================================================ */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("Kindergarten-App startet...");
 
-        console.log(
-            "Kindergarten-App startet..."
-        );
+  showLogin();
 
+  if (!supabaseClient) {
+    console.error("Supabase Client fehlt.");
 
-        showLogin();
+    return;
+  }
 
+  setupMainEvents();
 
-        if (!supabaseClient) {
+  setupChildBirthDate();
 
-            console.error(
-                "Supabase Client fehlt."
-            );
+  setupAuthListener();
 
-            return;
+  setupDevelopmentFilters();
 
-        }
+  await checkLogin();
 
-
-        setupMainEvents();
-
-        setupChildBirthDate();
-
-        setupAuthListener();
-
-        setupDevelopmentFilters();
-
-        await checkLogin();
-
-        await loadInstitutions();
-
-    }
-);
+  await loadInstitutions();
+});
 
 /* ============================================================
    NEUE ENTWICKLUNGSAUSWERTUNG
    ============================================================ */
 
 function calculateDevelopmentResult() {
-    const result = {
+  const result = {
+    total: 0,
+    noch_nicht: 0,
+    teilweise: 0,
+    sicher: 0,
+    nicht_beobachtet: 0,
+    percentage: 0,
+    ratedPercentage: 0,
+    areas: {},
+  };
+
+  const validAnswers = [
+    "noch_nicht",
+    "teilweise",
+    "sicher",
+    "nicht_beobachtet",
+  ];
+
+  currentQuestions.forEach((question) => {
+    const areaDefinition = DEVELOPMENT_AREAS.find(
+      (area) => area.key === question.area,
+    );
+
+    if (!result.areas[question.area]) {
+      result.areas[question.area] = {
+        key: question.area,
+        label: areaDefinition?.label || question.area,
         total: 0,
-        noch_nicht: 0,
-        teilweise: 0,
+        rated: 0,
         sicher: 0,
+        teilweise: 0,
+        noch_nicht: 0,
         nicht_beobachtet: 0,
         percentage: 0,
         ratedPercentage: 0,
-        areas: {}
-    };
+        questions: [],
+      };
+    }
 
-    const validAnswers = [
-        "noch_nicht",
-        "teilweise",
-        "sicher",
-        "nicht_beobachtet"
-    ];
+    const area = result.areas[question.area];
+    const answer =
+      currentAnswers[question.id] ||
+      currentAnswers[String(question.id)] ||
+      null;
 
-    currentQuestions.forEach(question => {
-        const areaDefinition =
-            DEVELOPMENT_AREAS.find(
-                area => area.key === question.area
-            );
+    area.total++;
 
-        if (!result.areas[question.area]) {
-            result.areas[question.area] = {
-                key: question.area,
-                label:
-                    areaDefinition?.label ||
-                    question.area,
-                total: 0,
-                rated: 0,
-                sicher: 0,
-                teilweise: 0,
-                noch_nicht: 0,
-                nicht_beobachtet: 0,
-                percentage: 0,
-                ratedPercentage: 0,
-                questions: []
-            };
-        }
-
-        const area = result.areas[question.area];
-        const answer =
-            currentAnswers[question.id] ||
-            currentAnswers[String(question.id)] ||
-            null;
-
-        area.total++;
-
-        area.questions.push({
-            ...question,
-            answer
-        });
-
-        if (
-            !answer ||
-            !validAnswers.includes(answer)
-        ) {
-            return;
-        }
-
-        result.total++;
-        result[answer]++;
-
-        area.rated++;
-        area[answer]++;
+    area.questions.push({
+      ...question,
+      answer,
     });
 
-    const questionCount =
-        currentQuestions.length;
+    if (!answer || !validAnswers.includes(answer)) {
+      return;
+    }
 
-    result.ratedPercentage =
-        questionCount > 0
-            ? Math.min(
-                100,
-                Math.round(
-                    result.total /
-                    questionCount *
-                    100
-                )
-            )
-            : 0;
+    result.total++;
+    result[answer]++;
 
-    const observable =
-        result.total -
-        result.nicht_beobachtet;
+    area.rated++;
+    area[answer]++;
+  });
 
-    result.percentage =
-        observable > 0
-            ? Math.min(
-                100,
-                Math.round(
-                    (
-                        result.sicher +
-                        result.teilweise * 0.5
-                    ) /
-                    observable *
-                    100
-                )
-            )
-            : 0;
+  const questionCount = currentQuestions.length;
 
-    Object.values(result.areas)
-        .forEach(area => {
-            area.ratedPercentage =
-                area.total > 0
-                    ? Math.min(
-                        100,
-                        Math.round(
-                            area.rated /
-                            area.total *
-                            100
-                        )
-                    )
-                    : 0;
+  result.ratedPercentage =
+    questionCount > 0
+      ? Math.min(100, Math.round((result.total / questionCount) * 100))
+      : 0;
 
-            const areaObservable =
-                area.rated -
-                area.nicht_beobachtet;
+  const observable = result.total - result.nicht_beobachtet;
 
-            area.percentage =
-                areaObservable > 0
-                    ? Math.min(
-                        100,
-                        Math.round(
-                            (
-                                area.sicher +
-                                area.teilweise * 0.5
-                            ) /
-                            areaObservable *
-                            100
-                        )
-                    )
-                    : 0;
-        });
+  result.percentage =
+    observable > 0
+      ? Math.min(
+          100,
+          Math.round(
+            ((result.sicher + result.teilweise * 0.5) / observable) * 100,
+          ),
+        )
+      : 0;
 
-    return result;
+  Object.values(result.areas).forEach((area) => {
+    area.ratedPercentage =
+      area.total > 0
+        ? Math.min(100, Math.round((area.rated / area.total) * 100))
+        : 0;
+
+    const areaObservable = area.rated - area.nicht_beobachtet;
+
+    area.percentage =
+      areaObservable > 0
+        ? Math.min(
+            100,
+            Math.round(
+              ((area.sicher + area.teilweise * 0.5) / areaObservable) * 100,
+            ),
+          )
+        : 0;
+  });
+
+  return result;
 }
-
 
 /*
  * Unvollständige Auswertungen dürfen gespeichert werden.
  */
 function validateDevelopment() {
-    if (!currentChildId) {
-        return {
-            valid: false,
-            message: "Bitte zuerst ein Kind auswählen."
-        };
-    }
-
-    if (!currentAge) {
-        return {
-            valid: false,
-            message: "Bitte zuerst das Alter auswählen."
-        };
-    }
-
-    if (
-        !currentQuestions ||
-        currentQuestions.length === 0
-    ) {
-        return {
-            valid: false,
-            message:
-                "Für dieses Alter sind keine Fragen vorhanden."
-        };
-    }
-
+  if (!currentChildId) {
     return {
-        valid: true,
-        message: ""
+      valid: false,
+      message: "Bitte zuerst ein Kind auswählen.",
     };
-}
+  }
 
+  if (!currentAge) {
+    return {
+      valid: false,
+      message: "Bitte zuerst das Alter auswählen.",
+    };
+  }
+
+  if (!currentQuestions || currentQuestions.length === 0) {
+    return {
+      valid: false,
+      message: "Für dieses Alter sind keine Fragen vorhanden.",
+    };
+  }
+
+  return {
+    valid: true,
+    message: "",
+  };
+}
 
 /* ============================================================
    AUSWERTUNG DARSTELLEN
    ============================================================ */
 
 function showDevelopmentResult(result) {
-    const {
-        resultContainer
-    } = getDevelopmentElements();
+  const { resultContainer } = getDevelopmentElements();
 
-    if (!resultContainer) {
-        return;
-    }
+  if (!resultContainer) {
+    return;
+  }
 
-    const areaEntries =
-        Object.values(result.areas);
+  const areaEntries = Object.values(result.areas);
 
-    const areasHtml =
-        areaEntries
-            .map(area => {
-                const incompleteQuestions =
-                    area.questions.filter(
-                        question =>
-                            question.answer !== "sicher"
-                    );
+  const areasHtml = areaEntries
+    .map((area) => {
+      const incompleteQuestions = area.questions.filter(
+        (question) => question.answer !== "sicher",
+      );
 
-                const detailsHtml =
-                    incompleteQuestions.length > 0
-                        ? incompleteQuestions
-                            .map(question => {
-                                const answerLabel =
-                                    DEVELOPMENT_OPTIONS.find(
-                                        option =>
-                                            option.value ===
-                                            question.answer
-                                    )?.label ||
-                                    "Noch nicht bewertet";
+      const detailsHtml =
+        incompleteQuestions.length > 0
+          ? incompleteQuestions
+              .map((question) => {
+                const answerLabel =
+                  DEVELOPMENT_OPTIONS.find(
+                    (option) => option.value === question.answer,
+                  )?.label || "Noch nicht bewertet";
 
-                                return `
+                return `
                                     <li>
                                         <span>
-                                            ${escapeHtml(
-                                                question.question
-                                            )}
+                                            ${escapeHtml(question.question)}
                                         </span>
                                         <small>
-                                            ${escapeHtml(
-                                                answerLabel
-                                            )}
+                                            ${escapeHtml(answerLabel)}
                                         </small>
                                     </li>
                                 `;
-                            })
-                            .join("")
-                        : `
+              })
+              .join("")
+          : `
                             <li class="development-complete">
                                 Alle Punkte sind vollständig erreicht.
                             </li>
                         `;
 
-                return `
+      return `
                     <article
                         class="development-result-area"
                     >
@@ -9321,10 +6550,10 @@ function showDevelopmentResult(result) {
                         </div>
                     </article>
                 `;
-            })
-            .join("");
+    })
+    .join("");
 
-    resultContainer.innerHTML = `
+  resultContainer.innerHTML = `
         <div class="development-result-card">
             <h2>Auswertung</h2>
 
@@ -9343,63 +6572,43 @@ function showDevelopmentResult(result) {
         </div>
     `;
 
-    resultContainer
-        .querySelectorAll(
-            ".development-result-area-toggle"
-        )
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => {
-                    const details =
-                        button.parentElement
-                            .querySelector(
-                                ".development-result-area-details"
-                            );
+  resultContainer
+    .querySelectorAll(".development-result-area-toggle")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const details = button.parentElement.querySelector(
+          ".development-result-area-details",
+        );
 
-                    if (!details) {
-                        return;
-                    }
+        if (!details) {
+          return;
+        }
 
-                    const isOpen =
-                        button.getAttribute(
-                            "aria-expanded"
-                        ) === "true";
+        const isOpen = button.getAttribute("aria-expanded") === "true";
 
-                    button.setAttribute(
-                        "aria-expanded",
-                        String(!isOpen)
-                    );
+        button.setAttribute("aria-expanded", String(!isOpen));
 
-                    details.hidden = isOpen;
-                }
-            );
-        });
+        details.hidden = isOpen;
+      });
+    });
 
-    resultContainer.style.display = "";
+  resultContainer.style.display = "";
 }
-
 
 /* ============================================================
    AUSWERTUNGS-STYLES
    ============================================================ */
 
 function ensureDevelopmentResultStyles() {
-    if (
-        document.getElementById(
-            "developmentResultStyles"
-        )
-    ) {
-        return;
-    }
+  if (document.getElementById("developmentResultStyles")) {
+    return;
+  }
 
-    const style =
-        document.createElement("style");
+  const style = document.createElement("style");
 
-    style.id =
-        "developmentResultStyles";
+  style.id = "developmentResultStyles";
 
-    style.textContent = `
+  style.textContent = `
         .development-result-card {
             margin-top: 30px;
             padding: 25px;
@@ -9530,7 +6739,7 @@ function ensureDevelopmentResultStyles() {
         }
     `;
 
-    document.head.appendChild(style);
+  document.head.appendChild(style);
 }
 
 /* ============================================================
@@ -9538,177 +6747,140 @@ function ensureDevelopmentResultStyles() {
    ============================================================ */
 
 function prepareDevelopmentReportBeforeAction() {
-    if (currentDevelopmentReport) {
-        return true;
-    }
+  if (currentDevelopmentReport) {
+    return true;
+  }
 
-    if (!currentChildId) {
-        safeText(
-            byId("developmentReportMessage"),
-            "Bitte zuerst ein Kind auswählen."
-        );
+  if (!currentChildId) {
+    safeText(
+      byId("developmentReportMessage"),
+      "Bitte zuerst ein Kind auswählen.",
+    );
 
-        return false;
-    }
+    return false;
+  }
 
-    try {
-        const result =
-            calculateDevelopmentResult();
+  try {
+    const result = calculateDevelopmentResult();
 
-        currentDevelopmentReport =
-            generateDevelopmentReport(result);
+    currentDevelopmentReport = generateDevelopmentReport(result);
 
-        showDevelopmentReport(
-            currentDevelopmentReport
-        );
+    showDevelopmentReport(currentDevelopmentReport);
 
-        return true;
-    }
-    catch (error) {
-        console.error(
-            "Gutachten konnte nicht vorbereitet werden:",
-            error
-        );
+    return true;
+  } catch (error) {
+    console.error("Gutachten konnte nicht vorbereitet werden:", error);
 
-        safeText(
-            byId("developmentReportMessage"),
-            "Das Gutachten konnte nicht erstellt werden."
-        );
+    safeText(
+      byId("developmentReportMessage"),
+      "Das Gutachten konnte nicht erstellt werden.",
+    );
 
-        return false;
-    }
+    return false;
+  }
 }
-
 
 function enableDevelopmentReportActions() {
-    const createButton =
-        byId("createDevelopmentReportButton");
+  const createButton = byId("createDevelopmentReportButton");
 
-    const saveButton =
-        byId("saveDevelopmentReportButton");
+  const saveButton = byId("saveDevelopmentReportButton");
 
-    const printButton =
-        byId("printDevelopmentReportButton");
+  const printButton = byId("printDevelopmentReportButton");
 
-    /*
-     * Die Schaltflächen dürfen nicht dauerhaft grau bleiben.
-     */
-    [
-        createButton,
-        saveButton,
-        printButton
-    ]
-        .filter(Boolean)
-        .forEach(button => {
-            button.disabled = false;
-            button.removeAttribute("disabled");
-        });
+  /*
+   * Die Schaltflächen dürfen nicht dauerhaft grau bleiben.
+   */
+  [createButton, saveButton, printButton].filter(Boolean).forEach((button) => {
+    button.disabled = false;
+    button.removeAttribute("disabled");
+  });
 
-    if (
-        saveButton &&
-        !saveButton.dataset.autoPrepareReady
-    ) {
-        saveButton.dataset.autoPrepareReady = "true";
+  if (saveButton && !saveButton.dataset.autoPrepareReady) {
+    saveButton.dataset.autoPrepareReady = "true";
 
-        saveButton.addEventListener(
-            "click",
-            event => {
-                if (
-                    !prepareDevelopmentReportBeforeAction()
-                ) {
-                    event.preventDefault();
-                    event.stopImmediatePropagation();
-                }
-            },
-            true
-        );
-    }
+    saveButton.addEventListener(
+      "click",
+      (event) => {
+        if (!prepareDevelopmentReportBeforeAction()) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      },
+      true,
+    );
+  }
 
-    if (
-        printButton &&
-        !printButton.dataset.autoPrepareReady
-    ) {
-        printButton.dataset.autoPrepareReady = "true";
+  if (printButton && !printButton.dataset.autoPrepareReady) {
+    printButton.dataset.autoPrepareReady = "true";
 
-        printButton.addEventListener(
-            "click",
-            event => {
-                if (
-                    !prepareDevelopmentReportBeforeAction()
-                ) {
-                    event.preventDefault();
-                    event.stopImmediatePropagation();
-                }
-            },
-            true
-        );
-    }
+    printButton.addEventListener(
+      "click",
+      (event) => {
+        if (!prepareDevelopmentReportBeforeAction()) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      },
+      true,
+    );
+  }
 }
-
 
 /*
  * Beim Öffnen der Anwendung und nach dem Laden der Seite
  * erneut prüfen, ob die Schaltflächen vorhanden sind.
  */
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-        enableDevelopmentReportActions();
+document.addEventListener("DOMContentLoaded", () => {
+  enableDevelopmentReportActions();
 
-        setTimeout(
-            enableDevelopmentReportActions,
-            500
-        );
+  setTimeout(enableDevelopmentReportActions, 500);
 
-        setTimeout(
-            enableDevelopmentReportActions,
-            1500
-        );
-    }
-);
+  setTimeout(enableDevelopmentReportActions, 1500);
+});
 
 // ==========================================
 // TERMINE – Modal öffnen/schließen
 // ==========================================
 
-const appointmentModal = document.getElementById('appointmentModal');
-const editingAppointmentId = appointmentModal.dataset.editingAppointmentId || null;
-const addAppointmentBtn = document.getElementById('addAppointmentBtn');
-const closeAppointmentModal = document.getElementById('closeAppointmentModal');
-const cancelAppointmentBtn = document.getElementById('cancelAppointmentBtn');
+const appointmentModal = document.getElementById("appointmentModal");
+const editingAppointmentId =
+  appointmentModal.dataset.editingAppointmentId || null;
+const addAppointmentBtn = document.getElementById("addAppointmentBtn");
+const closeAppointmentModal = document.getElementById("closeAppointmentModal");
+const cancelAppointmentBtn = document.getElementById("cancelAppointmentBtn");
 
 function openAppointmentModal() {
-    if (appointmentModal) {
-        appointmentModal.style.display = 'flex';
-        loadAppointmentChildren();
-    }
+  if (appointmentModal) {
+    appointmentModal.style.display = "flex";
+    loadAppointmentChildren();
+  }
 }
 
 function closeAppointmentModalFunc() {
-if (appointmentModal) {
-appointmentModal.style.display = 'none';
-}
+  if (appointmentModal) {
+    appointmentModal.style.display = "none";
+  }
 }
 
 if (addAppointmentBtn) {
-addAppointmentBtn.addEventListener('click', openAppointmentModal);
+  addAppointmentBtn.addEventListener("click", openAppointmentModal);
 }
 
 if (closeAppointmentModal) {
-closeAppointmentModal.addEventListener('click', closeAppointmentModalFunc);
+  closeAppointmentModal.addEventListener("click", closeAppointmentModalFunc);
 }
 
 if (cancelAppointmentBtn) {
-cancelAppointmentBtn.addEventListener('click', closeAppointmentModalFunc);
+  cancelAppointmentBtn.addEventListener("click", closeAppointmentModalFunc);
 }
 
 // Modal schließen, wenn außerhalb geklickt wird
 if (appointmentModal) {
-appointmentModal.addEventListener('click', function(event) {
-if (event.target === appointmentModal) {
-closeAppointmentModalFunc();
-}
-});
+  appointmentModal.addEventListener("click", function (event) {
+    if (event.target === appointmentModal) {
+      closeAppointmentModalFunc();
+    }
+  });
 }
 
 // ==========================================
@@ -9716,216 +6888,196 @@ closeAppointmentModalFunc();
 // ==========================================
 
 async function loadAppointmentChildren() {
-    const select = document.getElementById('appointmentChild');
+  const select = document.getElementById("appointmentChild");
 
-    if (!select) return;
+  if (!select) return;
 
-    select.innerHTML = '<option value="">Kind auswählen</option>';
+  select.innerHTML = '<option value="">Kind auswählen</option>';
 
-    const { data, error } = await supabaseClient
-        .from('children')
-        .select('id, child_code')
-        .order('child_code');
+  const { data, error } = await supabaseClient
+    .from("children")
+    .select("id, child_code")
+    .order("child_code");
 
-    if (error) {
-        console.error('Fehler beim Laden der Kinder:', error);
-        return;
-    }
+  if (error) {
+    console.error("Fehler beim Laden der Kinder:", error);
+    return;
+  }
 
-    if (!data || data.length === 0) {
-        select.innerHTML = '<option value="">Keine Kinder vorhanden</option>';
-        return;
-    }
+  if (!data || data.length === 0) {
+    select.innerHTML = '<option value="">Keine Kinder vorhanden</option>';
+    return;
+  }
 
-    data.forEach(child => {
-        const option = document.createElement('option');
+  data.forEach((child) => {
+    const option = document.createElement("option");
 
-        option.value = child.id;
-        option.textContent = child.child_code;
+    option.value = child.id;
+    option.textContent = child.child_code;
 
-        select.appendChild(option);
-    });
+    select.appendChild(option);
+  });
 }
 
 // ==========================================
 // TERMINE – Termin speichern
 // ==========================================
 
-const saveAppointmentBtn = document.getElementById('saveAppointmentBtn');
+const saveAppointmentBtn = document.getElementById("saveAppointmentBtn");
 if (saveAppointmentBtn) {
-    saveAppointmentBtn.addEventListener('click', async function () {
+  saveAppointmentBtn.addEventListener("click", async function () {
+    const title = document.getElementById("appointmentTitle").value.trim();
+    const childId = document.getElementById("appointmentChild").value;
+    const dateInput = document.getElementById("appointmentDate").value.trim();
+    const time = document.getElementById("appointmentTime").value;
+    const recurrence = document.getElementById("appointmentRecurrence").value;
+    const countdownEnabled = document.getElementById(
+      "appointmentCountdown",
+    ).checked;
 
-        const title = document.getElementById('appointmentTitle').value.trim();
-        const childId = document.getElementById('appointmentChild').value;
-        const dateInput = document.getElementById('appointmentDate').value.trim();
-        const time = document.getElementById('appointmentTime').value;
-        const recurrence = document.getElementById('appointmentRecurrence').value;
-        const countdownEnabled = document.getElementById('appointmentCountdown').checked;
+    // Datum TT.MM.JJJJ in YYYY-MM-DD umwandeln
+    let date = "";
 
-        // Datum TT.MM.JJJJ in YYYY-MM-DD umwandeln
-        let date = '';
+    if (dateInput) {
+      const parts = dateInput.split(".");
 
-        if (dateInput) {
-            const parts = dateInput.split('.');
+      if (
+        parts.length !== 3 ||
+        parts[0].length !== 2 ||
+        parts[1].length !== 2 ||
+        parts[2].length !== 4
+      ) {
+        alert("Bitte das Datum im Format TT.MM.JJJJ eingeben.");
+        return;
+      }
 
-            if (
-                parts.length !== 3 ||
-                parts[0].length !== 2 ||
-                parts[1].length !== 2 ||
-                parts[2].length !== 4
-            ) {
-                alert('Bitte das Datum im Format TT.MM.JJJJ eingeben.');
-                return;
-            }
+      const day = Number(parts[0]);
+      const month = Number(parts[1]);
+      const year = Number(parts[2]);
 
-            const day = Number(parts[0]);
-            const month = Number(parts[1]);
-            const year = Number(parts[2]);
+      const testDate = new Date(year, month - 1, day);
 
-            const testDate = new Date(year, month - 1, day);
+      if (
+        testDate.getFullYear() !== year ||
+        testDate.getMonth() !== month - 1 ||
+        testDate.getDate() !== day
+      ) {
+        alert("Bitte ein gültiges Datum eingeben.");
+        return;
+      }
 
-            if (
-                testDate.getFullYear() !== year ||
-                testDate.getMonth() !== month - 1 ||
-                testDate.getDate() !== day
-            ) {
-                alert('Bitte ein gültiges Datum eingeben.');
-                return;
-            }
-
-            date =
-                `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        }
-
-        // Pflichtfelder prüfen
-        if (!title) {
-            alert('Bitte einen Terminname eingeben.');
-            return;
-        }
-
-        if (!childId) {
-            alert('Bitte ein Kind auswählen.');
-            return;
-        }
-
-        if (!date) {
-            alert('Bitte ein Datum eingeben.');
-            return;
-        }
-
-        // Button deaktivieren
-        saveAppointmentBtn.disabled = true;
-        saveAppointmentBtn.textContent = 'Speichert...';
-
-        try {
-
-            let data;
-let error;
-
-if (editingAppointmentId) {
-
-    const result =
-        await supabaseClient
-            .from('child_appointments')
-            .update({
-                child_id: childId,
-                title: title,
-                event_date: date,
-                event_time: time || null,
-                recurrence: recurrence,
-                countdown_enabled: countdownEnabled
-            })
-            .eq('id', editingAppointmentId)
-            .select()
-            .single();
-
-    data = result.data;
-    error = result.error;
-
-} else {
-
-    const result =
-        await supabaseClient
-            .from('child_appointments')
-            .insert({
-                child_id: childId,
-                title: title,
-                event_date: date,
-                event_time: time || null,
-                recurrence: recurrence,
-                countdown_enabled: countdownEnabled
-            })
-            .select()
-            .single();
-
-    data = result.data;
-    error = result.error;
-}
-
-            if (error) {
-                console.error(
-                    'Fehler beim Speichern des Termins:',
-                    error
-                );
-
-                alert('Termin konnte nicht gespeichert werden.');
-                return;
-            }
-
-            console.log('Termin gespeichert:', data);
-
-            alert(
-                editingAppointmentId
-                    ? 'Termin wurde geändert!'
-                    : 'Termin wurde gespeichert!'
-            );
-
-            if (editingAppointmentId) {
-
-    // Aktuelle Termine neu aus Supabase laden
-    await loadChildAppointments();
-
-    // Kalender neu zeichnen
-    renderAppointmentCalendar();
-
-    // Dashboard aktualisieren
-    if (
-        typeof loadDashboardAppointmentCountdowns ===
-        'function'
-    ) {
-        await loadDashboardAppointmentCountdowns();
+      date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     }
-}
-            // Formular zurücksetzen
-            document.getElementById('appointmentTitle').value = '';
-            document.getElementById('appointmentChild').value = '';
-            document.getElementById('appointmentDate').value = '';
-            document.getElementById('appointmentTime').value = '';
-            document.getElementById('appointmentRecurrence').value = 'once';
-            document.getElementById('appointmentCountdown').checked = false;
 
+    // Pflichtfelder prüfen
+    if (!title) {
+      alert("Bitte einen Terminname eingeben.");
+      return;
+    }
 
-            appointmentModal.dataset.editingAppointmentId = '';
+    if (!childId) {
+      alert("Bitte ein Kind auswählen.");
+      return;
+    }
 
-document.getElementById(
-    'saveAppointmentBtn'
-).textContent = 'Termin speichern';
+    if (!date) {
+      alert("Bitte ein Datum eingeben.");
+      return;
+    }
 
-            closeAppointmentModalFunc();
+    // Button deaktivieren
+    saveAppointmentBtn.disabled = true;
+    saveAppointmentBtn.textContent = "Speichert...";
 
-        } catch (error) {
+    try {
+      let data;
+      let error;
 
-            console.error('Fehler:', error);
+      if (editingAppointmentId) {
+        const result = await supabaseClient
+          .from("child_appointments")
+          .update({
+            child_id: childId,
+            title: title,
+            event_date: date,
+            event_time: time || null,
+            recurrence: recurrence,
+            countdown_enabled: countdownEnabled,
+          })
+          .eq("id", editingAppointmentId)
+          .select()
+          .single();
 
-            alert('Beim Speichern ist ein Fehler aufgetreten.');
+        data = result.data;
+        error = result.error;
+      } else {
+        const result = await supabaseClient
+          .from("child_appointments")
+          .insert({
+            child_id: childId,
+            title: title,
+            event_date: date,
+            event_time: time || null,
+            recurrence: recurrence,
+            countdown_enabled: countdownEnabled,
+          })
+          .select()
+          .single();
 
-        } finally {
+        data = result.data;
+        error = result.error;
+      }
 
-            saveAppointmentBtn.disabled = false;
-            saveAppointmentBtn.textContent = 'Termin speichern';
+      if (error) {
+        console.error("Fehler beim Speichern des Termins:", error);
 
+        alert("Termin konnte nicht gespeichert werden.");
+        return;
+      }
+
+      console.log("Termin gespeichert:", data);
+
+      alert(
+        editingAppointmentId
+          ? "Termin wurde geändert!"
+          : "Termin wurde gespeichert!",
+      );
+
+      if (editingAppointmentId) {
+        // Aktuelle Termine neu aus Supabase laden
+        await loadChildAppointments();
+
+        // Kalender neu zeichnen
+        renderAppointmentCalendar();
+
+        // Dashboard aktualisieren
+        if (typeof loadDashboardAppointmentCountdowns === "function") {
+          await loadDashboardAppointmentCountdowns();
         }
-    });
+      }
+      // Formular zurücksetzen
+      document.getElementById("appointmentTitle").value = "";
+      document.getElementById("appointmentChild").value = "";
+      document.getElementById("appointmentDate").value = "";
+      document.getElementById("appointmentTime").value = "";
+      document.getElementById("appointmentRecurrence").value = "once";
+      document.getElementById("appointmentCountdown").checked = false;
+
+      appointmentModal.dataset.editingAppointmentId = "";
+
+      document.getElementById("saveAppointmentBtn").textContent =
+        "Termin speichern";
+
+      closeAppointmentModalFunc();
+    } catch (error) {
+      console.error("Fehler:", error);
+
+      alert("Beim Speichern ist ein Fehler aufgetreten.");
+    } finally {
+      saveAppointmentBtn.disabled = false;
+      saveAppointmentBtn.textContent = "Termin speichern";
+    }
+  });
 }
 
 // ==========================================
@@ -9937,170 +7089,119 @@ let currentAppointmentMonth = new Date();
 let currentChildAppointments = [];
 
 async function openChildAppointments(childId) {
+  const modal = document.getElementById("childAppointmentsModal");
 
-    const modal = document.getElementById(
-        'childAppointmentsModal'
-    );
+  if (!modal) {
+    console.error("childAppointmentsModal nicht gefunden.");
+    return;
+  }
 
-    if (!modal) {
-        console.error(
-            'childAppointmentsModal nicht gefunden.'
-        );
-        return;
-    }
+  currentAppointmentChildId = childId;
 
-    currentAppointmentChildId = childId;
+  currentAppointmentMonth = new Date();
+  currentAppointmentMonth.setDate(1);
 
-    currentAppointmentMonth = new Date();
-    currentAppointmentMonth.setDate(1);
+  modal.style.display = "flex";
 
-    modal.style.display = 'flex';
-
-    await loadChildAppointments();
+  await loadChildAppointments();
 }
 
 async function loadChildAppointments() {
+  const list = document.getElementById("childAppointmentsList");
 
-    const list = document.getElementById(
-        'childAppointmentsList'
-    );
+  const title = document.getElementById("childAppointmentsTitle");
 
-    const title = document.getElementById(
-        'childAppointmentsTitle'
-    );
+  if (!list) return;
 
-    if (!list) return;
+  list.innerHTML = "Termine werden geladen...";
 
-    list.innerHTML = 'Termine werden geladen...';
+  // Kind laden
+  const { data: child, error: childError } = await supabaseClient
+    .from("children")
+    .select("id, child_code")
+    .eq("id", currentAppointmentChildId)
+    .single();
 
-    // Kind laden
-    const { data: child, error: childError } =
-        await supabaseClient
-            .from('children')
-            .select('id, child_code')
-            .eq('id', currentAppointmentChildId)
-            .single();
+  if (childError) {
+    console.error("Fehler beim Laden des Kindes:", childError);
 
-    if (childError) {
-        console.error(
-            'Fehler beim Laden des Kindes:',
-            childError
-        );
+    list.innerHTML = "<p>Kind konnte nicht geladen werden.</p>";
 
-        list.innerHTML =
-            '<p>Kind konnte nicht geladen werden.</p>';
+    return;
+  }
 
-        return;
-    }
+  if (title) {
+    title.textContent = "📅 Termine – " + child.child_code;
+  }
 
-    if (title) {
-        title.textContent =
-            '📅 Termine – ' + child.child_code;
-    }
+  // Termine laden
+  const { data: appointments, error } = await supabaseClient
+    .from("child_appointments")
+    .select("*")
+    .eq("child_id", currentAppointmentChildId)
+    .order("event_date", {
+      ascending: true,
+    });
 
-    // Termine laden
-    const { data: appointments, error } =
-        await supabaseClient
-            .from('child_appointments')
-            .select('*')
-            .eq(
-                'child_id',
-                currentAppointmentChildId
-            )
-            .order('event_date', {
-                ascending: true
-            });
+  if (error) {
+    console.error("Fehler beim Laden der Termine:", error);
 
-    if (error) {
-        console.error(
-            'Fehler beim Laden der Termine:',
-            error
-        );
+    list.innerHTML = "<p>Termine konnten nicht geladen werden.</p>";
 
-        list.innerHTML =
-            '<p>Termine konnten nicht geladen werden.</p>';
+    return;
+  }
 
-        return;
-    }
+  currentChildAppointments = appointments || [];
 
- currentChildAppointments =
-    appointments || [];
-
-// Zum Monat des ersten Termins springen
-if (currentChildAppointments.length > 0) {
-
-    const firstAppointment =
-        currentChildAppointments[0];
+  // Zum Monat des ersten Termins springen
+  if (currentChildAppointments.length > 0) {
+    const firstAppointment = currentChildAppointments[0];
 
     if (firstAppointment.event_date) {
+      const parts = firstAppointment.event_date.substring(0, 10).split("-");
 
-        const parts =
-            firstAppointment.event_date
-                .substring(0, 10)
-                .split('-');
-
-        currentAppointmentMonth =
-            new Date(
-                Number(parts[0]),
-                Number(parts[1]) - 1,
-                1
-            );
+      currentAppointmentMonth = new Date(
+        Number(parts[0]),
+        Number(parts[1]) - 1,
+        1,
+      );
     }
-}
+  }
 
-renderAppointmentCalendar();
+  renderAppointmentCalendar();
 }
 
 function renderAppointmentCalendar() {
+  const list = document.getElementById("childAppointmentsList");
 
-    const list = document.getElementById(
-        'childAppointmentsList'
-    );
+  const monthTitle = document.getElementById("appointmentCurrentMonth");
 
-    const monthTitle = document.getElementById(
-        'appointmentCurrentMonth'
-    );
+  if (!list || !monthTitle) return;
 
-    if (!list || !monthTitle) return;
+  const year = currentAppointmentMonth.getFullYear();
 
-    const year =
-        currentAppointmentMonth.getFullYear();
+  const month = currentAppointmentMonth.getMonth();
 
-    const month =
-        currentAppointmentMonth.getMonth();
+  const monthName = currentAppointmentMonth.toLocaleDateString("de-DE", {
+    month: "long",
+    year: "numeric",
+  });
 
-    const monthName =
-        currentAppointmentMonth.toLocaleDateString(
-            'de-DE',
-            {
-                month: 'long',
-                year: 'numeric'
-            }
-        );
+  monthTitle.textContent =
+    monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
-    monthTitle.textContent =
-        monthName.charAt(0).toUpperCase() +
-        monthName.slice(1);
+  const firstDay = new Date(year, month, 1);
 
-    const firstDay =
-        new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
 
-    const lastDay =
-        new Date(year, month + 1, 0);
+  let startDay = firstDay.getDay();
 
-    let startDay =
-        firstDay.getDay();
+  // Sonntag = 0 → Montag = 0
+  startDay = startDay === 0 ? 6 : startDay - 1;
 
-    // Sonntag = 0 → Montag = 0
-    startDay =
-        startDay === 0
-            ? 6
-            : startDay - 1;
+  const daysInMonth = lastDay.getDate();
 
-    const daysInMonth =
-        lastDay.getDate();
-
-    let html = `
+  let html = `
         <div
             style="
                 display:grid;
@@ -10111,19 +7212,10 @@ function renderAppointmentCalendar() {
         >
     `;
 
-    const weekdays = [
-        'Mo',
-        'Di',
-        'Mi',
-        'Do',
-        'Fr',
-        'Sa',
-        'So'
-    ];
+  const weekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
-    weekdays.forEach(day => {
-
-        html += `
+  weekdays.forEach((day) => {
+    html += `
             <div
                 style="
                     text-align:center;
@@ -10134,71 +7226,39 @@ function renderAppointmentCalendar() {
                 ${day}
             </div>
         `;
+  });
 
-    });
-
-    // Leere Felder vor dem ersten Tag
-    for (
-        let i = 0;
-        i < startDay;
-        i++
-    ) {
-
-        html += `
+  // Leere Felder vor dem ersten Tag
+  for (let i = 0; i < startDay; i++) {
+    html += `
             <div></div>
         `;
+  }
 
-    }
+  // Tage erzeugen
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-    // Tage erzeugen
-    for (
-        let day = 1;
-        day <= daysInMonth;
-        day++
-    ) {
+    const dayAppointments = [];
 
-        const dateString =
-            `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    currentChildAppointments.forEach((appointment) => {
+      const occurrences = getAppointmentOccurrences(appointment, year, month);
 
-        const dayAppointments = [];
+      if (occurrences.includes(dateString)) {
+        dayAppointments.push(appointment);
+      }
+    });
 
-currentChildAppointments.forEach(
-    appointment => {
+    const hasAppointments = dayAppointments.length > 0;
 
-        const occurrences =
-            getAppointmentOccurrences(
-                appointment,
-                year,
-                month
-            );
-
-        if (
-            occurrences.includes(
-                dateString
-            )
-        ) {
-            dayAppointments.push(
-                appointment
-            );
-        }
-    }
-);
-
-        const hasAppointments =
-            dayAppointments.length > 0;
-
-        html += `
+    html += `
             <div
                 style="
                     min-height:80px;
                     border:1px solid #ddd;
                     border-radius:8px;
                     padding:6px;
-                    background:${
-                        hasAppointments
-                            ? '#eef6ff'
-                            : '#fff'
-                    };
+                    background:${hasAppointments ? "#eef6ff" : "#fff"};
                 "
             >
                 <div
@@ -10211,35 +7271,29 @@ currentChildAppointments.forEach(
                 </div>
         `;
 
-        dayAppointments.forEach(
-            appointment => {
-
-                const time =
-    appointment.event_time
+    dayAppointments.forEach((appointment) => {
+      const time = appointment.event_time
         ? appointment.event_time.substring(0, 5)
-        : '';
+        : "";
 
-const countdown =
-    appointment.countdown_enabled
-        ? getAppointmentCountdown(
-            appointment.event_date
-        )
-        : '';
+      const countdown = appointment.countdown_enabled
+        ? getAppointmentCountdown(appointment.event_date)
+        : "";
 
-        const recurrenceText = {
-    once: 'Einmalig',
-    daily: 'Täglich',
-    weekly: 'Wöchentlich',
-    monthly: 'Monatlich',
-    yearly: 'Jährlich'
-};
+      const recurrenceText = {
+        once: "Einmalig",
+        daily: "Täglich",
+        weekly: "Wöchentlich",
+        monthly: "Monatlich",
+        yearly: "Jährlich",
+      };
 
-const recurrenceLabel =
-    recurrenceText[appointment.recurrence] ||
-    appointment.recurrence ||
-    'Einmalig';
+      const recurrenceLabel =
+        recurrenceText[appointment.recurrence] ||
+        appointment.recurrence ||
+        "Einmalig";
 
-html += `
+      html += `
     <div
         style="
             background:#2563eb;
@@ -10252,21 +7306,14 @@ html += `
     >
 
         <div>
-            ${
-                time
-                    ? time + ' '
-                    : ''
-            }
+            ${time ? time + " " : ""}
 
-            ${escapeHtml(
-                appointment.title ||
-                'Termin'
-            )}
+            ${escapeHtml(appointment.title || "Termin")}
         </div>
 
         ${
-            countdown
-                ? `
+          countdown
+            ? `
                     <div
                         style="
                             margin-top:3px;
@@ -10276,7 +7323,7 @@ html += `
                         ${countdown}
                     </div>
                 `
-                : ''
+            : ""
         }
 
         <div
@@ -10289,9 +7336,7 @@ html += `
 
             <button
                 type="button"
-                data-edit-appointment="${escapeHtml(
-                    appointment.id
-                )}"
+                data-edit-appointment="${escapeHtml(appointment.id)}"
                 style="
                     border:0;
                     border-radius:4px;
@@ -10307,9 +7352,7 @@ html += `
 
             <button
                 type="button"
-                data-delete-appointment="${escapeHtml(
-                    appointment.id
-                )}"
+                data-delete-appointment="${escapeHtml(appointment.id)}"
                 style="
                     border:0;
                     border-radius:4px;
@@ -10327,154 +7370,105 @@ html += `
 
     </div>
 `;
+    });
 
-            }
-        );
-
-        html += `
+    html += `
             </div>
         `;
+  }
 
-    }
+  html += "</div>";
 
-    html += '</div>';
-
-    list.innerHTML = html;
-    setupAppointmentCalendarButtons();
-
+  list.innerHTML = html;
+  setupAppointmentCalendarButtons();
 }
 
 // Vorheriger Monat
-const appointmentPrevMonth =
-    document.getElementById(
-        'appointmentPrevMonth'
-    );
+const appointmentPrevMonth = document.getElementById("appointmentPrevMonth");
 
 if (appointmentPrevMonth) {
+  appointmentPrevMonth.addEventListener("click", () => {
+    currentAppointmentMonth.setMonth(currentAppointmentMonth.getMonth() - 1);
 
-    appointmentPrevMonth.addEventListener(
-        'click',
-        () => {
-
-            currentAppointmentMonth.setMonth(
-                currentAppointmentMonth.getMonth() - 1
-            );
-
-            renderAppointmentCalendar();
-
-        }
-    );
-
+    renderAppointmentCalendar();
+  });
 }
 
 // Nächster Monat
-const appointmentNextMonth =
-    document.getElementById(
-        'appointmentNextMonth'
-    );
+const appointmentNextMonth = document.getElementById("appointmentNextMonth");
 
 if (appointmentNextMonth) {
+  appointmentNextMonth.addEventListener("click", () => {
+    currentAppointmentMonth.setMonth(currentAppointmentMonth.getMonth() + 1);
 
-    appointmentNextMonth.addEventListener(
-        'click',
-        () => {
-
-            currentAppointmentMonth.setMonth(
-                currentAppointmentMonth.getMonth() + 1
-            );
-
-            renderAppointmentCalendar();
-
-        }
-    );
-
+    renderAppointmentCalendar();
+  });
 }
 
-const closeChildAppointmentsModal =
-    document.getElementById(
-        'closeChildAppointmentsModal'
-    );
+const closeChildAppointmentsModal = document.getElementById(
+  "closeChildAppointmentsModal",
+);
 
 if (closeChildAppointmentsModal) {
-    closeChildAppointmentsModal.addEventListener(
-        'click',
-        () => {
-            document.getElementById(
-                'childAppointmentsModal'
-            ).style.display = 'none';
-        }
-    );
+  closeChildAppointmentsModal.addEventListener("click", () => {
+    document.getElementById("childAppointmentsModal").style.display = "none";
+  });
 }
-
 
 // ==========================================
 // COUNTDOWN FÜR TERMINE
 // ==========================================
 
 function getAppointmentCountdown(eventDate) {
+  if (!eventDate) {
+    return "";
+  }
 
-    if (!eventDate) {
-        return '';
-    }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const targetDate = new Date(`${String(eventDate).substring(0, 10)}T00:00:00`);
 
-    const targetDate = new Date(
-        `${String(eventDate).substring(0, 10)}T00:00:00`
-    );
+  targetDate.setHours(0, 0, 0, 0);
 
-    targetDate.setHours(0, 0, 0, 0);
+  const difference = targetDate.getTime() - today.getTime();
 
-    const difference =
-        targetDate.getTime() - today.getTime();
+  const days = Math.ceil(difference / (1000 * 60 * 60 * 24));
 
-    const days = Math.ceil(
-        difference / (1000 * 60 * 60 * 24)
-    );
+  // Nur Countdown anzeigen,
+  // wenn das Ereignis innerhalb der nächsten 60 Tage liegt.
+  if (days < 0 || days > 60) {
+    return "";
+  }
 
-    // Nur Countdown anzeigen,
-    // wenn das Ereignis innerhalb der nächsten 60 Tage liegt.
-    if (days < 0 || days > 60) {
-        return '';
-    }
+  if (days === 0) {
+    return "⏳ Heute";
+  }
 
-    if (days === 0) {
-        return '⏳ Heute';
-    }
+  if (days === 1) {
+    return "⏳ Morgen";
+  }
 
-    if (days === 1) {
-        return '⏳ Morgen';
-    }
-
-    return `⏳ Noch ${days} Tage`;
+  return `⏳ Noch ${days} Tage`;
 }
-
 
 // ==========================================
 // DASHBOARD – TERMIN COUNTDOWNS
 // ==========================================
 
 async function loadDashboardAppointmentCountdowns() {
+  const container = document.getElementById("dashboardAppointmentCountdowns");
 
-    const container =
-        document.getElementById(
-            "dashboardAppointmentCountdowns"
-        );
+  if (!container || !supabaseClient) {
+    return;
+  }
 
-    if (!container || !supabaseClient) {
-        return;
-    }
+  container.innerHTML = "Termine werden geladen...";
 
-    container.innerHTML =
-        "Termine werden geladen...";
-
-    const {
-        data: appointments,
-        error
-    } = await supabaseClient
-        .from("child_appointments")
-        .select(`
+  const { data: appointments, error } = await supabaseClient
+    .from("child_appointments")
+    .select(
+      `
             id,
             child_id,
             title,
@@ -10483,47 +7477,34 @@ async function loadDashboardAppointmentCountdowns() {
             children (
                 child_code
             )
-        `)
-        .eq("countdown_enabled", true)
-        .order("event_date", {
-            ascending: true
-        });
+        `,
+    )
+    .eq("countdown_enabled", true)
+    .order("event_date", {
+      ascending: true,
+    });
 
-    if (error) {
+  if (error) {
+    console.error("Dashboard-Termine konnten nicht geladen werden:", error);
 
-        console.error(
-            "Dashboard-Termine konnten nicht geladen werden:",
-            error
-        );
+    container.innerHTML = "";
 
-        container.innerHTML = "";
+    return;
+  }
 
-        return;
-    }
+  const upcomingAppointments = (appointments || [])
+    .map((appointment) => {
+      const countdown = getAppointmentCountdown(appointment.event_date);
 
-    const upcomingAppointments =
-        (appointments || [])
-            .map(appointment => {
+      return {
+        ...appointment,
+        countdown,
+      };
+    })
+    .filter((appointment) => appointment.countdown !== "");
 
-                const countdown =
-                    getAppointmentCountdown(
-                        appointment.event_date
-                    );
-
-                return {
-                    ...appointment,
-                    countdown
-                };
-
-            })
-            .filter(
-                appointment =>
-                    appointment.countdown !== ""
-            );
-
-    if (upcomingAppointments.length === 0) {
-
-        container.innerHTML = `
+  if (upcomingAppointments.length === 0) {
+    container.innerHTML = `
             <div
                 style="
                     padding:16px;
@@ -10538,10 +7519,10 @@ async function loadDashboardAppointmentCountdowns() {
             </div>
         `;
 
-        return;
-    }
+    return;
+  }
 
-    container.innerHTML = `
+  container.innerHTML = `
         <div
             style="
                 padding:16px;
@@ -10575,26 +7556,21 @@ async function loadDashboardAppointmentCountdowns() {
                 <div>Tage bis Datum</div>
             </div>
 
-            ${upcomingAppointments.map(
-                appointment => {
+            ${upcomingAppointments
+              .map((appointment) => {
+                const childCode =
+                  appointment.children?.child_code || "Unbekannt";
 
-                    const childCode =
-                        appointment.children
-                            ?.child_code ||
-                        "Unbekannt";
+                const date = appointment.event_date
+                  ? new Date(
+                      `${String(appointment.event_date).substring(
+                        0,
+                        10,
+                      )}T00:00:00`,
+                    ).toLocaleDateString("de-DE")
+                  : "-";
 
-                    const date =
-                        appointment.event_date
-                            ? new Date(
-                                `${String(
-                                    appointment.event_date
-                                ).substring(0, 10)}T00:00:00`
-                            ).toLocaleDateString(
-                                "de-DE"
-                            )
-                            : "-";
-
-                    return `
+                return `
                         <div
                             style="
                                 display:grid;
@@ -10611,16 +7587,11 @@ async function loadDashboardAppointmentCountdowns() {
                         >
 
                             <div>
-                                ${escapeHtml(
-                                    childCode
-                                )}
+                                ${escapeHtml(childCode)}
                             </div>
 
                             <div>
-                                ${escapeHtml(
-                                    appointment.title ||
-                                    "Termin"
-                                )}
+                                ${escapeHtml(appointment.title || "Termin")}
                             </div>
 
                             <div>
@@ -10633,535 +7604,676 @@ async function loadDashboardAppointmentCountdowns() {
                                     color:#2563eb;
                                 "
                             >
-                                ${escapeHtml(
-                                    appointment.countdown
-                                )}
+                                ${escapeHtml(appointment.countdown)}
                             </div>
 
                         </div>
                     `;
-
-                }
-            ).join("")}
+              })
+              .join("")}
 
         </div>
     `;
 }
 
-function getAppointmentOccurrences(
-    appointment,
-    year,
-    month
-) {
+function getAppointmentOccurrences(appointment, year, month) {
+  const occurrences = [];
 
-    const occurrences = [];
+  if (!appointment.event_date) {
+    return occurrences;
+  }
 
-    if (!appointment.event_date) {
-        return occurrences;
-    }
+  const dateParts = appointment.event_date.substring(0, 10).split("-");
 
-    const dateParts =
-        appointment.event_date
-            .substring(0, 10)
-            .split('-');
+  const startYear = Number(dateParts[0]);
+  const startMonth = Number(dateParts[1]) - 1;
+  const startDay = Number(dateParts[2]);
 
-    const startYear = Number(dateParts[0]);
-    const startMonth = Number(dateParts[1]) - 1;
-    const startDay = Number(dateParts[2]);
+  const recurrence = appointment.recurrence || "once";
 
-    const recurrence =
-        appointment.recurrence || 'once';
+  const requestedMonth = new Date(year, month, 1);
 
-    const requestedMonth =
-        new Date(year, month, 1);
+  const startDate = new Date(startYear, startMonth, startDay);
 
-    const startDate =
-        new Date(
-            startYear,
-            startMonth,
-            startDay
-        );
-
-    // Einmaliger Termin
-    if (recurrence === 'once') {
-
-        if (
-            startYear === year &&
-            startMonth === month
-        ) {
-            occurrences.push(
-                `${year}-${String(month + 1).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`
-            );
-        }
-
-        return occurrences;
-    }
-
-    // Termin liegt komplett vor dem Start
-    if (requestedMonth < new Date(startYear, startMonth, 1)) {
-        return occurrences;
-    }
-
-    // Täglich
-    if (recurrence === 'daily') {
-
-        const daysInMonth =
-            new Date(
-                year,
-                month + 1,
-                0
-            ).getDate();
-
-        for (
-            let day = 1;
-            day <= daysInMonth;
-            day++
-        ) {
-
-            const currentDate =
-                new Date(
-                    year,
-                    month,
-                    day
-                );
-
-            if (currentDate >= startDate) {
-
-                occurrences.push(
-                    `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                );
-            }
-        }
-
-        return occurrences;
-    }
-
-    // Wöchentlich
-    if (recurrence === 'weekly') {
-
-        const daysInMonth =
-            new Date(
-                year,
-                month + 1,
-                0
-            ).getDate();
-
-        const originalWeekday =
-            startDate.getDay();
-
-        for (
-            let day = 1;
-            day <= daysInMonth;
-            day++
-        ) {
-
-            const currentDate =
-                new Date(
-                    year,
-                    month,
-                    day
-                );
-
-            if (
-                currentDate >= startDate &&
-                currentDate.getDay() === originalWeekday
-            ) {
-
-                occurrences.push(
-                    `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                );
-            }
-        }
-
-        return occurrences;
-    }
-
-    // Monatlich
-    if (recurrence === 'monthly') {
-
-        const daysInMonth =
-            new Date(
-                year,
-                month + 1,
-                0
-            ).getDate();
-
-        if (startDay <= daysInMonth) {
-
-            const currentDate =
-                new Date(
-                    year,
-                    month,
-                    startDay
-                );
-
-            if (currentDate >= startDate) {
-
-                occurrences.push(
-                    `${year}-${String(month + 1).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`
-                );
-            }
-        }
-
-        return occurrences;
-    }
-
-    // Jährlich
-    if (recurrence === 'yearly') {
-
-        if (month === startMonth) {
-
-            const daysInMonth =
-                new Date(
-                    year,
-                    month + 1,
-                    0
-                ).getDate();
-
-            if (startDay <= daysInMonth) {
-
-                const currentDate =
-                    new Date(
-                        year,
-                        month,
-                        startDay
-                    );
-
-                if (currentDate >= startDate) {
-
-                    occurrences.push(
-                        `${year}-${String(month + 1).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`
-                    );
-                }
-            }
-        }
-
-        return occurrences;
+  // Einmaliger Termin
+  if (recurrence === "once") {
+    if (startYear === year && startMonth === month) {
+      occurrences.push(
+        `${year}-${String(month + 1).padStart(2, "0")}-${String(startDay).padStart(2, "0")}`,
+      );
     }
 
     return occurrences;
+  }
+
+  // Termin liegt komplett vor dem Start
+  if (requestedMonth < new Date(startYear, startMonth, 1)) {
+    return occurrences;
+  }
+
+  // Täglich
+  if (recurrence === "daily") {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(year, month, day);
+
+      if (currentDate >= startDate) {
+        occurrences.push(
+          `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+        );
+      }
+    }
+
+    return occurrences;
+  }
+
+  // Wöchentlich
+  if (recurrence === "weekly") {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const originalWeekday = startDate.getDay();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(year, month, day);
+
+      if (
+        currentDate >= startDate &&
+        currentDate.getDay() === originalWeekday
+      ) {
+        occurrences.push(
+          `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+        );
+      }
+    }
+
+    return occurrences;
+  }
+
+  // Monatlich
+  if (recurrence === "monthly") {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    if (startDay <= daysInMonth) {
+      const currentDate = new Date(year, month, startDay);
+
+      if (currentDate >= startDate) {
+        occurrences.push(
+          `${year}-${String(month + 1).padStart(2, "0")}-${String(startDay).padStart(2, "0")}`,
+        );
+      }
+    }
+
+    return occurrences;
+  }
+
+  // Jährlich
+  if (recurrence === "yearly") {
+    if (month === startMonth) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      if (startDay <= daysInMonth) {
+        const currentDate = new Date(year, month, startDay);
+
+        if (currentDate >= startDate) {
+          occurrences.push(
+            `${year}-${String(month + 1).padStart(2, "0")}-${String(startDay).padStart(2, "0")}`,
+          );
+        }
+      }
+    }
+
+    return occurrences;
+  }
+
+  return occurrences;
 }
 
 async function deleteChildAppointment(appointmentId) {
+  if (!appointmentId) {
+    alert("Keine Termin-ID gefunden.");
+    return;
+  }
 
-    if (!appointmentId) {
-        alert('Keine Termin-ID gefunden.');
-        return;
+  const confirmed = confirm("Möchtest du diesen Termin wirklich löschen?");
+
+  if (!confirmed) {
+    return;
+  }
+
+  console.log("Lösche Termin:", appointmentId);
+
+  try {
+    const { error } = await supabaseClient
+      .from("child_appointments")
+      .delete()
+      .eq("id", appointmentId);
+
+    if (error) {
+      console.error("Fehler beim Löschen des Termins:", error);
+
+      alert("Termin konnte nicht gelöscht werden.");
+
+      return;
     }
 
-    const confirmed = confirm(
-        'Möchtest du diesen Termin wirklich löschen?'
-    );
+    console.log("Termin erfolgreich gelöscht:", appointmentId);
 
-    if (!confirmed) {
-        return;
+    // Termine erneut aus Supabase laden
+    await loadChildAppointments();
+
+    // Kalender neu aufbauen
+    renderAppointmentCalendar();
+
+    // Dashboard aktualisieren
+    if (typeof loadDashboardAppointmentCountdowns === "function") {
+      await loadDashboardAppointmentCountdowns();
     }
 
-    console.log(
-        'Lösche Termin:',
-        appointmentId
-    );
+    alert("Termin wurde gelöscht.");
+  } catch (error) {
+    console.error("Fehler beim Löschen:", error);
 
-    try {
-
-        const { error } =
-            await supabaseClient
-                .from('child_appointments')
-                .delete()
-                .eq('id', appointmentId);
-
-        if (error) {
-
-            console.error(
-                'Fehler beim Löschen des Termins:',
-                error
-            );
-
-            alert(
-                'Termin konnte nicht gelöscht werden.'
-            );
-
-            return;
-        }
-
-        console.log(
-            'Termin erfolgreich gelöscht:',
-            appointmentId
-        );
-
-        // Termine erneut aus Supabase laden
-        await loadChildAppointments();
-
-        // Kalender neu aufbauen
-        renderAppointmentCalendar();
-
-        // Dashboard aktualisieren
-        if (
-            typeof loadDashboardAppointmentCountdowns ===
-            'function'
-        ) {
-            await loadDashboardAppointmentCountdowns();
-        }
-
-        alert(
-            'Termin wurde gelöscht.'
-        );
-
-    } catch (error) {
-
-        console.error(
-            'Fehler beim Löschen:',
-            error
-        );
-
-        alert(
-            'Beim Löschen ist ein Fehler aufgetreten.'
-        );
-    }
+    alert("Beim Löschen ist ein Fehler aufgetreten.");
+  }
 }
 
 function setupAppointmentCalendarButtons() {
+  const list = document.getElementById("childAppointmentsList");
 
-    const list =
-        document.getElementById(
-            'childAppointmentsList'
-        );
+  if (!list) {
+    console.log("Terminliste nicht gefunden");
+    return;
+  }
 
-    if (!list) {
-        console.log(
-            'Terminliste nicht gefunden'
-        );
-        return;
-    }
+  const deleteButtons = list.querySelectorAll("[data-delete-appointment]");
 
-    const deleteButtons =
-        list.querySelectorAll(
-            '[data-delete-appointment]'
-        );
+  const editButtons = list.querySelectorAll("[data-edit-appointment]");
 
-    const editButtons =
-        list.querySelectorAll(
-            '[data-edit-appointment]'
-        );
+  console.log("Löschen-Buttons gefunden:", deleteButtons.length);
 
-    console.log(
-        'Löschen-Buttons gefunden:',
-        deleteButtons.length
-    );
+  console.log("Bearbeiten-Buttons gefunden:", editButtons.length);
 
-    console.log(
-        'Bearbeiten-Buttons gefunden:',
-        editButtons.length
-    );
+  // ==========================================
+  // LÖSCHEN
+  // ==========================================
 
+  deleteButtons.forEach((button) => {
+    button.onclick = async function (event) {
+      event.preventDefault();
+      event.stopPropagation();
 
-    // ==========================================
-    // LÖSCHEN
-    // ==========================================
+      const appointmentId = this.getAttribute("data-delete-appointment");
 
-    deleteButtons.forEach(button => {
+      console.log("Löschen geklickt:", appointmentId);
 
-        button.onclick = async function(event) {
+      await deleteChildAppointment(appointmentId);
+    };
+  });
 
-            event.preventDefault();
-            event.stopPropagation();
+  // ==========================================
+  // BEARBEITEN
+  // ==========================================
 
-            const appointmentId =
-                this.getAttribute(
-                    'data-delete-appointment'
-                );
+  editButtons.forEach((button) => {
+    button.onclick = function (event) {
+      event.preventDefault();
+      event.stopPropagation();
 
-            console.log(
-                'Löschen geklickt:',
-                appointmentId
-            );
+      const appointmentId = this.getAttribute("data-edit-appointment");
 
-            await deleteChildAppointment(
-                appointmentId
-            );
-        };
+      console.log("Bearbeiten geklickt:", appointmentId);
 
-    });
-
-
-    // ==========================================
-    // BEARBEITEN
-    // ==========================================
-
-    editButtons.forEach(button => {
-
-        button.onclick = function(event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            const appointmentId =
-                this.getAttribute(
-                    'data-edit-appointment'
-                );
-
-            console.log(
-                'Bearbeiten geklickt:',
-                appointmentId
-            );
-
-            editChildAppointment(
-                appointmentId
-            );
-        };
-
-    });
+      editChildAppointment(appointmentId);
+    };
+  });
 }
 
 async function editChildAppointment(appointmentId) {
+  if (!currentChildAppointments) {
+    alert("Termine sind noch nicht geladen.");
+    return;
+  }
 
-    if (!currentChildAppointments) {
-        alert('Termine sind noch nicht geladen.');
-        return;
-    }
+  const appointment = currentChildAppointments.find(
+    (item) => item.id === appointmentId,
+  );
 
-    const appointment =
-        currentChildAppointments.find(
-            item => item.id === appointmentId
-        );
+  if (!appointment) {
+    alert("Termin wurde nicht gefunden.");
+    return;
+  }
 
-    if (!appointment) {
-        alert('Termin wurde nicht gefunden.');
-        return;
-    }
+  // Terminname
+  document.getElementById("appointmentTitle").value = appointment.title || "";
 
-    // Terminname
-    document.getElementById(
-        'appointmentTitle'
-    ).value =
-        appointment.title || '';
+  // Kind
+  const childSelect = document.getElementById("appointmentChild");
 
-    // Kind
- const childSelect =
-    document.getElementById(
-        'appointmentChild'
+  if (childSelect) {
+    const childId = appointment.child_id || "";
+
+    const child = currentChildren?.find((item) => item.id === childId);
+
+    const childCode = child?.child_code || "Kind";
+
+    const childOption = Array.from(childSelect.options).find(
+      (option) => option.value === childId,
     );
-
-if (childSelect) {
-
-    const childId =
-        appointment.child_id || '';
-
-    const child =
-        currentChildren?.find(
-            item =>
-                item.id === childId
-        );
-
-    const childCode =
-        child?.child_code ||
-        'Kind';
-
-    const childOption =
-        Array.from(
-            childSelect.options
-        ).find(
-            option =>
-                option.value === childId
-        );
 
     if (childOption) {
-
-        childSelect.value =
-            childId;
-
+      childSelect.value = childId;
     } else {
+      const option = document.createElement("option");
 
-        const option =
-            document.createElement(
-                'option'
-            );
+      option.value = childId;
 
-        option.value =
-            childId;
+      option.textContent = childCode;
 
-        option.textContent =
-            childCode;
+      option.selected = true;
 
-        option.selected = true;
-
-        childSelect.appendChild(
-            option
-        );
+      childSelect.appendChild(option);
     }
+  }
+
+  // Datum YYYY-MM-DD → TT.MM.JJJJ
+  if (appointment.event_date) {
+    const parts = String(appointment.event_date).substring(0, 10).split("-");
+
+    if (parts.length === 3) {
+      document.getElementById("appointmentDate").value =
+        `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+  } else {
+    document.getElementById("appointmentDate").value = "";
+  }
+
+  // Uhrzeit
+  document.getElementById("appointmentTime").value = appointment.event_time
+    ? appointment.event_time.substring(0, 5)
+    : "";
+
+  // Wiederholung
+  document.getElementById("appointmentRecurrence").value =
+    appointment.recurrence || "once";
+
+  // Countdown
+  document.getElementById("appointmentCountdown").checked =
+    appointment.countdown_enabled === true;
+
+  // Termin-ID für das Bearbeiten merken
+  const modal = document.getElementById("appointmentModal");
+
+  modal.dataset.editingAppointmentId = appointmentId;
+
+  // Modal direkt an den Body hängen,
+  // damit es garantiert über dem Kalender liegt.
+  document.body.appendChild(modal);
+
+  // Button ändern
+  const saveButton = document.getElementById("saveAppointmentBtn");
+
+  saveButton.textContent = "Änderungen speichern";
+
+  // Modal öffnen
+  modal.style.display = "flex";
 }
 
-    // Datum YYYY-MM-DD → TT.MM.JJJJ
-    if (appointment.event_date) {
+/* ============================================================
+   TÄGLICHES KINDER ZÄHLEN / ANWESENHEIT (Sauber & Zentral)
+   ============================================================ */
 
-        const parts =
-            String(
-                appointment.event_date
-            )
-            .substring(0, 10)
-            .split('-');
+document.addEventListener("DOMContentLoaded", () => {
+  setupDailyCheckEvents();
+});
 
-        if (parts.length === 3) {
+function setupDailyCheckEvents() {
+  console.log("setupDailyCheckEvents wird initialisiert...");
 
-            document.getElementById(
-                'appointmentDate'
-            ).value =
-                `${parts[2]}.${parts[1]}.${parts[0]}`;
-        }
+  const openModalBtn = document.getElementById("openDailyCheckModal");
+  const dailyCheckCard = document.getElementById("dailyCheckCard");
+  const closeModalBtn = document.getElementById("closeDailyCheckModal");
+  const modal = document.getElementById("dailyCheckModal");
 
-    } else {
+  // Modal öffnen
+  const handleOpen = (e) => {
+    if (e) e.stopPropagation();
+    console.log("Modal soll geöffnet werden!");
+    if (modal) modal.style.display = "flex";
+    loadDailyCheckList(); // Lädt die Kinder aus Supabase
+  };
 
-        document.getElementById(
-            'appointmentDate'
-        ).value = '';
+  if (openModalBtn) openModalBtn.addEventListener("click", handleOpen);
+  if (dailyCheckCard) dailyCheckCard.addEventListener("click", handleOpen);
 
+  // Modal schließen
+  if (closeModalBtn && modal) {
+    closeModalBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+  }
+}
+// 1. Kinder laden und als Tabelle anzeigen (inkl. Laden des heutigen Status)
+async function loadDailyCheckList() {
+  console.log("Lade Kinder für die Anwesenheit...");
+
+  const listContainer = document.getElementById("dailyCheckList");
+  const groupInfo = document.getElementById("dailyCheckGroupInfo");
+
+  if (!listContainer) {
+    console.error("FEHLER: HTML-Element mit ID 'dailyCheckList' nicht gefunden!");
+    return;
+  }
+
+  listContainer.innerHTML = "<p style='padding: 10px;'>Lade Kinder...</p>";
+
+  try {
+    const client = window.supabaseClient || supabaseClient;
+    if (!client) throw new Error("Supabase-Client nicht gefunden!");
+
+    const today = new Date().toISOString().split("T")[0];
+    if (groupInfo) groupInfo.textContent = `Gruppe: Spatzen — Datum: ${today}`;
+
+    // A) Kinder für Gruppe 5 laden
+    const { data: children, error: childError } = await client
+      .from("children")
+      .select("id, child_code")
+      .eq("group_id", 5)
+      .order("child_code", { ascending: true });
+
+    if (childError) throw childError;
+
+    if (!children || children.length === 0) {
+      listContainer.innerHTML = "<p style='padding: 10px; color: orange;'>Keine Kinder für Gruppe 5 gefunden.</p>";
+      return;
     }
 
-    // Uhrzeit
-    document.getElementById(
-        'appointmentTime'
-    ).value =
-        appointment.event_time
-            ? appointment.event_time.substring(0, 5)
-            : '';
+    // Gesamtzahl im Dashboard aktualisieren
+    const countTotalEl = document.getElementById("countTotal");
+    if (countTotalEl) countTotalEl.textContent = children.length;
 
-    // Wiederholung
-    document.getElementById(
-        'appointmentRecurrence'
-    ).value =
-        appointment.recurrence || 'once';
+    // B) BEREITS GESPEICHERTE ANWESENHEIT FÜR HEUTE LADEN (WICHTIG: child_id muss dabei sein!)
+    const { data: attendanceRecords, error: attError } = await client
+      .from("attendance")
+      .select("child_id, status") // child_id war vorher fälschlicherweise nicht hier!
+      .eq("date", today);
 
-    // Countdown
-    document.getElementById(
-        'appointmentCountdown'
-    ).checked =
-        appointment.countdown_enabled === true;
+    const attendanceMap = {};
+    if (!attError && attendanceRecords) {
+      attendanceRecords.forEach(att => {
+        attendanceMap[att.child_id] = att.status;
+      });
+    }
 
+    // C) HTML für die Tabelle generieren
+    let html = '<table style="width:100%; border-collapse: collapse;">';
+    html += '<tr><th style="text-align:left; padding:8px; border-bottom:2px solid #ccc;">Kind-Code</th><th style="text-align:left; padding:8px; border-bottom:2px solid #ccc;">Status</th></tr>';
 
-    // Termin-ID für das Bearbeiten merken
-const modal =
-    document.getElementById(
-        'appointmentModal'
-    );
+    children.forEach((child) => {
+      // Wenn in der DB nichts steht, Standard auf "absent" (oder passe es an, falls Standard anders sein soll)
+      const currentStatus = attendanceMap[child.id] || "absent"; 
 
-modal.dataset.editingAppointmentId =
-    appointmentId;
+      html += `
+        <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 8px;"><strong>${child.child_code}</strong></td>
+            <td style="padding: 8px;">
+                <select name="status_${child.id}" class="child-status-select" data-child-id="${child.id}" style="padding: 6px; width: 100%; border-radius: 4px; border: 1px solid #ccc;">
+                    <option value="present" ${currentStatus === "present" ? "selected" : ""}>Anwesend</option>
+                    <option value="absent" ${currentStatus === "absent" ? "selected" : ""}>Nicht anwesend</option>
+                    <option value="sick" ${currentStatus === "sick" ? "selected" : ""}>Entschuldigt</option>
+                    <option value="vacation" ${currentStatus === "vacation" ? "selected" : ""}>Urlaub</option>
+                    <option value="more" ${currentStatus === "more" ? "selected" : ""}>Mehr</option>
+                </select>
+            </td>
+            <td style="padding: 8px; text-align: center;">
+                <button onclick="printAttendanceReport('${child.id}')" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">🖨️ Drucken</button>
+            </td>
+        </tr>
+      `;
+    });
 
-// Modal direkt an den Body hängen,
-// damit es garantiert über dem Kalender liegt.
-document.body.appendChild(modal);
+    html += "</table>";
+    listContainer.innerHTML = html;
+    console.log("Kinder und bestehender Status erfolgreich geladen!");
 
+    // D) Dashboard-Zähler sofort beim Öffnen aktualisieren
+    updateDashboardSummary(attendanceMap);
 
-    // Button ändern
-    const saveButton =
-        document.getElementById(
-            'saveAppointmentBtn'
-        );
+  } catch (err) {
+    console.error("Fehler beim Laden der Kinder:", err);
+    listContainer.innerHTML = "<p style='color: red; padding: 10px;'>Fehler beim Laden: " + err.message + "</p>";
+  }
+}
 
-    saveButton.textContent =
-        'Änderungen speichern';
+// 2. Anwesenheit speichern
+async function saveDailyCheckAttendance() {
+  const message = document.getElementById("dailyCheckMessage");
+  const selects = document.querySelectorAll(".child-status-select");
+  const today = new Date().toISOString().split("T")[0];
 
+  if (selects.length === 0) {
+    alert("Keine Kinder zum Speichern vorhanden.");
+    return;
+  }
 
-    // Modal öffnen
-    modal.style.display = 'flex';
+  const attendanceData = [];
+  const attendanceMap = {};
+
+  selects.forEach((sel) => {
+    const childId = sel.getAttribute("data-child-id");
+    const status = sel.value;
+    
+    attendanceData.push({
+      child_id: childId,
+      status: status,
+      date: today,
+    });
+
+    attendanceMap[childId] = status;
+  });
+
+  if (message) {
+    message.textContent = "Speichere Anwesenheit...";
+    message.style.color = "blue";
+  }
+
+  try {
+    const client = window.supabaseClient || supabaseClient;
+    const { error } = await client
+      .from("attendance")
+      .upsert(attendanceData, { onConflict: "child_id,date" });
+
+    if (error) throw error;
+
+    if (message) {
+      message.textContent = "Anwesenheit erfolgreich gespeichert!";
+      message.style.color = "green";
+    }
+
+    // Dashboard-Zahlen SOFORT aktualisieren, damit countPresent stimmt
+    updateDashboardSummary(attendanceMap);
+
+    setTimeout(() => {
+      const modal = document.getElementById("dailyCheckModal");
+      if (modal) modal.style.display = "none";
+      if (message) message.textContent = "";
+    }, 1200);
+  } catch (err) {
+    console.error("Fehler beim Speichern:", err);
+    if (message) {
+      message.textContent = "Fehler beim Speichern: " + err.message;
+      message.style.color = "red";
+    }
+  }
+}
+
+// 3. Zählt alle zusammen, die value="present" haben, und schreibt es in #countPresent
+function updateDashboardSummary(attendanceMap) {
+  let presentCount = 0;
+  
+  Object.values(attendanceMap).forEach(status => {
+    if (status === "present") {
+      presentCount++;
+    }
+  });
+
+  const countPresentEl = document.getElementById("countPresent");
+  if (countPresentEl) {
+    countPresentEl.textContent = presentCount;
+    console.log(`Anwesende Kinder (countPresent) aktualisiert auf: ${presentCount}`);
+  } else {
+    console.warn("Warnung: HTML-Element mit ID 'countPresent' nicht gefunden.");
+  }
+}
+
+// ============================================================
+// DRUCK-FUNKTION (Gesamte Gruppe oder einzelnes Kind)
+// ============================================================
+
+async function printAttendanceReport(selectedChildId = null) {
+  console.log(selectedChildId ? `Lade Bericht für Kind ID: ${selectedChildId}` : "Lade Bericht für gesamte Gruppe...");
+
+  try {
+    const client = window.supabaseClient || supabaseClient;
+    if (!client) throw new Error("Supabase-Client nicht gefunden!");
+
+    // 1. ALLES VORHER LADEN (Kein window.open am Anfang!)
+    let childQuery = client.from("children").select("id, child_code").eq("group_id", 5).order("child_code", { ascending: true });
+    
+    if (selectedChildId) {
+      childQuery = childQuery.eq("id", selectedChildId);
+    }
+
+    const { data: children, error: childError } = await childQuery;
+    if (childError) throw childError;
+
+    if (!children || children.length === 0) {
+      alert("Keine Kinder für den Druck gefunden.");
+      return;
+    }
+
+    const childIds = children.map(c => c.id);
+
+    const { data: attendanceRecords, error: attError } = await client
+      .from("attendance")
+      .select("child_id, date, status")
+      .in("child_id", childIds)
+      .order("date", { ascending: false });
+
+    if (attError) throw attError;
+
+    // Daten nach Kind gruppieren
+    const attendanceByChild = {};
+    children.forEach(c => {
+      attendanceByChild[c.id] = {
+        code: c.child_code,
+        records: []
+      };
+    });
+
+    if (attendanceRecords) {
+      attendanceRecords.forEach(att => {
+        if (attendanceByChild[att.child_id]) {
+          attendanceByChild[att.child_id].records.push({
+            date: att.date,
+            status: att.status
+          });
+        }
+      });
+    }
+
+    const statusMap = {
+      present: "Anwesend",
+      absent: "Nicht anwesend",
+      sick: "Entschuldigt",
+      vacation: "Urlaub",
+      more: "Mehr"
+    };
+
+    // 2. HTML-STRING KOMPLETT ZUSAMMENBAUEN
+    let html = `
+      <!DOCTYPE html>
+      <html lang="de">
+      <head>
+        <meta charset="UTF-8">
+        <title>Anwesenheits-Übersicht - Gruppe Spatzen</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+          h1 { font-size: 20px; margin-bottom: 5px; }
+          p { color: #666; font-size: 14px; margin-top: 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; font-size: 13px; }
+          th { background-color: #f4f4f4; }
+          .status-present { color: green; font-weight: bold; }
+          .status-absent { color: #555; }
+          .status-sick { color: #d9534f; }
+          .status-vacation { color: #f0ad4e; }
+          @media print {
+            body { margin: 0; }
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Anwesenheits-Übersicht: ${selectedChildId ? 'Einzelnes Kind' : 'Gruppe Spatzen'}</h1>
+        <p>Erstellt am: ${new Date().toLocaleDateString('de-DE')}</p>
+    `;
+
+    children.forEach(child => {
+      const data = attendanceByChild[child.id];
+      html += `
+        <h3 style="margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 5px;">Kind-Code: ${data.code}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      if (data.records.length === 0) {
+        html += `<tr><td colspan="2" style="color: #888; font-style: italic;">Keine Einträge vorhanden.</td></tr>`;
+      } else {
+        data.records.forEach(rec => {
+          const statusText = statusMap[rec.status] || rec.status;
+          html += `
+            <tr>
+              <td>${rec.date}</td>
+              <td class="status-${rec.status}">${statusText}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+          </tbody>
+        </table>
+      `;
+    });
+
+    html += `
+        <div style="margin-top: 30px; text-align: center;">
+          <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Jetzt drucken</button>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // 3. ERST JETZT DAS FENSTER ÖFFNEN UND REINSCHREIBEN
+    let printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert("Pop-up-Blocker aktiv? Bitte erlaube Pop-ups für diese Seite.");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+  } catch (err) {
+    console.error("Fehler beim Erstellen des Berichts:", err);
+    alert("Fehler beim Laden der Druckdaten: " + err.message);
+  }
 }
