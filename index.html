@@ -1,2075 +1,921 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-
-<hd>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>unfold</title>
 
     <!-- SUPABASE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+      defer
+    ></script>
     <script src="script.js" defer></script>
-    <link rel="stylesheet" href="style.css">
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f5f6f8;
-            color: #222;
-        }
-
-        body {
-            min-height: 100vh;
-        }
-
-        button,
-        input,
-        select,
-        textarea {
-            font: inherit;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* =========================
-           FORMULARE
-        ========================= */
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d8dce2;
-            border-radius: 8px;
-            background: white;
-        }
-
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        /* =========================
-           BUTTONS
-        ========================= */
-
-        .btn {
-            border: 0;
-            border-radius: 8px;
-            padding: 11px 16px;
-            background: #2563eb;
-            color: white;
-            font-weight: 600;
-        }
-
-        .btn:hover {
-            opacity: .9;
-        }
-
-        .btn:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background: #64748b;
-        }
-
-        .btn-success {
-            background: #16a34a;
-        }
-
-        .btn-danger {
-            background: #dc2626;
-        }
-
-        .btn-light {
-            background: #e5e7eb;
-            color: #222;
-        }
-
-        /* =========================
-           LOGIN
-        ========================= */
-
-        #loginSection,
-        #registerSection {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 440px;
-            background: white;
-            padding: 32px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, .08);
-        }
-
-        .login-card h1 {
-            margin-top: 0;
-            margin-bottom: 8px;
-        }
-
-        .login-card p {
-            color: #666;
-        }
-
-        /* =========================
-           APP
-        ========================= */
-
-        #appSection {
-            min-height: 100vh;
-        }
-
-        .topbar {
-            height: 64px;
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        .topbar-title {
-            font-weight: 700;
-            font-size: 18px;
-        }
-
-        .topbar-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .layout {
-            display: flex;
-            min-height: calc(100vh - 64px);
-        }
-
-        /* =========================
-           SIDEBAR
-        ========================= */
-
-        .sidebar {
-            width: 240px;
-            background: #111827;
-            color: white;
-            padding: 16px;
-            flex-shrink: 0;
-        }
-
-        .sidebar button {
-            width: 100%;
-            text-align: left;
-            border: 0;
-            background: transparent;
-            color: #d1d5db;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 4px;
-        }
-
-        .sidebar button:hover,
-        .sidebar button.active {
-            background: #1f2937;
-            color: white;
-        }
-
-        /* =========================
-           MAIN
-        ========================= */
-
-        .main {
-            flex: 1;
-            padding: 24px;
-            max-width: 1400px;
-        }
-
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        .page-header {
-            margin-bottom: 24px;
-        }
-
-        .page-header h1 {
-            margin: 0 0 6px;
-        }
-
-        .page-header p {
-            margin: 0;
-            color: #6b7280;
-        }
-
-        /* =========================
-           CARDS
-        ========================= */
-
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, .04);
-            border: 1px solid #e5e7eb;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(
-                auto-fit,
-                minmax(220px, 1fr)
-            );
-            gap: 16px;
-        }
-
-        .stat-number {
-            font-size: 32px;
-            font-weight: 700;
-            margin-top: 8px;
-        }
-
-        .stat-label {
-            color: #6b7280;
-        }
-
-        /* =========================
-           KINDER
-        ========================= */
-
-        .children-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .children-list {
-            display: grid;
-            gap: 12px;
-        }
-
-        .child-card,
-        .child-item {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .child-code {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .child-group {
-            color: #6b7280;
-            margin-top: 4px;
-        }
-
-        .create-child-card {
-            max-width: 600px;
-            margin-bottom: 20px;
-        }
-
-        .group-select-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .group-select-row select {
-            flex: 1;
-        }
-
-        /* =========================
-           GRUPPEN
-        ========================= */
-
-        .groups-list {
-            display: grid;
-            gap: 12px;
-        }
-
-        .group-item {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .group-item p {
-            color: #6b7280;
-        }
-
-        /* =========================
-           ENTWICKLUNG
-        ========================= */
-
-        .development-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .development-controls {
-            display: grid;
-            grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(220px, 1fr)
-                );
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .questions-list {
-            display: grid;
-            gap: 16px;
-        }
-
-        .development-question {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .question-number {
-            font-size: 13px;
-            color: #6b7280;
-            margin-bottom: 4px;
-        }
-
-        .question-area {
-            font-size: 13px;
-            color: #2563eb;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .question-text {
-            font-size: 17px;
-            font-weight: 600;
-            line-height: 1.5;
-            margin-bottom: 18px;
-        }
-
-        .development-options {
-            display: grid;
-            grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(160px, 1fr)
-                );
-            gap: 8px;
-        }
-
-        .development-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid #e5e7eb;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .development-option input {
-            width: auto;
-        }
-
-        /* =========================
-           AUSWERTUNG
-        ========================= */
-
-        .development-result-card {
-            margin-top: 30px;
-            padding: 25px;
-            border-radius: 18px;
-            background: white;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, .08);
-        }
-
-        .development-result-card h2 {
-            margin-top: 0;
-        }
-
-        .development-result-overview {
-            display: grid;
-            grid-template-columns:
-                minmax(180px, 1fr)
-                2fr;
-            gap: 25px;
-            align-items: center;
-        }
-
-        .development-result-main-score {
-            text-align: center;
-            padding: 25px;
-            border-radius: 16px;
-            background: #f5f7f8;
-        }
-
-        .development-result-main-score span {
-            display: block;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .development-result-main-score strong {
-            font-size: 42px;
-        }
-
-        .development-result-summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .development-result-summary div {
-            padding: 15px;
-            text-align: center;
-            border-radius: 12px;
-            background: #f7f7f7;
-        }
-
-        .development-result-summary span {
-            display: block;
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .development-result-summary strong {
-            font-size: 20px;
-        }
-
-        .development-result-areas {
-            display: grid;
-            gap: 15px;
-        }
-
-        .development-result-area {
-            padding: 15px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-        }
-
-        .development-result-area-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .development-result-progress,
-        .report-progress {
-            height: 10px;
-            background: #e5e7eb;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .development-result-progress-bar,
-        .report-progress-bar {
-            height: 100%;
-            background: #2563eb;
-        }
-
-        .development-result-area-status {
-            margin-top: 8px;
-            font-weight: 600;
-        }
-
-        .development-result-area-details {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 10px;
-            color: #666;
-            font-size: 13px;
-        }
-
-        /* =========================
-           GUTACHTEN
-        ========================= */
-
-        .development-report-form {
-            margin-top: 30px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            padding: 24px;
-        }
-
-        .development-report-form h3 {
-            margin-top: 0;
-        }
-
-        .report-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .development-report-message {
-            margin: 15px 0;
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        .development-report-container {
-            margin-top: 20px;
-        }
-
-        .development-report-document {
-            background: white;
-            padding: 35px;
-            border: 1px solid #ddd;
-            border-radius: 14px;
-            box-shadow: 0 3px 15px rgba(0,0,0,.05);
-        }
-
-        .development-report-header {
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }
-
-        .development-report-header h1 {
-            margin: 0;
-        }
-
-        .development-report-header p {
-            color: #666;
-        }
-
-        .development-report-document h2 {
-            margin-top: 30px;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 6px;
-        }
-
-        .report-main-score {
-            font-size: 22px;
-            font-weight: bold;
-            padding: 15px;
-            background: #f5f7fa;
-            border-radius: 8px;
-        }
-
-        .report-main-score strong {
-            margin-left: 15px;
-        }
-
-        .report-area {
-            margin-bottom: 18px;
-        }
-
-        .report-area-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .report-text {
-            line-height: 1.6;
-        }
-
-        .development-report-footer {
-            margin-top: 60px;
-            display: grid;
-            gap: 30px;
-        }
-
-        /* =========================
-           GESPEICHERTE GUTACHTEN
-        ========================= */
-
-        .saved-development-reports {
-            margin-top: 30px;
-        }
-
-        .saved-report-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 10px;
-        }
-
-        .saved-report-card small {
-            display: block;
-            color: #777;
-            margin-top: 5px;
-        }
-
-        .saved-report-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* =========================
-           ADMIN
-        ========================= */
-
-        .pending-users {
-            display: grid;
-            gap: 12px;
-        }
-
-        .pending-user {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-
-        /* =========================
-           MESSAGES
-        ========================= */
-
-        .message {
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 12px;
-            display: none;
-        }
-
-        .message.show {
-            display: block;
-        }
-
-        .message.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .message.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .message.info {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        /* =========================
-           MODAL
-        ========================= */
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.45);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 100;
-        }
-
-        .modal-content {
-            background: white;
-            width: 100%;
-            max-width: 500px;
-            border-radius: 14px;
-            padding: 24px;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-        }
-
-        /* =========================
-           RESPONSIVE
-        ========================= */
-
-        @media (max-width: 768px) {
-
-            .layout {
-                display: block;
-            }
-
-            .sidebar {
-                width: 100%;
-                display: flex;
-                overflow-x: auto;
-                gap: 4px;
-            }
-
-            .sidebar button {
-                min-width: max-content;
-                width: auto;
-            }
-
-            .main {
-                padding: 16px;
-            }
-
-            .topbar {
-                padding: 0 16px;
-            }
-
-            .topbar-actions {
-                gap: 4px;
-            }
-
-            .development-result-overview {
-                grid-template-columns: 1fr;
-            }
-
-            .development-result-summary {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .children-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .saved-report-card {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-
-        @media print {
-
-            body {
-                background: white;
-            }
-
-            .sidebar,
-            .topbar,
-            .report-actions,
-            .development-report-form,
-            .saved-development-reports {
-                display: none !important;
-            }
-
-            .main {
-                padding: 0;
-                max-width: none;
-            }
-
-            .development-report-document {
-                border: 0;
-                box-shadow: none;
-            }
-        }
-    </style>
-</head>
-
-
-<body>
-
-<!-- =========================================================
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- =========================================================
      LOGIN
 ========================================================= -->
 
-<section id="loginSection">
-
-    <div class="login-card">
-
+    <section id="loginSection">
+      <div class="login-card">
         <h1>unfold</h1>
 
-        <p>
-            Bitte melde dich an.
-        </p>
+        <p>Bitte melde dich an.</p>
 
         <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail"> E-Mail </label>
 
-            <div class="form-group">
+            <input type="email" id="loginEmail" autocomplete="email" required />
+          </div>
 
-                <label for="loginEmail">
-                    E-Mail
-                </label>
+          <div class="form-group">
+            <label for="loginPassword"> Passwort </label>
 
-                <input
-                    type="email"
-                    id="loginEmail"
-                    autocomplete="email"
-                    required
-                >
+            <input
+              type="password"
+              id="loginPassword"
+              autocomplete="current-password"
+              required
+            />
+          </div>
 
-            </div>
+          <button type="submit" class="btn">Anmelden</button>
 
-            <div class="form-group">
+          <button
+            type="button"
+            id="showRegisterButton"
+            class="btn btn-light"
+            style="margin-top: 8px"
+          >
+            Registrieren
+          </button>
 
-                <label for="loginPassword">
-                    Passwort
-                </label>
-
-                <input
-                    type="password"
-                    id="loginPassword"
-                    autocomplete="current-password"
-                    required
-                >
-
-            </div>
-
-            <button
-                type="submit"
-                class="btn"
-            >
-                Anmelden
-            </button>
-
-            <button
-                type="button"
-                id="showRegisterButton"
-                class="btn btn-light"
-                style="margin-top:8px;"
-            >
-                Registrieren
-            </button>
-
-            <div
-                id="loginMessage"
-                class="message"
-            ></div>
-
+          <div id="loginMessage" class="message"></div>
         </form>
+      </div>
+    </section>
 
-    </div>
-
-</section>
-
-
-<!-- =========================================================
+    <!-- =========================================================
      REGISTRIERUNG
 ========================================================= -->
 
-<section
-    id="registerSection"
-    style="display:none;"
->
-
-    <div class="login-card">
-
+    <section id="registerSection" style="display: none">
+      <div class="login-card">
         <h1>Registrierung</h1>
 
         <form id="registerForm">
+          <div class="form-group">
+            <label for="registerFirstName"> Vorname </label>
 
-            <div class="form-group">
-                <label for="registerFirstName">
-                    Vorname
-                </label>
+            <input type="text" id="registerFirstName" />
+          </div>
 
-                <input
-                    type="text"
-                    id="registerFirstName"
-                >
-            </div>
+          <div class="form-group">
+            <label for="registerLastName"> Nachname </label>
 
-            <div class="form-group">
-                <label for="registerLastName">
-                    Nachname
-                </label>
+            <input type="text" id="registerLastName" />
+          </div>
 
-                <input
-                    type="text"
-                    id="registerLastName"
-                >
-            </div>
-                        
-            <div class="form-group">
+          <div class="form-group">
+            <label for="registerInstitution"> Institution </label>
 
-                <label for="registerInstitution">
-                    Institution
-                </label>
+            <select id="registerInstitution" required>
+              <option value="">Institution auswählen...</option>
+            </select>
+          </div>
 
-                <select
-                    id="registerInstitution"
-                    required
-                >
-                    <option value="">
-                        Institution auswählen...
-                    </option>
-                </select>
+          <div class="form-group">
+            <label for="registerEmail"> E-Mail </label>
 
-            </div>
+            <input type="email" id="registerEmail" required />
+          </div>
 
+          <div class="form-group">
+            <label for="registerPassword"> Passwort </label>
 
-            <div class="form-group">
-                <label for="registerEmail">
-                    E-Mail
-                </label>
+            <input type="password" id="registerPassword" required />
+          </div>
 
-                <input
-                    type="email"
-                    id="registerEmail"
-                    required
-                >
-            </div>
+          <button type="submit" class="btn btn-success">Registrieren</button>
 
-            <div class="form-group">
-                <label for="registerPassword">
-                    Passwort
-                </label>
+          <button
+            type="button"
+            id="showLoginButton"
+            class="btn btn-light"
+            style="margin-top: 8px"
+          >
+            Zur Anmeldung
+          </button>
 
-                <input
-                    type="password"
-                    id="registerPassword"
-                    required
-                >
-            </div>
-
-            <button
-                type="submit"
-                class="btn btn-success"
-            >
-                Registrieren
-            </button>
-
-            <button
-                type="button"
-                id="showLoginButton"
-                class="btn btn-light"
-                style="margin-top:8px;"
-            >
-                Zur Anmeldung
-            </button>
-
-            <div
-                id="registerMessage"
-                class="message"
-            ></div>
-
+          <div id="registerMessage" class="message"></div>
         </form>
+      </div>
+    </section>
 
-    </div>
-
-</section>
-
-
-<!-- =========================================================
+    <!-- =========================================================
      APP
 ========================================================= -->
 
-<section
-    id="appSection"
-    class="hidden"
->
+    <section id="appSection" class="hidden">
+      <!-- TOPBAR -->
 
-    <!-- TOPBAR -->
-
-    <header class="topbar">
-
-        <div class="topbar-title">
-            unfold
-        </div>
+      <header class="topbar">
+        <div class="topbar-title">unfold</div>
 
         <div class="topbar-actions">
+          <span id="institutionName"> — </span>
 
-            <span id="institutionName">
-                —
-            </span>
+          <button id="profileButton" class="btn btn-light" type="button">
+            Profil
+          </button>
 
-            <button
-                id="profileButton"
-                class="btn btn-light"
-                type="button"
-            >
-                Profil
-            </button>
-
-            <button
-                id="logoutButton"
-                class="btn btn-danger"
-                type="button"
-            >
-                Abmelden
-            </button>
-
+          <button id="logoutButton" class="btn btn-danger" type="button">
+            Abmelden
+          </button>
         </div>
+      </header>
 
-    </header>
-
-
-    <div class="layout">
-
+      <div class="layout">
         <!-- SIDEBAR -->
 
         <aside class="sidebar">
+          <button type="button" data-section="dashboard" class="active">
+            Dashboard
+          </button>
 
-            <button
-                type="button"
-                data-section="dashboard"
-                class="active"
-            >
-                Dashboard
-            </button>
+          <button type="button" data-section="children">Kinder</button>
 
-            <button
-                type="button"
-                data-section="children"
-            >
-                Kinder
-            </button>
+          <button type="button" data-section="groups">Gruppen</button>
 
-            <button
-                type="button"
-                data-section="groups"
-            >
-                Gruppen
-            </button>
+          <button type="button" data-section="development">Entwicklung</button>
 
-            <button
-                type="button"
-                data-section="development"
-            >
-                Entwicklung
-            </button>
-
-            <button
-                type="button"
-                data-section="admin"
-                id="openAdminButton"
-            >
-                Administration
-            </button>
-
+          <button type="button" data-section="admin" id="openAdminButton">
+            Admin
+          </button>
         </aside>
-
 
         <!-- MAIN -->
 
         <main class="main">
-
-
-            <!-- =================================================
+          <!-- =================================================
                  DASHBOARD
             ================================================== -->
 
-            <section
-                class="section active"
-                data-section-content="dashboard"
+          <section class="section active" data-section-content="dashboard">
+            <div class="page-header">
+              <h1 id="dashboardGreeting">Hallo!</h1>
+              <h1>Womit wollen wir anfangen?</h1>
+
+              <p>Übersicht deiner Einrichtung</p>
+
+              <div
+                id="dashboardAppointmentCountdowns"
+                style="margin-top: 20px; margin-bottom: 20px"
+              ></div>
+            </div>
+
+            <div class="grid">
+              <div class="card">
+                <div class="stat-label">Kinder</div>
+
+                <div class="stat-number" id="childrenCount">0</div>
+              </div>
+
+              <div class="card">
+                <div class="stat-label">Gruppen</div>
+
+                <div class="stat-number" id="groupsCount">0</div>
+              </div>
+            </div>
+
+            <div
+              class="card"
+              id="dailyCheckCard"
+              style="
+                margin-top: 20px;
+                cursor: pointer;
+                border: 2px dashed var(--primary-color, #0091ff);
+              "
             >
-
-                <div class="page-header">
-
-                    <h1 id="dashboardGreeting">
-                        Hallo!
-                    </h1>
-                    <h1>Womit wollen wir anfangen?</h1>
-
-                    <p>
-                        Übersicht deiner Einrichtung
-                    </p>
-
-                    <div
-                        id="dashboardAppointmentCountdowns"
-                        style="
-                            margin-top:20px;
-                            margin-bottom:20px;
-                        "
-                    >
-                    </div>
-
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <div>
+                  <h2>📋 Kinder zählen</h2>
+                  <p style="margin: 5px 0 0 0; color: #666">
+                    Tägliche Anwesenheit deiner Gruppe erfassen
+                  </p>
                 </div>
+                <button type="button" class="btn" id="openDailyCheckModal">
+                  Anwesenheit prüfen
+                </button>
+                <button onclick="printAttendanceReport()">
+                    Gesamte Gruppe drucken
+                </button>
 
-                <section class="dashboard-section">
+              </div>
+              <div class="attendance-box">
+                <h3>Anwesenheitsliste</h3>
+                <p>
+                  Anwesend: <span id="countPresent">0</span> von
+                  <span id="countTotal">0</span> Kindern
+                </p>
+              </div>
+            </div>
 
-                    <h2>
-                        Angefangene Beobachtungen
-                    </h2>
+            <section class="dashboard-section">
+              <h2>Angefangene Beobachtungen</h2>
 
-                    <div
-                        id="startedDevelopmentObservations"
-                        class="started-development-observations"
-                        
-                    ></div>
-
-                </section>
-
-                <div class="grid">
-
-                    <div class="card">
-
-                        <div class="stat-label">
-                            Kinder
-                        </div>
-
-                        <div
-                            class="stat-number"
-                            id="childrenCount"
-                        >
-                            0
-                        </div>
-
-                    </div>
-
-                    <div class="card">
-
-                        <div class="stat-label">
-                            Gruppen
-                        </div>
-
-                        <div
-                            class="stat-number"
-                            id="groupsCount"
-                        >
-                            0
-                        </div>
-
-                    </div>
-
-                </div>
-
+              <div
+                id="startedDevelopmentObservations"
+                class="started-development-observations"
+              ></div>
             </section>
+          </section>
 
-
-            <!-- =================================================
+          <!-- =================================================
                  KINDER
             ================================================== -->
 
-            <section
-                class="section"
-                data-section-content="children"
+          <section class="section" data-section-content="children">
+            <div class="children-header">
+              <div class="page-header">
+                <h1>Kinder</h1>
+
+                <p>Kinder deiner Einrichtung verwalten</p>
+              </div>
+
+              <button type="button" class="btn" id="openCreateChildButton">
+                + Kind anlegen
+              </button>
+
+              <button id="addAppointmentBtn" class="btn-primary">
+                📅 Termin planen
+              </button>
+            </div>
+
+            <!-- KIND ANLEGEN -->
+
+            <div
+              id="createChildSection"
+              class="card create-child-card"
+              style="display: none"
             >
+              <h2>Kind anlegen</h2>
 
-                <div class="children-header">
+              <p>
+                Es wird keine persönliche Namensangabe für das Kind gespeichert.
+              </p>
 
-                    <div class="page-header">
+              <div class="form-group">
+                <label for="newChildCode"> Kinder-ID </label>
 
-                        <h1>
-                            Kinder
-                        </h1>
+                <input
+                  type="text"
+                  id="newChildCode"
+                  placeholder="z. B. K-001"
+                  required
+                />
+              </div>
 
-                        <p>
-                            Kinder deiner Einrichtung verwalten
-                        </p>
+              <!-- GEBURTSDATUM -->
 
-                    </div>
+              <div class="form-group">
+                <label for="newChildBirthDate"> Geburtsdatum </label>
 
-                    <button
-                        type="button"
-                        class="btn"
-                        id="openCreateChildButton"
-                    >
-                        + Kind anlegen
-                    </button>
+                <input type="date" id="newChildBirthDate" required />
+              </div>
 
-                    <button id="addAppointmentBtn" class="btn-primary">
-                        📅 Termin planen
-                    </button>
+              <!-- AUTOMATISCHES ALTER -->
 
+              <div class="form-group">
+                <label> Alter </label>
+
+                <div id="newChildAgeDisplay" class="child-age-display">
+                  Bitte zuerst das Geburtsdatum eingeben.
                 </div>
+              </div>
 
+              <div class="form-group">
+                <label for="newChildGroup"> Gruppe </label>
 
-                <!-- KIND ANLEGEN -->
+                <div class="group-select-row">
+                  <select id="newChildGroup">
+                    <option value="">Gruppe auswählen...</option>
+                  </select>
 
-                <div
-                    id="createChildSection"
-                    class="card create-child-card"
-                    style="display:none;"
-                >
-
-                    <h2>
-                        Kind anlegen
-                    </h2>
-
-                    <p>
-                        Es wird keine persönliche Namensangabe
-                        für das Kind gespeichert.
-                    </p>
-
-                    <div class="form-group">
-
-                        <label for="newChildCode">
-                            Kinder-ID
-                        </label>
-
-                        <input
-                            type="text"
-                            id="newChildCode"
-                            placeholder="z. B. K-001"
-                            required
-                        >
-
-                    </div>
-
-                    <!-- GEBURTSDATUM -->
-
-<div class="form-group">
-
-    <label for="newChildBirthDate">
-        Geburtsdatum
-    </label>
-
-    <input
-        type="date"
-        id="newChildBirthDate"
-        required
-    >
-
-</div>
-
-<!-- AUTOMATISCHES ALTER -->
-
-<div class="form-group">
-
-    <label>
-        Alter
-    </label>
-
-    <div
-        id="newChildAgeDisplay"
-        class="child-age-display"
-    >
-        Bitte zuerst das Geburtsdatum eingeben.
-    </div>
-
-</div>
-
-                    <div class="form-group">
-
-                        <label for="newChildGroup">
-                            Gruppe
-                        </label>
-
-                        <div class="group-select-row">
-
-                            <select id="newChildGroup">
-
-                                <option value="">
-                                    Gruppe auswählen...
-                                </option>
-
-                            </select>
-
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                id="openCreateGroupButton"
-                            >
-                                Neue Gruppe
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                    <button
-                        type="button"
-                        class="btn btn-success"
-                        id="createChildButton"
-                    >
-                        Kind speichern
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn btn-light"
-                        id="cancelCreateChildButton"
-                    >
-                        Abbrechen
-                    </button>
-
-                    <div
-                        id="childMessage"
-                        class="message"
-                    ></div>
-
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="openCreateGroupButton"
+                  >
+                    Neue Gruppe
+                  </button>
                 </div>
+              </div>
 
+              <button
+                type="button"
+                class="btn btn-success"
+                id="createChildButton"
+              >
+                Kind speichern
+              </button>
 
-                <!-- KINDERLISTE -->
+              <button
+                type="button"
+                class="btn btn-light"
+                id="cancelCreateChildButton"
+              >
+                Abbrechen
+              </button>
 
-                <div
-                    id="childrenList"
-                    class="children-list"
-                >
+              <div id="childMessage" class="message"></div>
+            </div>
 
-                    <p>
-                        Kinder werden geladen...
-                    </p>
+            <!-- KINDERLISTE -->
 
-                </div>
+            <div id="childrenList" class="children-list">
+              <p>Kinder werden geladen...</p>
+            </div>
+          </section>
 
-            </section>
-
-
-            <!-- =================================================
+          <!-- =================================================
                  GRUPPEN
             ================================================== -->
 
-            <section
-                class="section"
-                data-section-content="groups"
-            >
+          <section class="section" data-section-content="groups">
+            <div class="page-header">
+              <h1>Gruppen</h1>
 
-                <div class="page-header">
+              <p>Gruppen deiner Institution</p>
+            </div>
 
-                    <h1>
-                        Gruppen
-                    </h1>
+            <div id="groupsList" class="groups-list">
+              <p>Gruppen werden geladen...</p>
+            </div>
+          </section>
 
-                    <p>
-                        Gruppen deiner Institution
-                    </p>
-
-                </div>
-
-                <div
-                    id="groupsList"
-                    class="groups-list"
-                >
-
-                    <p>
-                        Gruppen werden geladen...
-                    </p>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
+          <!-- =================================================
                  ENTWICKLUNG
             ================================================== -->
 
-            <section
-                id="developmentSection"
-                class="section"
-                data-section-content="development"
+          <section
+            id="developmentSection"
+            class="section"
+            data-section-content="development"
+          >
+            <div class="development-header">
+              <div class="page-header">
+                <h1>Entwicklungskompass</h1>
+
+                <p>Entwicklungsstand eines Kindes erfassen</p>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-light"
+                id="closeDevelopmentButton"
+              >
+                Schließen
+              </button>
+            </div>
+
+            <!-- KIND + ALTER -->
+
+            <div class="card development-controls">
+              <div class="form-group">
+                <label for="developmentChild"> Kind </label>
+
+                <select id="developmentChild">
+                  <option value="">Kind auswählen...</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="developmentAge"> Alter </label>
+
+                <select id="developmentAge">
+                  <option value="">Alter auswählen...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- MELDUNG -->
+
+            <div id="questionsMessage" class="message"></div>
+
+            <!-- FRAGEN -->
+
+            <div class="development-filters">
+              <button
+                type="button"
+                class="development-filter active"
+                data-filter="offen"
+              >
+                ☐ Noch zu bewerten
+              </button>
+
+              <button
+                type="button"
+                class="development-filter"
+                data-filter="alle"
+              >
+                Alle anzeigen
+              </button>
+
+              <button
+                type="button"
+                class="development-filter"
+                data-filter="sprache"
+              >
+                Sprache
+              </button>
+
+              <button
+                type="button"
+                class="development-filter"
+                data-filter="sozial"
+              >
+                Sozial
+              </button>
+
+              <button
+                type="button"
+                class="development-filter"
+                data-filter="literacy"
+              >
+                Literacy
+              </button>
+
+              <button
+                type="button"
+                class="development-filter"
+                data-filter="grundlagen"
+              >
+                Grundlagen
+              </button>
+            </div>
+
+            <div id="questionsContainer" class="questions-list">
+              <div class="card">
+                <p>
+                  Bitte zuerst ein Kind und anschließend das Alter auswählen.
+                </p>
+              </div>
+            </div>
+
+            <!-- AUSWERTUNG -->
+
+            <div id="developmentResult" style="display: none"></div>
+
+            <div
+              style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px"
             >
+              <button
+                type="button"
+                class="btn btn-success"
+                id="saveDevelopmentButton"
+              >
+                Auswertung speichern
+              </button>
 
-                <div class="development-header">
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="createDevelopmentReportButton"
+              >
+                Entwicklungsgutachten erstellen
+              </button>
+            </div>
 
-                    <div class="page-header">
-
-                        <h1>
-                            Entwicklungskompass
-                        </h1>
-
-                        <p>
-                            Entwicklungsstand eines Kindes erfassen
-                        </p>
-
-                    </div>
-
-                    <button
-                        type="button"
-                        class="btn btn-light"
-                        id="closeDevelopmentButton"
-                    >
-                        Schließen
-                    </button>
-
-                </div>
-
-
-                <!-- KIND + ALTER -->
-
-                <div class="card development-controls">
-
-                    <div class="form-group">
-
-                        <label for="developmentChild">
-                            Kind
-                        </label>
-
-                        <select id="developmentChild">
-
-                            <option value="">
-                                Kind auswählen...
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="developmentAge">
-                            Alter
-                        </label>
-
-                        <select id="developmentAge">
-
-                            <option value="">
-                                Alter auswählen...
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <!-- MELDUNG -->
-
-                <div
-                    id="questionsMessage"
-                    class="message"
-                ></div>
-
-
-                <!-- FRAGEN -->
-
-
-<div class="development-filters">
-
-    <button
-        type="button"
-        class="development-filter active"
-        data-filter="offen"
-    >
-        ☐ Noch zu bewerten
-    </button>
-
-    <button
-        type="button"
-        class="development-filter"
-        data-filter="alle"
-    >
-        Alle anzeigen
-    </button>
-
-    <button
-        type="button"
-        class="development-filter"
-        data-filter="sprache"
-    >
-        Sprache
-    </button>
-
-    <button
-        type="button"
-        class="development-filter"
-        data-filter="sozial"
-    >
-        Sozial
-    </button>
-
-    <button
-        type="button"
-        class="development-filter"
-        data-filter="literacy"
-    >
-        Literacy
-    </button>
-
-    <button
-        type="button"
-        class="development-filter"
-        data-filter="grundlagen"
-    >
-        Grundlagen
-    </button>
-
-</div>
-
-                <div
-                    id="questionsContainer"
-                    class="questions-list"
-                >
-
-                    <div class="card">
-
-                        <p>
-                            Bitte zuerst ein Kind und anschließend
-                            das Alter auswählen.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <!-- AUSWERTUNG -->
-
-                <div
-                    id="developmentResult"
-                    style="display:none;"
-                ></div>
-
-
-                <div
-                    style="
-                        margin-top:20px;
-                        display:flex;
-                        flex-wrap:wrap;
-                        gap:8px;
-                    "
-                >
-
-                    <button
-                        type="button"
-                        class="btn btn-success"
-                        id="saveDevelopmentButton"
-                    >
-                        Auswertung speichern
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn btn-primary"
-                        id="createDevelopmentReportButton"
-                    >
-                        Entwicklungsgutachten erstellen
-                    </button>
-
-                </div>
-
-
-                <!-- =================================================
+            <!-- =================================================
                      ENTWICKLUNGSGUTACHTEN
                 ================================================== -->
 
-                <div
-                    id="developmentReportForm"
-                    class="development-report-form"
-                    style="display:none;"
+            <div
+              id="developmentReportForm"
+              class="development-report-form"
+              style="display: none"
+            >
+              <h2>Entwicklungsgutachten</h2>
+
+              <p>
+                Das Gutachten wird auf Grundlage der aktuellen
+                Entwicklungsauswertung erstellt.
+              </p>
+
+              <div
+                id="developmentReportMessage"
+                class="development-report-message"
+              ></div>
+
+              <div class="form-group">
+                <label for="reportObservations"> Beobachtungen </label>
+
+                <textarea
+                  id="reportObservations"
+                  placeholder="Besondere Beobachtungen zum Entwicklungsstand..."
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="reportStrengths"> Stärken des Kindes </label>
+
+                <textarea
+                  id="reportStrengths"
+                  placeholder="Besondere Stärken und Ressourcen..."
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="reportSupportNeeds">
+                  Entwicklungs- und Unterstützungsbedarf
+                </label>
+
+                <textarea
+                  id="reportSupportNeeds"
+                  placeholder="Bereiche, in denen weitere Unterstützung sinnvoll ist..."
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="reportRecommendations">
+                  Pädagogische Empfehlungen
+                </label>
+
+                <textarea
+                  id="reportRecommendations"
+                  placeholder="Empfehlungen für die weitere pädagogische Begleitung..."
+                ></textarea>
+              </div>
+
+              <div class="report-actions">
+                <button
+                  type="button"
+                  class="btn btn-success"
+                  id="saveDevelopmentReportButton"
+                  disabled
                 >
+                  Gutachten speichern
+                </button>
 
-                    <h2>
-                        Entwicklungsgutachten
-                    </h2>
-
-                    <p>
-                        Das Gutachten wird auf Grundlage der aktuellen
-                        Entwicklungsauswertung erstellt.
-                    </p>
-
-
-                    <div
-                        id="developmentReportMessage"
-                        class="development-report-message"
-                    ></div>
-
-
-                    <div class="form-group">
-
-                        <label for="reportObservations">
-                            Beobachtungen
-                        </label>
-
-                        <textarea
-                            id="reportObservations"
-                            placeholder="Besondere Beobachtungen zum Entwicklungsstand..."
-                        ></textarea>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="reportStrengths">
-                            Stärken des Kindes
-                        </label>
-
-                        <textarea
-                            id="reportStrengths"
-                            placeholder="Besondere Stärken und Ressourcen..."
-                        ></textarea>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="reportSupportNeeds">
-                            Entwicklungs- und Unterstützungsbedarf
-                        </label>
-
-                        <textarea
-                            id="reportSupportNeeds"
-                            placeholder="Bereiche, in denen weitere Unterstützung sinnvoll ist..."
-                        ></textarea>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="reportRecommendations">
-                            Pädagogische Empfehlungen
-                        </label>
-
-                        <textarea
-                            id="reportRecommendations"
-                            placeholder="Empfehlungen für die weitere pädagogische Begleitung..."
-                        ></textarea>
-
-                    </div>
-
-
-                    <div class="report-actions">
-
-                        <button
-                            type="button"
-                            class="btn btn-success"
-                            id="saveDevelopmentReportButton"
-                            disabled
-                        >
-                            Gutachten speichern
-                        </button>
-
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            id="printDevelopmentReportButton"
-                            disabled
-                        >
-                            Drucken / PDF
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <!-- GUTACHTEN AUSGABE -->
-
-                <div
-                    id="developmentReport"
-                    class="development-report-container"
-                    style="display:none;"
-                ></div>
-
-
-                <!-- GESPEICHERTE GUTACHTEN -->
-
-                <div
-                    id="savedDevelopmentReports"
-                    class="saved-development-reports"
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  id="printDevelopmentReportButton"
+                  disabled
                 >
+                  Drucken / PDF
+                </button>
+              </div>
+            </div>
 
-                    <h2>
-                        Gespeicherte Gutachten
-                    </h2>
+            <!-- GUTACHTEN AUSGABE -->
 
-                    <div
-                        id="savedDevelopmentReportsList"
-                    >
+            <div
+              id="developmentReport"
+              class="development-report-container"
+              style="display: none"
+            ></div>
 
-                        <div class="card">
+            <!-- GESPEICHERTE GUTACHTEN -->
 
-                            <p>
-                                Für das ausgewählte Kind wurden noch
-                                keine Gutachten gespeichert.
-                            </p>
+            <div id="savedDevelopmentReports" class="saved-development-reports">
+              <h2>Gespeicherte Gutachten</h2>
 
-                        </div>
-
-                    </div>
-
+              <div id="savedDevelopmentReportsList">
+                <div class="card">
+                  <p>
+                    Für das ausgewählte Kind wurden noch keine Gutachten
+                    gespeichert.
+                  </p>
                 </div>
+              </div>
+            </div>
+          </section>
 
-            </section>
-
-
-            <!-- =================================================
+          <!-- =================================================
                  ADMINISTRATION
             ================================================== -->
 
-            <section
-                id="adminSection"
-                class="section"
-                data-section-content="admin"
-            >
+          <section
+            id="adminSection"
+            class="section"
+            data-section-content="admin"
+          >
+            <div class="page-header">
+              <h1>Administration</h1>
 
-                <div class="page-header">
+              <p>Benutzer und Freigaben verwalten</p>
+            </div>
 
-                    <h1>
-                        Administration
-                    </h1>
+            <div class="card">
+              <h2>Offene Freigaben</h2>
 
-                    <p>
-                        Benutzer und Freigaben verwalten
-                    </p>
-
-                </div>
-
-                <div class="card">
-
-                    <h2>
-                        Offene Freigaben
-                    </h2>
-
-                    <div
-                        id="pendingUsersList"
-                        class="pending-users"
-                    >
-
-                        <p>
-                            Benutzer werden geladen...
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
+              <div id="pendingUsersList" class="pending-users">
+                <p>Benutzer werden geladen...</p>
+              </div>
+            </div>
+          </section>
         </main>
+      </div>
+    </section>
 
-    </div>
-
-</section>
-
-
-<!-- =========================================================
+    <!-- =========================================================
      PROFIL MODAL
 ========================================================= -->
 
-<div
-    id="profileModal"
-    class="modal"
-    style="display:none;"
->
-
-    <div class="modal-content">
-
+    <div id="profileModal" class="modal" style="display: none">
+      <div class="modal-content">
         <div class="modal-header">
+          <h2>Profil</h2>
 
-            <h2>
-                Profil
-            </h2>
-
-            <button
-                type="button"
-                class="btn btn-light"
-                id="closeProfileModal"
-            >
-                Schließen
-            </button>
-
+          <button type="button" class="btn btn-light" id="closeProfileModal">
+            Schließen
+          </button>
         </div>
-
 
         <div class="form-group">
+          <strong> Name </strong>
 
-            <strong>
-                Name
-            </strong>
-
-            <div id="profileName">
-                —
-            </div>
-
+          <div id="profileName">—</div>
         </div>
-
 
         <div class="form-group">
+          <strong> E-Mail </strong>
 
-            <strong>
-                E-Mail
-            </strong>
-
-            <div id="profileEmail">
-                —
-            </div>
-
+          <div id="profileEmail">—</div>
         </div>
-
 
         <div class="form-group">
+          <strong> Rolle </strong>
 
-            <strong>
-                Rolle
-            </strong>
-
-            <div id="profileRole">
-                —
-            </div>
-
+          <div id="profileRole">—</div>
         </div>
-
+      </div>
     </div>
 
-</div>
-
-
-<!-- =========================================================
+    <!-- =========================================================
      GRUPPE ERSTELLEN MODAL
 ========================================================= -->
 
-<div
-    id="createGroupModal"
-    class="modal"
-    style="display:none;"
->
-
-    <div class="modal-content">
-
+    <div id="createGroupModal" class="modal" style="display: none">
+      <div class="modal-content">
         <div class="modal-header">
+          <h2>Neue Gruppe</h2>
 
-            <h2>
-                Neue Gruppe
-            </h2>
-
-            <button
-                type="button"
-                class="btn btn-light"
-                id="closeCreateGroupModal"
-            >
-                Schließen
-            </button>
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label for="newGroupName">
-                Gruppenname
-            </label>
-
-            <input
-                type="text"
-                id="newGroupName"
-                placeholder="z. B. Gruppe Sonnenblume"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label for="newGroupDescription">
-                Beschreibung
-            </label>
-
-            <textarea
-                id="newGroupDescription"
-                placeholder="Beschreibung der Gruppe..."
-            ></textarea>
-
-        </div>
-
-
-        <button
+          <button
             type="button"
-            class="btn btn-success"
-            id="createGroupButton"
-        >
-            Gruppe speichern
+            class="btn btn-light"
+            id="closeCreateGroupModal"
+          >
+            Schließen
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label for="newGroupName"> Gruppenname </label>
+
+          <input
+            type="text"
+            id="newGroupName"
+            placeholder="z. B. Gruppe Sonnenblume"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="newGroupDescription"> Beschreibung </label>
+
+          <textarea
+            id="newGroupDescription"
+            placeholder="Beschreibung der Gruppe..."
+          ></textarea>
+        </div>
+
+        <button type="button" class="btn btn-success" id="createGroupButton">
+          Gruppe speichern
         </button>
 
-
-        <div
-            id="groupMessage"
-            class="message"
-        ></div>
-
+        <div id="groupMessage" class="message"></div>
+      </div>
     </div>
 
-</div>
-
-<div id="appointmentModal" class="modal" style="display: none;">
-    <div class="modal-content">
+    <div id="appointmentModal" class="modal" style="display: none">
+      <div class="modal-content">
         <div class="modal-header">
-            <h2>📅 Termin planen</h2>
-            <button id="closeAppointmentModal" type="button">✕</button>
+          <h2>📅 Termin planen</h2>
+          <button id="closeAppointmentModal" type="button">✕</button>
         </div>
-</body>
 
-<!-- Termin-Modal -->
+        <!-- Termin-Modal -->
 
-
-```
-    <div class="form-group">
-        <label for="appointmentTitle">Terminname</label>
-        <input
+        <div class="form-group">
+          <label for="appointmentTitle">Terminname</label>
+          <input
             type="text"
             id="appointmentTitle"
             placeholder="z. B. Elterngespräch"
-        >
-    </div>
-
-    <div class="form-group">
-        <label for="appointmentChild">Kind</label>
-        <select id="appointmentChild">
-            <option value="">Kind auswählen</option>
-        </select>
-    </div>
-
-    <div class="form-row">
-        <div class="form-group">
-    <label for="appointmentDate">Datum</label>
-    <input
-        type="text"
-        id="appointmentDate"
-        placeholder="TT.MM.JJJJ"
-        inputmode="numeric"
-        autocomplete="off"
-        maxlength="10"
-    >
-</div>
-
-        <div class="form-group">
-            <label for="appointmentTime">Uhrzeit</label>
-            <input type="time" id="appointmentTime">
+          />
         </div>
-    </div>
 
-    <div class="form-group">
-        <label for="appointmentRecurrence">Wiederholung</label>
-        <select id="appointmentRecurrence">
+        <div class="form-group">
+          <label for="appointmentChild">Kind</label>
+          <select id="appointmentChild">
+            <option value="">Kind auswählen</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="appointmentDate">Datum</label>
+            <input
+              type="text"
+              id="appointmentDate"
+              placeholder="TT.MM.JJJJ"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="10"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="appointmentTime">Uhrzeit</label>
+            <input type="time" id="appointmentTime" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="appointmentRecurrence">Wiederholung</label>
+          <select id="appointmentRecurrence">
             <option value="once">Einmalig</option>
             <option value="daily">Täglich</option>
             <option value="weekly">Wöchentlich</option>
             <option value="monthly">Monatlich</option>
             <option value="yearly">Jährlich</option>
-        </select>
-    </div>
+          </select>
+        </div>
 
-    <div class="form-group">
-        <label>
-            <input type="checkbox" id="appointmentCountdown">
-            Countdown anzeigen, wenn weniger als 60 Tage
-        </label>
-    </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="appointmentCountdown" />Countdown
+            anzeigen, wenn weniger als 60 Tage
+          </label>
+        </div>
 
-    <div class="modal-actions">
-        <button type="button" id="cancelAppointmentBtn">
-            Abbrechen
-        </button>
+        <div class="modal-actions">
+          <button type="button" id="cancelAppointmentBtn">Abbrechen</button>
 
-        <button type="button" id="saveAppointmentBtn" class="btn-primary">
+          <button type="button" id="saveAppointmentBtn" class="btn-primary">
             Termin speichern
-        </button>
+          </button>
+        </div>
+      </div>
     </div>
-</div>
-```
 
-</div>
-
-<div
-    id="childAppointmentsModal"
-    class="modal"
-    style="display:none;"
->
-    <div class="modal-content">
-
+    <div id="childAppointmentsModal" class="modal" style="display: none">
+      <div class="modal-content">
         <div
-            style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                margin-bottom:20px;
-            "
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+          "
         >
-            <h2 id="childAppointmentsTitle">
-                📅 Termine
-            </h2>
+          <h2 id="childAppointmentsTitle">📅 Termine</h2>
 
-            <button
-                type="button"
-                id="closeChildAppointmentsModal"
-                class="btn btn-secondary"
-            >
-                Schließen
-            </button>
+          <button
+            type="button"
+            id="closeChildAppointmentsModal"
+            class="btn btn-secondary"
+          >
+            Schließen
+          </button>
         </div>
 
         <div
-    style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        margin-bottom:15px;
-    "
->
-    <button
-        type="button"
-        id="appointmentPrevMonth"
-        class="btn btn-secondary"
-    >
-        ◀
-    </button>
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          "
+        >
+          <button
+            type="button"
+            id="appointmentPrevMonth"
+            class="btn btn-secondary"
+          >
+            ◀
+          </button>
 
-    <h3
-        id="appointmentCurrentMonth"
-        style="margin:0;"
-    >
-        Monat
-    </h3>
+          <h3 id="appointmentCurrentMonth" style="margin: 0">Monat</h3>
 
-    <button
-        type="button"
-        id="appointmentNextMonth"
-        class="btn btn-secondary"
-    >
-        ▶
-    </button>
-</div>
+          <button
+            type="button"
+            id="appointmentNextMonth"
+            class="btn btn-secondary"
+          >
+            ▶
+          </button>
+        </div>
 
-<div id="childAppointmentsList">
-    Termine werden geladen...
-</div>
-
+        <div id="childAppointmentsList">Termine werden geladen...</div>
+      </div>
     </div>
-</div>
 
+    <!-- Das Pop-up Modal für die Anwesenheit -->
+    <div
+      id="dailyCheckModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      "
+    >
+      <div
+        style="
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          width: 450px;
+          max-width: 90%;
+          max-height: 98%;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+          overflow-y: scroll;
+        "
+      >
+        <h3 id="dailyCheckGroupInfo" style="margin-top: 0">
+          Tägliche Anwesenheit
+        </h3>
+        <p
+          id="dailyCheckMessage"
+          style="font-size: 14px; margin-bottom: 10px"
+        ></p>
 
+        <!-- Hier landen die Kinder und Dropdowns -->
+        <div
+          id="dailyCheckList"
+          style="
+            min-height: 100px;
+            max-height: 90%;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+          "
+        >
+          <!-- Wird dynamisch gefüllt -->
+        </div>
 
-
-
+        <div style="display: fix; justify-content: flex-end; gap: 10px">
+          <button
+            type="button"
+            id="closeDailyCheckModal"
+            style="
+              padding: 8px 12px;
+              background: #ccc;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            id="saveDailyCheckBtn"
+            onclick="saveDailyCheckAttendance()"
+            style="
+              padding: 8px 12px;
+              background: #2196f3;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
