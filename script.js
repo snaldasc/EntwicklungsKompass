@@ -8127,17 +8127,31 @@ function updateDashboardSummary(attendanceMap) {
 }
 
 // ============================================================
-// DRUCK-FUNKTION (Gesamte Gruppe oder einzelnes Kind)
+// DRUCK-FUNKTION (Mit Kürzeln A, E, U und Legende)(Mit Zeitraum-Filter: Woche, Monat, Halbjahr)
 // ============================================================
 
-async function printAttendanceReport(selectedChildId = null) {
-  console.log(selectedChildId ? `Lade Bericht für Kind ID: ${selectedChildId}` : "Lade Bericht für gesamte Gruppe...");
+async function printAttendanceReport(selectedChildId = null, timeframe = 'month') {
+  console.log(`Lade Bericht (${timeframe}) für ${selectedChildId ? 'Kind ID: ' + selectedChildId : 'gesamte Gruppe'}`);
 
   try {
     const client = window.supabaseClient || supabaseClient;
     if (!client) throw new Error("Supabase-Client nicht gefunden!");
 
-    // 1. ALLES VORHER LADEN (Kein window.open am Anfang!)
+    // 1. Startdatum basierend auf der Auswahl berechnen
+    const now = new Date();
+    let startDate = new Date();
+
+    if (timeframe === 'week') {
+      startDate.setDate(now.getDate() - 7); // Letzte 7 Tage
+    } else if (timeframe === 'month') {
+      startDate.setMonth(now.getMonth() - 1); // Letzter Monat / 30 Tage
+    } else if (timeframe === 'halfyear') {
+      startDate.setMonth(now.getMonth() - 6); // Letzte 6 Monate
+    }
+
+    const startDateStr = startDate.toISOString().split('T')[0];
+
+    // 2. Kinder laden
     let childQuery = client.from("children").select("id, child_code").eq("group_id", 5).order("child_code", { ascending: true });
     
     if (selectedChildId) {
@@ -8154,10 +8168,12 @@ async function printAttendanceReport(selectedChildId = null) {
 
     const childIds = children.map(c => c.id);
 
+    // 3. Anwesenheit ab Startdatum laden
     const { data: attendanceRecords, error: attError } = await client
       .from("attendance")
       .select("child_id, date, status")
       .in("child_id", childIds)
+      .gte("date", startDateStr) // Filtert ab dem berechneten Startdatum
       .order("date", { ascending: false });
 
     if (attError) throw attError;
@@ -8182,15 +8198,22 @@ async function printAttendanceReport(selectedChildId = null) {
       });
     }
 
+    // Status-Kürzel Mapping
     const statusMap = {
-      present: "Anwesend",
-      absent: "Nicht anwesend",
-      sick: "Entschuldigt",
-      vacation: "Urlaub",
-      more: "Mehr"
+      present: "A",
+      absent: "-",
+      sick: "E",
+      vacation: "U",
+      more: "M"
     };
 
-    // 2. HTML-STRING KOMPLETT ZUSAMMENBAUEN
+    const timeframeNames = {
+      week: "Letzte Woche (7 Tage)",
+      month: "Letzter Monat",
+      halfyear: "Letztes Halbjahr (6 Monate)"
+    };
+
+    // 4. HTML-STRING GENERIEREN
     let html = `
       <!DOCTYPE html>
       <html lang="de">
@@ -8201,13 +8224,15 @@ async function printAttendanceReport(selectedChildId = null) {
           body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
           h1 { font-size: 20px; margin-bottom: 5px; }
           p { color: #666; font-size: 14px; margin-top: 0; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .legend, .filter-info { margin: 10px 0; padding: 8px 12px; background: #f9f9f9; border: 1px solid #ddd; font-size: 13px; display: inline-block; margin-right: 10px; }
+          .legend span { margin-right: 12px; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
           th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; font-size: 13px; }
           th { background-color: #f4f4f4; }
-          .status-present { color: green; font-weight: bold; }
-          .status-absent { color: #555; }
-          .status-sick { color: #d9534f; }
-          .status-vacation { color: #f0ad4e; }
+          .status-A { color: green; font-weight: bold; text-align: center; }
+          .status-E { color: #d9534f; font-weight: bold; text-align: center; }
+          .status-U { color: #f0ad4e; font-weight: bold; text-align: center; }
+          .status-dash { color: #888; text-align: center; }
           @media print {
             body { margin: 0; }
             button { display: none; }
@@ -8216,32 +8241,45 @@ async function printAttendanceReport(selectedChildId = null) {
       </head>
       <body>
         <h1>Anwesenheits-Übersicht: ${selectedChildId ? 'Einzelnes Kind' : 'Gruppe Spatzen'}</h1>
-        <p>Erstellt am: ${new Date().toLocaleDateString('de-DE')}</p>
+        <p>Erstellt am: ${new Date().toLocaleDateString('de-DE')} | Zeitraum: <strong>${timeframeNames[timeframe] || timeframe}</strong></p>
+
+        <div>
+          <!-- Legende -->
+          <div class="legend">
+            <strong>Legende:</strong> 
+            <span style="color: green;">A = Anwesend</span> 
+            <span style="color: #d9534f;">E = Entschuldigt</span> 
+            <span style="color: #f0ad4e;">U = Urlaub</span> 
+            <span style="color: #888;">- = Nicht anwesend</span>
+          </div>
+        </div>
     `;
 
     children.forEach(child => {
       const data = attendanceByChild[child.id];
       html += `
-        <h3 style="margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 5px;">Kind-Code: ${data.code}</h3>
+        <h3 style="margin-top: 25px; border-bottom: 2px solid #333; padding-bottom: 5px;">Kind-Code: ${data.code}</h3>
         <table>
           <thead>
             <tr>
-              <th>Datum</th>
-              <th>Status</th>
+              <th style="width: 50%;">Datum</th>
+              <th style="width: 50%;">Status</th>
             </tr>
           </thead>
           <tbody>
       `;
 
       if (data.records.length === 0) {
-        html += `<tr><td colspan="2" style="color: #888; font-style: italic;">Keine Einträge vorhanden.</td></tr>`;
+        html += `<tr><td colspan="2" style="color: #888; font-style: italic;">Keine Einträge im gewählten Zeitraum vorhanden.</td></tr>`;
       } else {
         data.records.forEach(rec => {
-          const statusText = statusMap[rec.status] || rec.status;
+          const statusShort = statusMap[rec.status] || rec.status;
+          const cssClass = statusShort === "A" ? "status-A" : (statusShort === "E" ? "status-E" : (statusShort === "U" ? "status-U" : "status-dash"));
+          
           html += `
             <tr>
               <td>${rec.date}</td>
-              <td class="status-${rec.status}">${statusText}</td>
+              <td class="${cssClass}">${statusShort}</td>
             </tr>
           `;
         });
@@ -8261,7 +8299,7 @@ async function printAttendanceReport(selectedChildId = null) {
       </html>
     `;
 
-    // 3. ERST JETZT DAS FENSTER ÖFFNEN UND REINSCHREIBEN
+    // 5. Fenster öffnen und befüllen
     let printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert("Pop-up-Blocker aktiv? Bitte erlaube Pop-ups für diese Seite.");
