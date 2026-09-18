@@ -474,6 +474,49 @@ async function handleLogin(event) {
 
   await initializeApplication();
 }
+// ============================================================
+// SIDEBAR NAVIGATION INITIALISIEREN
+// ============================================================
+function setupSidebarNavigation() {
+  const sidebarButtons = document.querySelectorAll(".sidebar button");
+  const sections = document.querySelectorAll(".section");
+
+  if (sidebarButtons.length === 0) {
+    console.warn("Keine Sidebar-Buttons gefunden.");
+    return;
+  }
+
+  sidebarButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      // 1. "active"-Klasse umschalten
+      sidebarButtons.forEach((btn) => btn.classList.remove("active"));
+      button.classList.add("active");
+
+      // 2. Ziel-Sektion ermitteln
+      const targetSection = button.getAttribute("data-section");
+
+      // Alle Sektionen verstecken
+      sections.forEach((sec) => {
+        sec.style.display = "none";
+      });
+
+      // Passende Sektion einblenden
+      const activeSection = document.querySelector(`[data-section-content="${targetSection}"]`);
+      if (activeSection) {
+        activeSection.style.display = "block";
+      }
+
+      // 3. Wenn "groups" geklickt wird, Gruppenansicht laden
+      if (targetSection === "groups") {
+        if (typeof loadGroupsView === "function") {
+          loadGroupsView();
+        } else {
+          console.error("Funktion loadGroupsView ist nicht definiert!");
+        }
+      }
+    });
+  });
+}
 
 /* ============================================================
    REGISTRIERUNG
@@ -797,66 +840,11 @@ function openSection(sectionName) {
    KINDER
    ============================================================ */
 
-async function loadChildren() {
-  if (!supabaseClient || !currentUser) {
-    return [];
-  }
-
-  const childrenList = byId("childrenList");
-
-  if (childrenList) {
-    childrenList.innerHTML = "<p>Kinder werden geladen...</p>";
-  }
-
-  let query = supabaseClient
-    .from("children")
-    .select(
-      `
-            id,
-            child_code,
-            birth_date,
-            group_id,
-            institution_id,
-            created_at,
-            Groups (
-                id,
-                group_name,
-                institution_id
-            )
-        `,
-    )
-    .order("child_code", {
-      ascending: true,
-    });
-
-  if (currentProfile?.institution_id) {
-    query = query.eq("institution_id", currentProfile.institution_id);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Kinder konnten nicht geladen werden:", error);
-
-    if (childrenList) {
-      childrenList.innerHTML = `
-                <p style="color:red;">
-                    Kinder konnten nicht geladen werden.<br>
-                    ${escapeHtml(error.message)}
-                </p>
-            `;
-    }
-
-    return [];
-  }
-
-  currentChildren = data || [];
-
-  renderChildrenList(currentChildren);
-
-  updateChildrenCount(currentChildren.length);
-
-  return currentChildren;
+// Wird ausgeführt, wenn der Admin im Dropdown eine andere Gruppe auswählt
+async function onAdminChildrenGroupChange() {
+  const selectEl = document.getElementById("adminChildrenGroupSelect");
+  const selectedGroupId = selectEl ? selectEl.value : "";
+  await loadChildren(selectedGroupId);
 }
 
 function renderChildrenList(children) {
@@ -2428,56 +2416,152 @@ function getDevelopmentElements() {
    KINDER FÜR ENTWICKLUNG
    ============================================================ */
 
-async function loadChildrenForDevelopment() {
-  const { childSelect } = getDevelopmentElements();
+// Wird ausgeführt, wenn der Admin im Dropdown eine andere Gruppe auswählt
+async function onAdminChildrenGroupChange() {
+  const selectEl = document.getElementById("adminChildrenGroupSelect");
+  const selectedGroupId = selectEl ? selectEl.value : "";
+  await loadChildren(selectedGroupId);
+}
 
-  if (!childSelect) {
-    console.error("developmentChild wurde nicht gefunden.");
+async function loadChildren(selectedGroupId = null) {
+  if (!supabaseClient) return;
 
-    return;
+  const childrenList = document.getElementById("childrenList");
+  const subtitle = document.getElementById("childrenSubtitle");
+  const adminControl = document.getElementById("adminChildrenGroupControl");
+
+  if (childrenList) {
+    childrenList.innerHTML = "<p>Kinder werden geladen...</p>";
   }
 
-  childSelect.innerHTML = `
-        <option value="">
-            Kinder werden geladen...
-        </option>
-        `;
+  try {
+    // 1. Aktuell eingeloggten User ermitteln
+    let userId = null;
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+      userId = currentUser.id;
+    } else {
+      const { data: authData, error: userError } = await supabaseClient.auth.getUser();
+      if (userError || !authData.user) {
+        if (childrenList) childrenList.innerHTML = "<p style='color:red;'>Kein Benutzer eingeloggt.</p>";
+        return;
+      }
+      userId = authData.user.id;
+    }
 
-  if (!currentChildren || currentChildren.length === 0) {
-    await loadChildren();
+    // 2. Profil des Users laden (wieder mit .eq("id", userId), da profiles.id die Auth-ID spiegelt)
+    const { data: profile, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("role, institution_id, group_id")
+      .eq("id", userId) // <--- Wieder auf "id" geändert, passend zu deiner Tabellenstruktur
+      .single();
+
+    if (profileError || !profile) {
+      console.error("Profile Error:", profileError);
+      if (childrenList) childrenList.innerHTML = "<p style='color:red;'>Profil konnte nicht geladen werden.</p>";
+      return;
+    }
+
+    const userRole = profile.role ? profile.role.trim().toLowerCase() : "";
+    const isAdmin = userRole === "admin" || userRole === "administrator";
+
+    // 3. Basis-Abfrage für Kinder aufbauen
+    let query = supabaseClient
+      .from("children")
+      .select(`
+        id,
+        child_code,
+        birth_date,
+        group_id,
+        institution_id,
+        Groups (
+          id,
+          group_name
+        )
+      `)
+      .order("child_code", { ascending: true });
+
+    // Nach Institution filtern
+    if (profile.institution_id) {
+      query = query.eq("institution_id", profile.institution_id);
+    }
+
+    // 4. Rollen-Logik anwenden
+    if (isAdmin) {
+      // --- ADMIN-ANSICHT ---
+      if (subtitle) subtitle.textContent = "Administrator-Ansicht: Alle Kinder oder nach Gruppe gefiltert";
+      if (adminControl) adminControl.style.display = "block";
+
+      // Dropdown mit Gruppen füllen (falls noch nicht geschehen)
+      const selectEl = document.getElementById("adminChildrenGroupSelect");
+      if (selectEl && selectEl.options.length <= 1) {
+        let groupsQuery = supabaseClient.from("Groups").select("id, group_name");
+        if (profile.institution_id) {
+          groupsQuery = groupsQuery.eq("institution_id", profile.institution_id);
+        }
+        const { data: groupsData } = await groupsQuery;
+
+        if (groupsData) {
+          groupsData.forEach(g => {
+            const opt = document.createElement("option");
+            opt.value = g.id;
+            opt.textContent = g.group_name;
+            selectEl.appendChild(opt);
+          });
+        }
+      }
+
+      // Wenn der Admin im Dropdown eine spezifische Gruppe gewählt hat -> filtern
+      if (selectedGroupId && selectedGroupId !== "") {
+        query = query.eq("group_id", selectedGroupId);
+      }
+
+    } else {
+      // --- ERZIEHER-ANSICHT ---
+      if (subtitle) subtitle.textContent = "Kinder deiner zugewiesenen Gruppe";
+      if (adminControl) adminControl.style.display = "none"; // Dropdown für Erzieher verstecken
+
+      if (profile.group_id) {
+        query = query.eq("group_id", profile.group_id);
+      } else {
+        if (childrenList) childrenList.innerHTML = "<p>Dir ist aktuell keine Gruppe zugewiesen.</p>";
+        return;
+      }
+    }
+
+    // 5. Daten abrufen
+    const { data: childrenData, error: childrenError } = await query;
+    if (childrenError) throw childrenError;
+
+    if (!childrenData || childrenData.length === 0) {
+      if (childrenList) childrenList.innerHTML = "<p>Keine Kinder gefunden.</p>";
+      return;
+    }
+
+    // 6. HTML für die Kinderliste zusammenbauen
+    let html = '<div class="children-grid" style="display: grid; gap: 10px;">';
+    childrenData.forEach(child => {
+      const groupName = child.Groups ? child.Groups.group_name : "Keine Gruppe";
+      html += `
+        <div style="background: white; padding: 12px; border: 1px solid #ddd; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong>${escapeHtml(child.child_code)}</strong>
+            <span style="font-size: 12px; color: #666; margin-left: 10px;">(Gruppe: ${escapeHtml(groupName)})</span>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+
+    if (childrenList) {
+      childrenList.innerHTML = html;
+    }
+
+  } catch (err) {
+    console.error("Fehler beim Laden der Kinder:", err);
+    if (childrenList) {
+      childrenList.innerHTML = `<p style="color: red;">Fehler beim Laden: ${escapeHtml(err.message)}</p>`;
+    }
   }
-
-  childSelect.innerHTML = `
-        <option value="">
-            Kind auswählen...
-        </option>
-        `;
-
-  if (!currentChildren || currentChildren.length === 0) {
-    childSelect.innerHTML = `
-            <option value="">
-                Noch keine Kinder vorhanden
-            </option>
-            `;
-
-    return;
-  }
-
-  currentChildren.forEach((child) => {
-    const option = document.createElement("option");
-
-    /*
-     * UUID unbedingt als String verwenden.
-     */
-
-    option.value = String(child.id);
-
-    const groupName = child.Groups?.group_name || "Keine Gruppe";
-
-    option.textContent = `${child.child_code || "Kind"} – ${groupName}`;
-
-    childSelect.appendChild(option);
-  });
 }
 
 /* ============================================================
@@ -6113,6 +6197,9 @@ function setupMainEvents() {
       if (section) {
         section.style.display = "";
       }
+
+      // Hier wird der automatische Code generiert, sobald sich das Formular öffnet
+      generateNextChildCode();
     });
   }
 
@@ -6889,15 +6976,46 @@ if (appointmentModal) {
 
 async function loadAppointmentChildren() {
   const select = document.getElementById("appointmentChild");
-
   if (!select) return;
 
   select.innerHTML = '<option value="">Kind auswählen</option>';
 
-  const { data, error } = await supabaseClient
+  // 1. Aktuell eingeloggten Benutzer ermitteln
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+  if (userError || !user) {
+    console.error("Kein Benutzer eingeloggt:", userError);
+    return;
+  }
+
+  // 2. Profil des Benutzers laden (Rolle und group_id)
+  const { data: profile, error: profileError } = await supabaseClient
+    .from("profiles") // Passe den Tabellennamen an, falls er bei dir anders heißt
+    .select("role, group_id")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile) {
+    console.error("Fehler beim Laden des Benutzerprofils:", profileError);
+    return;
+  }
+
+  // 3. Supabase-Abfrage für die Kinder vorbereiten
+  let childrenQuery = supabaseClient
     .from("children")
-    .select("id, child_code")
+    .select("id, child_code, group_id")
     .order("child_code");
+
+  // 4. Wenn der Nutzer KEIN Admin ist, nach seiner group_id filtern
+  if (profile.role !== "admin") {
+    if (!profile.group_id) {
+      select.innerHTML = '<option value="">Keine Gruppe zugewiesen</option>';
+      return;
+    }
+    childrenQuery = childrenQuery.eq("group_id", profile.group_id);
+  }
+
+  // 5. Daten ausführen
+  const { data, error } = await childrenQuery;
 
   if (error) {
     console.error("Fehler beim Laden der Kinder:", error);
@@ -6905,18 +7023,48 @@ async function loadAppointmentChildren() {
   }
 
   if (!data || data.length === 0) {
-    select.innerHTML = '<option value="">Keine Kinder vorhanden</option>';
+    select.innerHTML = '<option value="">Keine Kinder in deiner Gruppe</option>';
     return;
   }
 
-  data.forEach((child) => {
-    const option = document.createElement("option");
+// 6. Rollen-Logik
+    if (isAdmin) {
+      console.log("5a. Modus: Admin");
+      if (subtitle) subtitle.textContent = "Administrator-Ansicht: Alle Kinder oder nach Gruppe gefiltert";
+      
+      // Suchen und absichern des Dropdowns
+      const adminControl = document.getElementById("adminChildrenGroupControl");
+      console.log("Gefundenes adminControl Element:", adminControl); // Schau mal, ob hier 'null' steht!
 
-    option.value = child.id;
-    option.textContent = child.child_code;
+      if (adminControl) {
+        // Erzwinge die Sichtbarkeit (falls CSS blockiert, nutzen wir important)
+        adminControl.style.setProperty('display', 'block', 'important');
+      } else {
+        console.error("FEHLER: #adminChildrenGroupControl wurde im DOM nicht gefunden!");
+      }
 
-    select.appendChild(option);
-  });
+      const selectEl = document.getElementById("adminChildrenGroupSelect");
+      if (selectEl && selectEl.options.length <= 1) {
+        let groupsQuery = supabaseClient.from("Groups").select("id, group_name");
+        if (profile.institution_id) {
+          groupsQuery = groupsQuery.eq("institution_id", profile.institution_id);
+        }
+        const { data: groupsData } = await groupsQuery;
+
+        if (groupsData) {
+          groupsData.forEach(g => {
+            const opt = document.createElement("option");
+            opt.value = g.id;
+            opt.textContent = g.group_name;
+            selectEl.appendChild(opt);
+          });
+        }
+      }
+
+      if (selectedGroupId && selectedGroupId !== "") {
+        query = query.eq("group_id", selectedGroupId);
+      }
+    }
 }
 
 // ==========================================
@@ -8313,5 +8461,285 @@ async function printAttendanceReport(selectedChildId = null, timeframe = 'month'
   } catch (err) {
     console.error("Fehler beim Erstellen des Berichts:", err);
     alert("Fehler beim Laden der Druckdaten: " + err.message);
+  }
+}
+
+// Wird aufgerufen, wenn der Nutzer auf den Tab "Gruppen" klickt
+async function loadGroupsView() {
+  const container = document.getElementById("groupsListContainer");
+  const subtitle = document.getElementById("groupSubtitle");
+  const adminControl = document.getElementById("adminGroupControl");
+
+  container.innerHTML = "<p>Lade Berechtigungen und Gruppen...</p>";
+
+  try {
+    const client = window.supabaseClient || supabaseClient;
+    if (!client) throw new Error("Supabase-Client nicht gefunden!");
+
+    // 1. Aktuell eingeloggten User abrufen
+    const { data: { user }, error: userError } = await client.auth.getUser();
+    if (userError || !user) throw new Error("Nicht eingeloggt.");
+
+    // 2. Profil/Rolle des Users aus der Datenbank laden
+    const { data: profile, error: profileError } = await client
+      .from("profiles") // Name deiner Profil-Tabelle (muss ggf. angepasst werden)
+      .select("role, institution_id, group_id") // Pass das an deine Spalten an (z.B. falls User direkt eine group_id hat)
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.warn("Profil konnte nicht geladen werden, zeige Standard-Ansicht.");
+    }
+
+    const isAdmin = profile && profile.role === "admin";
+
+    if (isAdmin) {
+      // --- ADMIN LOGIK ---
+      subtitle.textContent = "Administrator-Ansicht: Alle Gruppen der Institution";
+      adminControl.style.display = "block";
+
+      // Alle Gruppen der Institution laden (oder alle, falls keine Institution-ID vorhanden)
+      let groupsQuery = client.from("Groups").select("id, name");
+      if (profile && profile.institution_id) {
+        groupsQuery = groupsQuery.eq("institution_id", profile.institution_id);
+      }
+
+      const { data: groups, error: gError } = await groupsQuery;
+      if (gError) throw gError;
+
+      // Dropdown befüllen
+      const selectEl = document.getElementById("adminGroupSelect");
+      selectEl.innerHTML = '<option value="">-- Bitte wählen --</option>';
+      
+      if (groups && groups.length > 0) {
+        groups.forEach(g => {
+          selectEl.innerHTML += `<option value="${g.id}">${g.name}</option>`;
+        });
+        container.innerHTML = "<p style='color: #666;'>Bitte wähle oben eine Gruppe aus, um die Kinder anzuzeigen.</p>";
+      } else {
+        container.innerHTML = "<p style='color: orange;'>Keine Gruppen in dieser Institution gefunden.</p>";
+      }
+
+    } else {
+      // --- NORMALER USER LOGIK (z.B. Erzieher/in) ---
+      subtitle.textContent = "Deine zugeordneten Gruppen und Kinder";
+      adminControl.style.display = "none";
+
+      // Beispiel A: Wenn der User in der Profiltabelle direkt eine `group_id` hat:
+      // const assignedGroupId = profile ? profile.group_id : 5; 
+      
+      // Beispiel B: Oder über eine Zwischentabelle (z.B. user_groups). 
+      // Hier laden wir beispielhaft die Gruppe(n) des Users (Angenommen Gruppe ID 5 oder aus Profil):
+      const userGroupId = profile?.group_id || 5; // Fallback auf Gruppe 5 wie in deinem Code
+
+      await loadChildrenForGroup(userGroupId, container);
+    }
+
+  } catch (err) {
+    console.error("Fehler beim Laden der Gruppenansicht:", err);
+    container.innerHTML = `<p style="color: red;">Fehler: ${err.message}</p>`;
+  }
+}
+
+// Wird vom Admin-Dropdown aufgerufen, wenn eine Gruppe ausgewählt wird
+async function onAdminGroupChange() {
+  const selectEl = document.getElementById("adminGroupSelect");
+  const groupId = selectEl.value;
+  
+  // WICHTIG: Hier muss exakt dieselbe ID stehen wie im HTML ("groupsList")
+  const container = document.getElementById("groupsList"); 
+
+  if (!container) {
+    console.error("FEHLER: HTML-Element mit ID 'groupsList' nicht gefunden!");
+    return;
+  }
+
+  if (!groupId) {
+    container.innerHTML = "<p style='color: #666;'>Bitte wähle oben eine Gruppe aus, um die Kinder anzuzeigen.</p>";
+    return;
+  }
+
+  await loadChildrenForGroup(groupId, container);
+}
+
+// Hilfsfunktion: Lädt und zeigt die Kinder einer bestimmten Gruppe an
+async function loadChildrenForGroup(groupId, containerElement) {
+  containerElement.innerHTML = "<p>Lade Kinder der Gruppe...</p>";
+
+  try {
+    const client = window.supabaseClient || supabaseClient;
+    if (!client) throw new Error("Supabase-Client nicht gefunden!");
+
+    // 1. Kinder für diese Gruppe laden (Nur Spalten, die sicher existieren: id, child_code)
+    const { data: children, error } = await client
+      .from("children")
+      .select("id, child_code") // first_name und last_name entfernt, da sie den 400er Fehler verursachten
+      .eq("group_id", groupId)
+      .order("child_code", { ascending: true });
+
+    if (error) throw error;
+
+    let html = `<h3>Gruppe (ID: ${groupId})</h3>`;
+
+    if (!children || children.length === 0) {
+      html += "<p style='color: orange;'>Keine Kinder in dieser Gruppe eingetragen.</p>";
+    } else {
+      html += `<p style="font-size: 13px; color: #666;">Anzahl Kinder: ${children.length}</p>`;
+      html += '<table style="width:100%; border-collapse: collapse; margin-top: 10px;">';
+      html += '<tr><th style="text-align:left; padding:8px; border-bottom:2px solid #ccc;">Kind-Code</th></tr>';
+
+      children.forEach(child => {
+        html += `
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 8px;"><strong>${child.child_code}</strong></td>
+          </tr>
+        `;
+      });
+
+      html += '</table>';
+    }
+
+    containerElement.innerHTML = html;
+
+  } catch (err) {
+    console.error("Fehler beim Laden der Kinder:", err);
+    containerElement.innerHTML = `<p style="color: red;">Fehler beim Laden der Kinder: ${err.message}</p>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupDailyCheckEvents();
+  setupSidebarNavigation(); // Hier wird die Sidebar initialisiert
+});
+
+async function loadGroupsView() {
+  const container = document.getElementById("groupsList"); 
+  const subtitle = document.getElementById("groupSubtitle");
+  const adminControl = document.getElementById("adminGroupControl");
+
+  if (!container) {
+    console.error("FEHLER: HTML-Element mit ID 'groupsList' wurde nicht gefunden!");
+    return;
+  }
+
+  container.innerHTML = "<p>Lade Berechtigungen und Gruppen...</p>";
+
+  try {
+    const client = window.supabaseClient || supabaseClient;
+    if (!client) throw new Error("Supabase-Client nicht gefunden!");
+
+    // 1. Aktuell eingeloggten User abrufen
+    const { data: { user }, error: userError } = await client.auth.getUser();
+    if (userError || !user) throw new Error("Nicht eingeloggt.");
+
+    // 2. Profil/Rolle des Users aus der Datenbank laden
+    const { data: profile, error: profileError } = await client
+      .from("profiles")
+      .select("role, institution_id, group_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.warn("Profil konnte nicht geladen werden:", profileError.message);
+    }
+
+    const userRole = profile?.role ? profile.role.trim().toLowerCase() : "";
+    const isAdmin = userRole === "admin" || userRole === "administrator";
+
+    console.log("Eingeloggter User Rolle:", profile?.role, "-> Ist Admin?", isAdmin);
+
+    if (isAdmin) {
+      // --- ADMIN LOGIK ---
+      if (subtitle) subtitle.textContent = "Administrator-Ansicht: Wähle eine Gruppe aus";
+      
+      if (adminControl) {
+        adminControl.style.display = "block";
+      }
+
+      // WICHTIG: Hier nutzen wir jetzt die korrekten Spaltennamen aus deiner Struktur ("id, group_name")
+      let groupsQuery = client.from("Groups").select("id, group_name");
+      
+      if (profile && profile.institution_id) {
+        groupsQuery = groupsQuery.eq("institution_id", profile.institution_id);
+      }
+
+      const { data: groups, error: gError } = await groupsQuery;
+      if (gError) throw gError;
+
+      const selectEl = document.getElementById("adminGroupSelect");
+      if (selectEl) {
+        selectEl.innerHTML = '<option value="">-- Bitte wählen --</option>';
+        if (groups && groups.length > 0) {
+          groups.forEach(g => {
+            // WICHTIG: Hier greifen wir auf g.group_name zu statt g.name
+            selectEl.innerHTML += `<option value="${g.id}">${g.group_name}</option>`;
+          });
+        }
+      }
+
+      container.innerHTML = "<p style='color: #666;'>Bitte wähle oben im Dropdown eine Gruppe aus, um die Kinder anzuzeigen.</p>";
+
+    } else {
+      // --- NORMALER USER LOGIK ---
+      if (subtitle) subtitle.textContent = "Deine zugeordneten Gruppen und Kinder";
+      
+      if (adminControl) {
+        adminControl.style.display = "none";
+      }
+
+      const userGroupId = profile?.group_id || 5; 
+      await loadChildrenForGroup(userGroupId, container);
+    }
+
+  } catch (err) {
+    console.error("Fehler beim Laden der Gruppenansicht:", err);
+    container.innerHTML = `<p style="color: red;">Fehler: ${err.message}</p>`;
+  }
+}
+
+async function generateNextChildCode() {
+  if (!supabaseClient) return;
+
+  try {
+    // 1. Alle Kinder-Codes aus der Datenbank laden
+    const { data, error } = await supabaseClient
+      .from("children")
+      .select("child_code");
+
+    if (error) throw error;
+
+    let maxNumber = 0;
+
+    // 2. Durch alle Codes durchgehen und die mathematisch höchste Nummer finden
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        if (item.child_code) {
+          const match = item.child_code.match(/\d+/); // Sucht nach der Zahl im String
+          if (match) {
+            const num = parseInt(match[0], 10);
+            if (num > maxNumber) {
+              maxNumber = num; // Höchste Zahl speichern
+            }
+          }
+        }
+      });
+    }
+
+    // 3. Die nächste Nummer berechnen (Höchste Zahl + 1)
+    const nextNumber = maxNumber + 1;
+
+    // 4. Formatieren (z. B. K-001, K-004 etc.)
+    const formattedCode = "K-" + String(nextNumber).padStart(3, "0");
+
+    console.log("Höchste gefundene Nummer:", maxNumber, "-> Neuer Code:", formattedCode);
+
+    // 5. In das Eingabefeld schreiben
+    const codeInput = byId("newChildCode");
+    if (codeInput) {
+      codeInput.value = formattedCode;
+    }
+
+  } catch (err) {
+    console.error("Fehler beim Generieren des Kinder-Codes:", err);
   }
 }
