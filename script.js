@@ -2537,7 +2537,7 @@ async function loadChildren(selectedGroupId = null) {
       return;
     }
 
-    // 6. HTML für die Kinderliste zusammenbauen
+    // 6. HTML für die Kinderliste zusammenbauen (inkl. Termin-Button pro Kind)
     let html = '<div class="children-grid" style="display: grid; gap: 10px;">';
     childrenData.forEach(child => {
       const groupName = child.Groups ? child.Groups.group_name : "Keine Gruppe";
@@ -2546,6 +2546,12 @@ async function loadChildren(selectedGroupId = null) {
           <div>
             <strong>${escapeHtml(child.child_code)}</strong>
             <span style="font-size: 12px; color: #666; margin-left: 10px;">(Gruppe: ${escapeHtml(groupName)})</span>
+          </div>
+          <div>
+            <!-- Kind-spezifischer Termin-Button -->
+            <button type="button" class="btn btn-sm btn-secondary" onclick="openChildAppointmentModal('${child.id}', '${escapeHtml(child.child_code)}')">
+              📅 Termin
+            </button>
           </div>
         </div>
       `;
@@ -6929,10 +6935,35 @@ document.addEventListener("DOMContentLoaded", () => {
 // TERMINE – Modal öffnen/schließen
 // ==========================================
 
+// 1. Wird oben über den Button "📅 Termin planen" aufgerufen (für die ganze Gruppe / Einrichtung)
+const addAppointmentBtn = byId("addAppointmentBtn");
+if (addAppointmentBtn && !addAppointmentBtn.dataset.eventsReady) {
+  addAppointmentBtn.dataset.eventsReady = "true";
+  addAppointmentBtn.addEventListener("click", () => {
+    // Hier deine Logik aufrufen, um das Modal / die Ansicht für allgemeine Termine zu öffnen
+    console.log("Allgemeinen Termin planen geklickt");
+    // Beispiel: openAppointmentModal(); 
+  });
+}
+
+// 2. Wird hinter jedem einzelnen Kind aufgerufen
+function openChildAppointmentModal(childId, childCode) {
+  console.log("Termin planen für Kind:", childCode, "ID:", childId);
+  
+  // Trage hier die Logik ein, die dein Modal für das spezifische Kind öffnet.
+  // Du kannst z.B. die childId in ein verstecktes Feld im Termin-Formular schreiben:
+  const hiddenChildInput = byId("appointmentChildId"); // Falls du so ein Feld hast
+  if (hiddenChildInput) {
+    hiddenChildInput.value = childId;
+  }
+
+  // Falls du eine Funktion hast, die das Termin-Fenster öffnet:
+  // if (typeof openAppointmentModal === 'function') openAppointmentModal();
+}
+
 const appointmentModal = document.getElementById("appointmentModal");
 const editingAppointmentId =
   appointmentModal.dataset.editingAppointmentId || null;
-const addAppointmentBtn = document.getElementById("addAppointmentBtn");
 const closeAppointmentModal = document.getElementById("closeAppointmentModal");
 const cancelAppointmentBtn = document.getElementById("cancelAppointmentBtn");
 
@@ -6989,8 +7020,8 @@ async function loadAppointmentChildren() {
 
   // 2. Profil des Benutzers laden (Rolle und group_id)
   const { data: profile, error: profileError } = await supabaseClient
-    .from("profiles") // Passe den Tabellennamen an, falls er bei dir anders heißt
-    .select("role, group_id")
+    .from("profiles")
+    .select("role, group_id, institution_id")
     .eq("id", user.id)
     .single();
 
@@ -7005,66 +7036,39 @@ async function loadAppointmentChildren() {
     .select("id, child_code, group_id")
     .order("child_code");
 
-  // 4. Wenn der Nutzer KEIN Admin ist, nach seiner group_id filtern
-  if (profile.role !== "admin") {
+  // 4. Rollen-Prüfung: Wenn KEIN Admin, nur Kinder der eigenen Gruppe laden
+  const userRole = profile.role ? profile.role.trim().toLowerCase() : "";
+  if (userRole !== "admin" && userRole !== "administrator") {
     if (!profile.group_id) {
       select.innerHTML = '<option value="">Keine Gruppe zugewiesen</option>';
       return;
     }
     childrenQuery = childrenQuery.eq("group_id", profile.group_id);
+  } else {
+    // Falls der Admin einer Institution zugehörig ist, evtl. darauf einschränken (optional)
+    // Wenn Admins alle sehen sollen, bleibt childrenQuery offen.
   }
 
   // 5. Daten ausführen
   const { data, error } = await childrenQuery;
 
   if (error) {
-    console.error("Fehler beim Laden der Kinder:", error);
+    console.error("Fehler beim Laden der Kinder für Termine:", error);
     return;
   }
 
   if (!data || data.length === 0) {
-    select.innerHTML = '<option value="">Keine Kinder in deiner Gruppe</option>';
+    select.innerHTML = '<option value="">Keine Kinder gefunden</option>';
     return;
   }
 
-// 6. Rollen-Logik
-    if (isAdmin) {
-      console.log("5a. Modus: Admin");
-      if (subtitle) subtitle.textContent = "Administrator-Ansicht: Alle Kinder oder nach Gruppe gefiltert";
-      
-      // Suchen und absichern des Dropdowns
-      const adminControl = document.getElementById("adminChildrenGroupControl");
-      console.log("Gefundenes adminControl Element:", adminControl); // Schau mal, ob hier 'null' steht!
-
-      if (adminControl) {
-        // Erzwinge die Sichtbarkeit (falls CSS blockiert, nutzen wir important)
-        adminControl.style.setProperty('display', 'block', 'important');
-      } else {
-        console.error("FEHLER: #adminChildrenGroupControl wurde im DOM nicht gefunden!");
-      }
-
-      const selectEl = document.getElementById("adminChildrenGroupSelect");
-      if (selectEl && selectEl.options.length <= 1) {
-        let groupsQuery = supabaseClient.from("Groups").select("id, group_name");
-        if (profile.institution_id) {
-          groupsQuery = groupsQuery.eq("institution_id", profile.institution_id);
-        }
-        const { data: groupsData } = await groupsQuery;
-
-        if (groupsData) {
-          groupsData.forEach(g => {
-            const opt = document.createElement("option");
-            opt.value = g.id;
-            opt.textContent = g.group_name;
-            selectEl.appendChild(opt);
-          });
-        }
-      }
-
-      if (selectedGroupId && selectedGroupId !== "") {
-        query = query.eq("group_id", selectedGroupId);
-      }
-    }
+  // 6. Optionen in das Dropdown-Feld für Termine einfügen
+  data.forEach(child => {
+    const opt = document.createElement("option");
+    opt.value = child.id;
+    opt.textContent = child.child_code;
+    select.appendChild(opt);
+  });
 }
 
 // ==========================================
@@ -8743,3 +8747,34 @@ async function generateNextChildCode() {
     console.error("Fehler beim Generieren des Kinder-Codes:", err);
   }
 }
+
+
+window.openChildAppointmentModal = async function(childId, childCode) {
+  console.log("Öffne Kalender/Termine für Kind:", childCode, "ID:", childId);
+  
+  // 1. Das Termin-Modal oder die Sektion einblenden
+  const appointmentModal = byId("appointmentSection") || byId("appointmentModal"); 
+  if (appointmentModal) {
+    appointmentModal.style.display = "block";
+  }
+
+  // 2. Zuerst die Liste der Kinder im Dropdown laden, damit das Feld befüllt ist
+  if (typeof loadAppointmentChildren === 'function') {
+    await loadAppointmentChildren();
+  }
+
+  // 3. Das Dropdown-Feld automatisch auf dieses spezifische Kind einstellen
+  const appointmentChildSelect = byId("appointmentChild");
+  if (appointmentChildSelect) {
+    appointmentChildSelect.value = childId;
+  }
+
+  // 4. Falls du eine Funktion hast, die die bestehenden Termine des Kindes lädt:
+  if (typeof loadChildAppointments === 'function') {
+    loadChildAppointments(childId);
+  }
+};
+
+
+
+  
