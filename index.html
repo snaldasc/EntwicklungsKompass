@@ -129,9 +129,9 @@
         <div class="topbar-actions">
           <span id="institutionName"> — </span>
 
-          <button id="profileButton" class="btn btn-light" type="button">
+          <!-- <button id="profileButton" class="btn btn-light" type="button">
             Profil
-          </button>
+          </button> -->
 
           <button id="logoutButton" class="btn btn-danger" type="button">
             Abmelden
@@ -218,9 +218,8 @@
                   Anwesenheit prüfen
                 </button>
                 <button onclick="printAttendanceReport()">
-                    Gesamte Gruppe drucken
+                  Gesamte Gruppe drucken
                 </button>
-
               </div>
               <div class="attendance-box">
                 <h3>Anwesenheitsliste</h3>
@@ -247,6 +246,46 @@
 
           <section class="section" data-section-content="children">
             <div class="children-header">
+              <section class="section" data-section-content="children">
+                <div class="page-header">
+                  <h1>Kinder</h1>
+                  <p id="childrenSubtitle">Kinder verwalten</p>
+                </div>
+
+                <!-- ADMIN-ANSICHT: Dropdown zur Gruppenauswahl (Anfangs versteckt) -->
+                <div
+                  id="adminChildrenGroupControl"
+                  style="
+                    display: none;
+                    margin-bottom: 20px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 6px;
+                    border: 1px solid #ddd;
+                  "
+                >
+                  <label
+                    for="adminChildrenGroupSelect"
+                    style="font-weight: bold; margin-right: 10px"
+                    >Gruppe filtern:</label
+                  >
+                  <select
+                    id="adminChildrenGroupSelect"
+                    onchange="onAdminChildrenGroupChange()"
+                    style="
+                      padding: 6px;
+                      width: 250px;
+                      border-radius: 4px;
+                      border: 1px solid #ccc;
+                    "
+                  >
+
+                    <option value="">-- Alle Gruppen anzeigen --</option>
+                  </select>
+                </div>
+
+                <!-- Hier landet die Liste der Kinder -->
+              </section>
               <div class="page-header">
                 <h1>Kinder</h1>
 
@@ -354,13 +393,44 @@
 
           <section class="section" data-section-content="groups">
             <div class="page-header">
-              <h1>Gruppen</h1>
-
-              <p>Gruppen deiner Institution</p>
+              <h1>Gruppen & Kinder</h1>
+              <p id="groupSubtitle">Lade Gruppen...</p>
             </div>
 
+            <!-- ADMIN-ANSICHT: Dropdown zur Gruppenauswahl (WICHTIG!) -->
+            <div
+              id="adminGroupControl"
+              style="
+                display: none;
+                margin-bottom: 20px;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 6px;
+                border: 1px solid #ddd;
+              "
+            >
+              <label
+                for="adminGroupSelect"
+                style="font-weight: bold; margin-right: 10px"
+                >Gruppe auswählen:</label
+              >
+              <select
+                id="adminGroupSelect"
+                onchange="onAdminGroupChange()"
+                style="
+                  padding: 6px;
+                  width: 250px;
+                  border-radius: 4px;
+                  border: 1px solid #ccc;
+                "
+              >
+                <option value="">-- Bitte wählen --</option>
+              </select>
+            </div>
+
+            <!-- CONTAINER FÜR DIE KINDER-TABELLE -->
             <div id="groupsList" class="groups-list">
-              <p>Gruppen werden geladen...</p>
+              <p>Daten werden geladen...</p>
             </div>
           </section>
 
